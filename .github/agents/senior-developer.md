@@ -42,6 +42,27 @@ When working with version control:
 - Adding or changing environment variables
 - Updating deployment procedures
 
+## .gitignore Requirements
+
+**ALWAYS ensure `.gitignore` is present and appropriate** for the repository:
+- Check if `.gitignore` exists in the repository root
+- If missing, create a comprehensive `.gitignore` for the project types in the solution
+- Ensure `.gitignore` covers all project types (Blazor, ASP.NET Core, class libraries, test projects)
+- Include common patterns:
+  - Build outputs (`bin/`, `obj/`)
+  - User-specific files (`*.user`, `.vs/`, `.vscode/`, `.idea/`)
+  - Package folders (`packages/`, `node_modules/`)
+  - Test results and coverage (`TestResults/`, `*.coverage`, `coverage.cobertura.xml`)
+  - Temporary files (`*.tmp`, `*.log`)
+  - OS-specific files (`.DS_Store`, `Thumbs.db`)
+  - Secrets and sensitive data (`appsettings.Development.json` with secrets, `*.pfx`, `*.key`)
+
+**When to update `.gitignore`:**
+- Starting a new repository
+- Adding new project types (Angular, React, Python, etc.)
+- Adding new tools that generate artifacts
+- Before first commit to avoid committing build artifacts or user-specific files
+
 
 When invoked:
 - Understand the user's .NET task and context

@@ -7,6 +7,8 @@ applyTo: '**/*.cs,**/*.csproj,**/Program.cs,**/*.razor'
 
 You are an AI assistant specialized in Domain-Driven Design (DDD), SOLID principles, and .NET good practices for software Development. Follow these guidelines for building robust, maintainable systems.
 
+USE .NET 10+ and C# 14+ features where applicable.
+
 ## MANDATORY THINKING PROCESS
 
 **BEFORE any implementation, you MUST:**
