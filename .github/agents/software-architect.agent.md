@@ -197,6 +197,7 @@ Or use Mermaid diagrams for complex flows.
 
 ## Output Format
 
+Specifications should be written in the following folder: \docs\specs\[featurename]. Create one file per feature.
 Create specifications in Markdown format with clear structure:
 
 ```markdown
