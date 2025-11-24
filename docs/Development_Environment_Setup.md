@@ -197,7 +197,7 @@ Build and run the application to verify configuration.
 ### Build Solution
 
 ```bash
-cd /home/runner/work/ghc-sample-ps/ghc-sample-ps
+cd [repository-root]
 dotnet build
 ```
 
