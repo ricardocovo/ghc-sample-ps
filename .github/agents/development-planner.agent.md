@@ -88,6 +88,41 @@ Each Feature should have 3-8 sub-issues representing:
 
 For each Feature, create a parent GitHub issue with sub-issues:
 
+**CRITICAL: Creating Parent-Child Relationships**
+
+After creating issues, you MUST establish the parent-child relationship using GitHub CLI:
+
+1. **Create parent Feature issue first** and capture its issue number
+2. **Create all sub-issues** for that Feature and capture their issue numbers
+3. **Link sub-issues to parent** using the command:
+   ```
+   gh issue edit <sub-issue-number> --add-parent <parent-issue-number>
+   ```
+4. **Verify the relationship** by checking that sub-issues appear in the parent issue
+
+**Example workflow for one Feature:**
+```powershell
+# Step 1: Create parent issue and capture number
+$parentIssue = gh issue create --title "[Feature] User Management" --body "..." --json number | ConvertFrom-Json
+$parentNumber = $parentIssue.number
+
+# Step 2: Create sub-issues and capture numbers
+$sub1 = gh issue create --title "[Core/Data] Implement User data model" --body "..." --json number | ConvertFrom-Json
+$sub2 = gh issue create --title "[Core/Services] Implement UserService" --body "..." --json number | ConvertFrom-Json
+
+# Step 3: Link sub-issues to parent
+gh issue edit $sub1.number --add-parent $parentNumber
+gh issue edit $sub2.number --add-parent $parentNumber
+```
+
+**Batching strategy with relationships:**
+- Batch 1: Create all parent Feature issues → capture their numbers
+- Batch 2: Create sub-issues for Feature 1 → link to parent #1
+- Batch 3: Create sub-issues for Feature 2 → link to parent #2
+- Continue for all Features
+
+**IMPORTANT**: Always link sub-issues immediately after creating them for each Feature before moving to the next Feature.
+
 #### Parent Issue (Feature) Title Format
 `[Feature] Feature or component name`
 
@@ -459,7 +494,8 @@ When you finish creating the Feature/sub-issue plan:
 - **Consider the whole stack**: Include all layers in each Feature (data, logic, UI, tests)
 - **Use plain language**: Describe what to build, reference patterns by file path, but never write the code
 - **Sub-issues should be cohesive**: Group related functionality together, avoid fragmentation
-- **ALWAYS BATCH**: Never create GitHub issues one-by-one; always use parallel tool calls in batches
+- **ALWAYS LINK SUB-ISSUES**: After creating sub-issues, immediately link them to parent using `gh issue edit <sub-issue> --add-parent <parent>`
+- **Verify relationships**: Check that sub-issues appear under parent before moving to next Feature
 
 ## Output Format
 
@@ -544,18 +580,21 @@ Feature #X → Feature #Y → Feature #Z (Total: N days)
 This breakdown creates [X] parent Features with [Y] total sub-issues.
 
 **Proposed approach:**
-1. Create all [X] parent Feature issues first
-2. Create sub-issues and link them to parent Features
+1. Create all [X] parent Feature issues first (capture issue numbers)
+2. For each Feature:
+   - Create its sub-issues (capture issue numbers)
+   - **Link sub-issues to parent using `gh issue edit <sub-issue> --add-parent <parent>`**
+   - Verify the relationship before moving to next Feature
 3. Set up project board with Feature columns
 4. Assign Features to iterations/milestones
 
 Ready to create these Features and sub-issues in GitHub? Please confirm or suggest adjustments.
 
-Once approved, I will create these issues in batches:
-- **Batch 1**: Create all X Feature (parent) issues in parallel
-- **Batch 2**: Create sub-issues for Feature 1 in parallel
-- **Batch 3**: Create sub-issues for Feature 2 in parallel
-- Continue batching by Feature grouping
+Once approved, I will create these issues with proper parent-child relationships:
+- **Batch 1**: Create all X Feature (parent) issues → capture numbers
+- **Batch 2**: Create sub-issues for Feature 1 → **link to parent**
+- **Batch 3**: Create sub-issues for Feature 2 → **link to parent**
+- Continue for each Feature, ensuring all sub-issues are linked
 ```
 
 Your goal is to make it effortless for development agents to pick up issues and implement them correctly, following all project standards and maintaining clean architecture.
@@ -566,19 +605,43 @@ Your goal is to make it effortless for development agents to pick up issues and 
 
 1. **Analysis Phase**: Read spec, create complete Feature/sub-issue breakdown
 2. **Review Phase**: Present all Features and sub-issues to user for approval
-3. **Batch Creation Phase**: Create issues in parallel batches (never one-by-one)
-   - Use tool batching to create multiple issues simultaneously
-   - Group by type: all Features first, then sub-issues by Feature
-   - Typical batch size: 5-10 issues per parallel call
+3. **Batch Creation Phase with Linking**: Create issues and establish parent-child relationships
+   - Create parent issues first, capture issue numbers
+   - Create sub-issues for each Feature, capture issue numbers
+   - **IMMEDIATELY link sub-issues to parent using `gh issue edit --add-parent`**
+   - Process one Feature at a time to ensure proper linking
 
-**Example Batch Creation**:
-```
+**Example Batch Creation with Linking**:
+```powershell
 # After user approval:
-Batch 1 (Parallel): Create Feature issues #1-3 → All created simultaneously
-Batch 2 (Parallel): Create Sub-issues for Feature 1 (#1.1-#1.5) → All created simultaneously  
-Batch 3 (Parallel): Create Sub-issues for Feature 2 (#2.1-#2.4) → All created simultaneously
-Batch 4 (Parallel): Create Sub-issues for Feature 3 (#3.1-#3.3) → All created simultaneously
+
+# Batch 1: Create all parent Feature issues
+$parent1 = gh issue create --title "[Feature] User Management" --body "..." --json number | ConvertFrom-Json
+$parent2 = gh issue create --title "[Feature] Product Catalog" --body "..." --json number | ConvertFrom-Json
+$parent3 = gh issue create --title "[Feature] Authentication" --body "..." --json number | ConvertFrom-Json
+
+# Batch 2: Create sub-issues for Feature 1 AND link them
+$sub1_1 = gh issue create --title "[Core/Data] User models" --body "..." --json number | ConvertFrom-Json
+$sub1_2 = gh issue create --title "[Core/Services] UserService" --body "..." --json number | ConvertFrom-Json
+gh issue edit $sub1_1.number --add-parent $parent1.number
+gh issue edit $sub1_2.number --add-parent $parent1.number
+
+# Batch 3: Create sub-issues for Feature 2 AND link them
+$sub2_1 = gh issue create --title "[Core/Data] Product models" --body "..." --json number | ConvertFrom-Json
+$sub2_2 = gh issue create --title "[Core/Services] ProductService" --body "..." --json number | ConvertFrom-Json
+gh issue edit $sub2_1.number --add-parent $parent2.number
+gh issue edit $sub2_2.number --add-parent $parent2.number
+
+# Continue for all Features...
 ```
 
-This approach minimizes API calls and creates issues efficiently.
+**CRITICAL RULES**:
+- ✅ Always create parent issue first, capture its number
+- ✅ Create sub-issues for that Feature, capture their numbers
+- ✅ **Immediately link each sub-issue to parent using `gh issue edit --add-parent`**
+- ✅ Verify linking worked before moving to next Feature
+- ❌ Never skip the linking step
+- ❌ Don't create all sub-issues before linking any
+
+This approach ensures every sub-issue is properly linked to its parent Feature.
 
