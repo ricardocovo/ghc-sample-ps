@@ -190,52 +190,69 @@ Configuration is managed in:
 - [Architecture Guidelines](../../.github/instructions/blazor-architecture.instructions.md)
 - [C# Guidelines](../../.github/instructions/csharp.instructions.md)
 
-## Performance Optimization
+## Progressive Web App (PWA) Features
 
-This project is optimized for mobile performance with the following features:
+This application includes PWA capabilities for mobile installation:
 
-### Response Compression
-- Brotli and Gzip compression enabled for all responses
-- Optimized compression levels for production
-- Support for HTTPS compression
+### Manifest Configuration
 
-### Caching Strategy
-- Static assets cached for 1 year in production
-- Disabled caching in development for faster iteration
-- Proper cache-control headers set automatically
+The PWA manifest (`wwwroot/manifest.json`) includes:
+- **App Name**: GhcSamplePs - Blazor Web Application
+- **Short Name**: GhcSamplePs (for home screen)
+- **Display Mode**: Standalone (app-like experience)
+- **Theme Color**: #594AE2 (MudBlazor primary purple)
+- **Background Color**: #FFFFFF (white)
+- **Orientation**: Any
 
-### Resource Loading
-- Critical resources preloaded (MudBlazor, Blazor framework)
-- Optimized script and stylesheet loading order
-- Minimal render-blocking resources
+### App Icons
 
-### Build Configuration
-- Release builds optimized for production
-- Debug symbols removed for smaller binaries
-- Code optimization enabled
+Icons are available in multiple sizes in `wwwroot/icons/`:
+- 72x72, 96x96, 128x128, 144x144, 152x152 pixels
+- 192x192 pixels (minimum required)
+- 384x384 pixels
+- 512x512 pixels (minimum required)
 
-### Performance Targets
-- First Contentful Paint (FCP): < 1.5s
-- Largest Contentful Paint (LCP): < 2.5s
-- Time to Interactive (TTI): < 3s on 4G
-- Total bundle size: < 2MB (actual: ~232KB Brotli compressed)
-- Lighthouse performance score: > 90
+All icons follow Material Design guidelines and use the MudBlazor theme colors.
 
-For detailed performance information and testing procedures, see [docs/PERFORMANCE.md](../../docs/PERFORMANCE.md).
+### Installation
 
-## MudBlazor Integration
+**On Android (Chrome/Edge):**
+1. Open the app in Chrome or Edge browser
+2. Tap the menu (three dots) and select "Install app" or "Add to Home screen"
+3. The app will be added to your home screen and app drawer
 
-This project uses MudBlazor 8.15.0 for Material Design components:
+**On iOS (Safari):**
+1. Open the app in Safari
+2. Tap the Share button
+3. Scroll down and tap "Add to Home Screen"
+4. Tap "Add" to confirm
 
-- **CSS**: `_content/MudBlazor/MudBlazor.min.css` (44KB compressed)
-- **JS**: `_content/MudBlazor/MudBlazor.min.js` (16KB compressed)
-- **Services**: Configured in `Program.cs` with `AddMudServices()`
+**On Desktop (Chrome/Edge):**
+1. Open the app in Chrome or Edge
+2. Look for the install icon in the address bar
+3. Click it and follow the prompts to install
 
-MudBlazor provides:
-- Material Design components
-- Mobile-first responsive design
-- Touch-friendly interfaces
-- Built-in dark mode support
-- Accessible components (WCAG 2.1 AA)
+### Testing PWA Features
 
-For MudBlazor documentation, visit: https://mudblazor.com/
+**Validate Manifest:**
+- Open browser DevTools (F12)
+- Go to Application tab → Manifest
+- Verify all properties are loaded correctly
+- Check that all icons are available
+
+**Check Service Worker (if enabled):**
+- Application tab → Service Workers
+- Verify registration and status
+
+**Lighthouse Audit:**
+- Run Lighthouse audit in Chrome DevTools
+- Check PWA score and recommendations
+
+### Browser Support
+
+- ✅ Chrome/Edge (Android): Full support
+- ✅ Safari (iOS): Requires "Add to Home Screen" manually
+- ✅ Chrome/Edge (Desktop): Full support
+- ⚠️ Firefox: Limited PWA support (no installation prompt)
+
+For more details, see the [MudBlazor Mobile Integration Specification](../../docs/specs/MudBlazor_Mobile_Integration_Specification.md).
