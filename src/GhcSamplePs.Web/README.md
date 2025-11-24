@@ -9,6 +9,7 @@ This project contains the user interface layer of the GhcSamplePs application, i
 - Pages and layouts
 - UI-specific services and state management
 - Client-side validation and user interaction logic
+- Progressive Web App (PWA) configuration
 
 ## Dependencies
 
@@ -23,29 +24,30 @@ GhcSamplePs.Web/
 │   ├── Layout/          # Layout components
 │   └── Pages/           # Page components (Home, Counter, Weather)
 ├── wwwroot/             # Static files (CSS, JS, images)
-├── App.razor            # Root component with MudBlazor CSS/JS references
-├── Routes.razor         # Router with MudBlazor providers
-├── _Imports.razor       # Global using statements including MudBlazor
+├── App.razor            # Root component (includes PWA manifest link)
 ├── Program.cs           # Application entry point and DI configuration
 └── appsettings.json     # Configuration
 ```
 
-## UI Framework
+## Progressive Web App (PWA)
 
-This project uses **MudBlazor** (Material Design components) for the UI instead of Bootstrap:
+The application includes PWA support to enable installation on mobile devices:
 
-- **CSS Framework**: MudBlazor (Material Design)
-- **Bootstrap**: Removed (no longer used)
-- **Mobile-First**: Optimized for mobile devices with responsive design
-- **Touch-Friendly**: Minimum 44x44 pixel touch targets
+- **Manifest Link**: `App.razor` includes a link to `/manifest.json`
+- **Browser Detection**: Supported browsers (Chrome, Edge, Safari 16.4+) will detect PWA capability
+- **Installation**: Users can install the app via browser menu (Add to Home Screen)
 
-### MudBlazor Features Available
+### PWA Configuration
 
-- Material Design components (buttons, cards, tables, forms)
-- Built-in responsive layouts
-- Dark mode support
-- Dialog and Snackbar notifications
-- Accessible components (WCAG 2.1 AA compliant)
+The manifest link is configured in `Components/App.razor`:
+```html
+<link rel="manifest" href="/manifest.json" />
+```
+
+This enables:
+- Install prompt on supported browsers
+- Add to home screen functionality on mobile devices
+- App-like experience when launched from home screen
 
 ## Running the Application
 
@@ -189,70 +191,4 @@ Configuration is managed in:
 - [MudBlazor Documentation](https://mudblazor.com/)
 - [Architecture Guidelines](../../.github/instructions/blazor-architecture.instructions.md)
 - [C# Guidelines](../../.github/instructions/csharp.instructions.md)
-
-## Progressive Web App (PWA) Features
-
-This application includes PWA capabilities for mobile installation:
-
-### Manifest Configuration
-
-The PWA manifest (`wwwroot/manifest.json`) includes:
-- **App Name**: GhcSamplePs - Blazor Web Application
-- **Short Name**: GhcSamplePs (for home screen)
-- **Display Mode**: Standalone (app-like experience)
-- **Theme Color**: #594AE2 (MudBlazor primary purple)
-- **Background Color**: #FFFFFF (white)
-- **Orientation**: Any
-
-### App Icons
-
-Icons are available in multiple sizes in `wwwroot/icons/`:
-- 72x72, 96x96, 128x128, 144x144, 152x152 pixels
-- 192x192 pixels (minimum required)
-- 384x384 pixels
-- 512x512 pixels (minimum required)
-
-All icons follow Material Design guidelines and use the MudBlazor theme colors.
-
-### Installation
-
-**On Android (Chrome/Edge):**
-1. Open the app in Chrome or Edge browser
-2. Tap the menu (three dots) and select "Install app" or "Add to Home screen"
-3. The app will be added to your home screen and app drawer
-
-**On iOS (Safari):**
-1. Open the app in Safari
-2. Tap the Share button
-3. Scroll down and tap "Add to Home Screen"
-4. Tap "Add" to confirm
-
-**On Desktop (Chrome/Edge):**
-1. Open the app in Chrome or Edge
-2. Look for the install icon in the address bar
-3. Click it and follow the prompts to install
-
-### Testing PWA Features
-
-**Validate Manifest:**
-- Open browser DevTools (F12)
-- Go to Application tab → Manifest
-- Verify all properties are loaded correctly
-- Check that all icons are available
-
-**Check Service Worker (if enabled):**
-- Application tab → Service Workers
-- Verify registration and status
-
-**Lighthouse Audit:**
-- Run Lighthouse audit in Chrome DevTools
-- Check PWA score and recommendations
-
-### Browser Support
-
-- ✅ Chrome/Edge (Android): Full support
-- ✅ Safari (iOS): Requires "Add to Home Screen" manually
-- ✅ Chrome/Edge (Desktop): Full support
-- ⚠️ Firefox: Limited PWA support (no installation prompt)
-
-For more details, see the [MudBlazor Mobile Integration Specification](../../docs/specs/MudBlazor_Mobile_Integration_Specification.md).
+- [MudBlazor Mobile Integration Spec](../../docs/specs/MudBlazor_Mobile_Integration_Specification.md)
