@@ -13,6 +13,43 @@ This project contains the user interface layer of the GhcSamplePs application, i
 ## Dependencies
 
 - **GhcSamplePs.Core** - Business logic and services
+- **MudBlazor** (v8.15.0) - Material Design component library
+
+## UI Framework
+
+This application uses **MudBlazor**, a Material Design component library for Blazor. MudBlazor provides:
+- Material Design components (buttons, cards, dialogs, etc.)
+- Theming and styling system
+- Dialog management via MudDialogProvider
+- Toast notifications via MudSnackbarProvider
+- Responsive grid system
+- Mobile-first design patterns
+
+### MudBlazor Configuration
+
+MudBlazor is configured in:
+- **Program.cs** - Services registered with `builder.Services.AddMudServices()`
+- **App.razor** - Providers configured (MudThemeProvider, MudDialogProvider, MudSnackbarProvider)
+- **_Imports.razor** - Namespace imported (`@using MudBlazor`)
+
+### Using MudBlazor Components
+
+```razor
+@* Example: Using MudButton *@
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="HandleClick">
+    Click Me
+</MudButton>
+
+@* Example: Using MudCard *@
+<MudCard>
+    <MudCardContent>
+        <MudText Typo="Typo.h5">Card Title</MudText>
+        <MudText>Card content goes here</MudText>
+    </MudCardContent>
+</MudCard>
+```
+
+See [MudBlazor Documentation](https://mudblazor.com/) for all available components.
 
 ## Project Structure
 
@@ -22,7 +59,7 @@ GhcSamplePs.Web/
 │   ├── Layout/          # Layout components
 │   └── Pages/           # Page components
 ├── wwwroot/             # Static files (CSS, JS, images)
-├── App.razor            # Root component
+├── App.razor            # Root component with MudBlazor providers
 ├── Program.cs           # Application entry point and DI configuration
 └── appsettings.json     # Configuration
 ```
@@ -45,6 +82,7 @@ Visit `https://localhost:5001` in your browser.
 - Use EventCallback for output events
 - Avoid business logic in `.razor` files - call services instead
 - Use `@inject` directive to inject services
+- Use MudBlazor components for consistent UI/UX
 
 ### Service Usage
 
@@ -80,9 +118,12 @@ Configuration is managed in:
 2. Register service in `Program.cs`
 3. Create Blazor component in appropriate folder
 4. Inject and use service in component
-5. Test business logic in `GhcSamplePs.Core.Tests`
+5. Use MudBlazor components for UI elements
+6. Test business logic in `GhcSamplePs.Core.Tests`
 
 ## See Also
 
 - [Architecture Guidelines](../../.github/instructions/blazor-architecture.instructions.md)
 - [C# Guidelines](../../.github/instructions/csharp.instructions.md)
+- [MudBlazor Documentation](https://mudblazor.com/)
+- [MudBlazor Specification](../../docs/specs/MudBlazor_Mobile_Integration_Specification.md)
