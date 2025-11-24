@@ -274,3 +274,79 @@ The theme is applied in `App.razor` through the `MudThemeProvider` component:
 ```
 
 All MudBlazor components automatically use the configured theme colors and styles.
+
+## Authentication and Authorization
+
+### Azure Entra ID Integration
+
+This application uses **Azure Entra ID External Identities** for authentication and authorization. The infrastructure must be set up before the application can authenticate users.
+
+#### Authentication Features
+
+- ✅ **Multiple Identity Providers**: Microsoft Account, Google, Email signup
+- ✅ **Self-Service Registration**: User sign-up flows
+- ✅ **Role-Based Access Control**: Admin and User roles
+- ✅ **Secure Token Management**: OAuth 2.0 / OpenID Connect
+- ✅ **Single Sign-On**: Seamless authentication experience
+
+#### Configuration
+
+Authentication configuration is stored in `appsettings.json` and `appsettings.Development.json`:
+
+```json
+{
+  "AzureAd": {
+    "Instance": "https://login.microsoftonline.com/",
+    "Domain": "your-tenant.onmicrosoft.com",
+    "TenantId": "00000000-0000-0000-0000-000000000000",
+    "ClientId": "00000000-0000-0000-0000-000000000000",
+    "CallbackPath": "/signin-oidc",
+    "SignedOutCallbackPath": "/signout-callback-oidc"
+  }
+}
+```
+
+**Security Note**: Client Secret must be stored in:
+- **Development**: User Secrets (`dotnet user-secrets set "AzureAd:ClientSecret" "your-secret"`)
+- **Production**: Azure Key Vault (referenced via environment variables)
+
+#### Setup Requirements
+
+Before running the application with authentication:
+
+1. **Azure Infrastructure Setup**
+   - Follow: [Azure Entra ID Setup Guide](../../docs/Azure_EntraID_Setup_Guide.md)
+   - Create Entra ID tenant and application registration
+   - Configure identity providers and user flows
+   - Set up Azure Key Vault for secrets
+
+2. **Development Environment Configuration**
+   - Follow: [Development Environment Setup](../../docs/Development_Environment_Setup.md)
+   - Update `appsettings.Development.json` with Tenant ID and Client ID
+   - Store Client Secret in user secrets
+   - Verify redirect URIs in Azure Portal
+
+3. **Verification**
+   - Complete: [Infrastructure Verification Checklist](../../docs/Infrastructure_Verification_Checklist.md)
+   - Test authentication in Azure Portal
+   - Verify configuration values
+
+#### Quick Reference
+
+For quick access to configuration values and commands, see:
+- [Configuration Quick Reference](../../docs/Azure_EntraID_Configuration_Reference.md)
+
+#### Authentication Code Implementation
+
+**Status**: 🔄 Pending - Authentication middleware and UI components not yet implemented
+
+The authentication code integration will be completed in a future phase. Current configuration templates are ready for when authentication code is added.
+
+**Next Steps:**
+1. Add Microsoft.Identity.Web NuGet packages
+2. Configure authentication middleware in `Program.cs`
+3. Create LoginDisplay component
+4. Add Authorize attributes to protected pages
+5. Implement authorization policies
+
+See specification: [Entra ID External Identities Integration](../../docs/specs/EntraID_ExternalIdentities_Integration_Specification.md)

@@ -101,3 +101,52 @@ builder.Services.AddScoped<IMyRepository, MyRepository>();
 - [Architecture Guidelines](../../.github/instructions/blazor-architecture.instructions.md)
 - [C# Guidelines](../../.github/instructions/csharp.instructions.md)
 - [DDD Best Practices](../../.github/instructions/dotnet-architecture-good-practices.instructions.md)
+
+## Planned Features
+
+### Authentication and Authorization Services
+
+The Core project will contain authentication and authorization logic (business rules and validation), while the Web project will handle authentication middleware and UI components.
+
+#### Planned Domain Models
+
+Future authentication-related models will be added to `Models/Identity/`:
+
+- **ApplicationUser**: User identity information extracted from Entra ID claims
+  - Id, Email, DisplayName, Roles, Claims, IsActive, LastLoginDate
+- **UserClaim**: Custom claim information
+- **Role definitions**: Admin, User role constants
+
+#### Planned Services
+
+Future authentication services will be added:
+
+**IAuthenticationService** (`Services/Interfaces/IAuthenticationService.cs`):
+- GetCurrentUserAsync() - Retrieve current authenticated user
+- GetUserClaimsAsync() - Get user claims
+- GetUserRolesAsync() - Get user roles
+- IsInRoleAsync(roleName) - Check role membership
+
+**IAuthorizationService** (`Services/Interfaces/IAuthorizationService.cs`):
+- AuthorizeAsync(policy) - Check policy requirements
+- CanAccessAsync(resource) - Resource-based authorization
+- GetUserPermissionsAsync() - Get user permissions
+
+#### Implementation Status
+
+**Status**: 🔄 Not Yet Implemented
+
+The authentication and authorization services will be implemented in a future development phase after the Azure infrastructure is set up.
+
+**Prerequisites:**
+- Azure Entra ID infrastructure must be configured
+- See: [Azure Entra ID Setup Guide](../../docs/Azure_EntraID_Setup_Guide.md)
+
+**Next Steps:**
+1. Azure infrastructure setup (current epic)
+2. Add authentication models to Core
+3. Implement authentication/authorization services
+4. Write comprehensive unit tests
+5. Integrate with Web project authentication middleware
+
+See specification: [Entra ID External Identities Integration](../../docs/specs/EntraID_ExternalIdentities_Integration_Specification.md)
