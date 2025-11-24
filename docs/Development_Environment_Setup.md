@@ -158,7 +158,7 @@ Your app registration should include:
 3. Go to "Authentication"
 4. Under "Platform configurations" > "Web" > "Redirect URIs"
 5. Confirm `https://localhost:5001/signin-oidc` is listed
-6. Under "Front-channel logout URL", confirm `https://localhost:5001/signout-oidc` is listed
+6. Under "Front-channel logout URL", confirm `https://localhost:5001/signout-callback-oidc` is listed
 
 ### Add if Missing
 
@@ -167,7 +167,7 @@ If the localhost URIs are missing:
 1. Click "Add URI" under Redirect URIs
 2. Enter `https://localhost:5001/signin-oidc`
 3. Scroll to "Front-channel logout URL"
-4. Enter `https://localhost:5001/signout-oidc`
+4. Enter `https://localhost:5001/signout-callback-oidc`
 5. Click "Save"
 
 ## Step 5: Install Development Certificate (HTTPS)
