@@ -43,242 +43,488 @@ When given a feature specification file, follow this process:
 - Note dependencies and integration points
 - Review acceptance criteria and success metrics
 
-### 2. Decompose into Tasks
-Break down the specification into logical, implementable tasks across these categories:
+### 2. Decompose into Feature Epics and Sub-Tasks
+Break down the specification into larger feature epics with sub-issues. Use this hierarchical approach:
 
-#### Data Layer Tasks
-- Database schema changes (migrations)
-- Entity/model creation or updates
-- Repository interface and implementation
-- Data validation rules
+#### Epic Structure
+Create **feature epics** (parent issues) that represent complete vertical slices of functionality. Each epic should:
+- Be a complete, shippable feature or major component
+- Take 1-3 days to complete (4-24 hours total)
+- Include all layers: data, logic, UI, and tests
+- Have 3-8 sub-issues that break down the implementation
 
-#### Business Logic Tasks
-- Service interface definitions
-- Service implementations
-- Business rule implementations
-- Domain logic and calculations
-- Validation logic
+#### Epic Categories
 
-#### API/Interface Tasks
-- API endpoint creation
-- Request/response model definitions
-- Authentication/authorization implementation
-- API documentation
+**Data Layer Epics:**
+- Complete data model with repository implementation and tests
+- Database migration with validation and rollback strategy
 
-#### UI Tasks (if applicable)
-- Component creation
-- Page creation
-- UI state management
-- User interaction handling
-- Client-side validation
+**Feature Implementation Epics:**
+- End-to-end feature (e.g., "User Management Module" includes models, services, UI, tests)
+- Major component with full functionality (e.g., "Authentication System")
 
-#### Testing Tasks
-- Unit tests for services
-- Unit tests for repositories
-- Integration tests (if needed)
-- Test data creation
+**UI Module Epics:**
+- Complete page or major UI section with all related components
+- Full user workflow implementation (e.g., "Checkout Process")
 
-#### Infrastructure Tasks
-- Configuration changes
-- Dependency additions (NuGet packages)
-- Environment variable setup
-- Deployment updates
+**Infrastructure Epics:**
+- Complete deployment pipeline setup
+- Full integration with external service (e.g., "Azure SQL Integration")
 
-#### Documentation Tasks
-- README updates (all levels)
-- API documentation
-- Architecture documentation updates
+#### Sub-Issue Guidelines
+Each epic should have 3-8 sub-issues representing:
+1. **Foundation**: Core models, interfaces, database setup
+2. **Implementation**: Service logic, business rules, validations  
+3. **Presentation**: UI components, pages, user interactions
+4. **Quality**: Unit tests, integration tests, documentation
+5. **Integration**: Wiring up DI, configuration, deployment
 
-### 3. Create GitHub Issues
+**Avoid creating separate sub-issues for:**
+- Individual small files (combine related files)
+- Test files that directly correspond to implementation (include in same sub-issue)
+- README updates (include as checklist item in relevant sub-issue)
 
-For each task, create a GitHub issue with the following structure:
+### 3. Create GitHub Issues with Sub-Issues
 
-#### Issue Title Format
-`[Component] Brief description of task`
+For each epic, create a parent GitHub issue with sub-issues:
+
+#### Parent Issue (Epic) Title Format
+`[Epic] Feature or component name`
 
 Examples:
-- `[Core/Services] Implement UserService for user management`
-- `[Web/Components] Create UserProfile Blazor component`
-- `[Core/Repository] Add UserRepository with CRUD operations`
-- `[Tests] Add unit tests for UserService`
-- `[Docs] Update README with new user management feature`
+- `[Epic] User Management Module`
+- `[Epic] MudBlazor Mobile Integration`
+- `[Epic] Product Catalog Feature`
+- `[Epic] Authentication System`
 
-#### Issue Body Structure
+#### Parent Issue Body Structure
+
+```markdown
+## Epic Overview
+Comprehensive description of the complete feature/module being implemented. Explain the business value and how it fits into the overall application.
+
+## Specification Reference
+Link or reference to the specification file (e.g., `docs/specs/UserManagement_Specification.md`)
+
+## Epic Scope
+High-level overview of what's included:
+- Data layer components
+- Business logic services
+- UI components and pages
+- Testing coverage
+- Documentation updates
+
+## Epic Success Criteria
+- [ ] All sub-issues completed
+- [ ] Feature is fully functional end-to-end
+- [ ] All tests passing (unit + integration)
+- [ ] Documentation updated
+- [ ] Code follows project standards
+- [ ] Ready for production deployment
+
+## Sub-Issues
+
+This epic is broken down into the following implementation tasks:
+
+### Phase 1: Foundation
+- [ ] #[number] - [Sub-Issue Title] - Data models, migrations, and repository layer
+- [ ] #[number] - [Sub-Issue Title] - Service interfaces and core business logic
+
+### Phase 2: Implementation  
+- [ ] #[number] - [Sub-Issue Title] - Feature implementation with validation
+- [ ] #[number] - [Sub-Issue Title] - Integration with existing services
+
+### Phase 3: User Interface
+- [ ] #[number] - [Sub-Issue Title] - UI components and pages
+- [ ] #[number] - [Sub-Issue Title] - User workflows and interactions
+
+### Phase 4: Quality & Documentation
+- [ ] #[number] - [Sub-Issue Title] - Comprehensive testing
+- [ ] #[number] - [Sub-Issue Title] - Documentation and deployment prep
+
+## Implementation Timeline
+Estimated: [X days / X hours total]
+- Phase 1: [X hours]
+- Phase 2: [X hours]
+- Phase 3: [X hours]
+- Phase 4: [X hours]
+
+## Dependencies
+- Requires: [list any external dependencies or prerequisite epics]
+- Enables: [list features that depend on this epic]
+
+## Architecture Impact
+Brief description of how this epic affects the overall architecture, which layers are touched, and any significant design decisions.
+
+## Acceptance Criteria
+- [ ] End-to-end feature works as specified
+- [ ] All data validation rules enforced
+- [ ] UI is responsive and follows design guidelines
+- [ ] Performance meets targets (if applicable)
+- [ ] Security requirements met (if applicable)
+- [ ] Deployment-ready
+
+## Labels
+[Suggest labels: epic, feature, enhancement, etc.]
+```
+
+#### Sub-Issue Title Format
+`[Component/Layer] Specific implementation task`
+
+Examples:
+- `[Core/Data] Implement User data model, repository, and database migration`
+- `[Core/Services] Implement UserService with authentication and authorization`
+- `[Web/UI] Create user management components and pages`
+- `[Tests] Add comprehensive test coverage for user management`
+
+#### Sub-Issue Body Structure
 
 ```markdown
 ## Overview
-Brief description of what needs to be implemented and why.
+Specific description of what needs to be implemented in this sub-issue.
 
-## Specification Reference
-Link or reference to the specification file (e.g., `docs/UserManagement_Specification.md`)
+## Parent Epic
+Part of: #[parent issue number] - [Epic Title]
 
 ## Acceptance Criteria
-- [ ] Criterion 1
-- [ ] Criterion 2
-- [ ] Criterion 3
+- [ ] Specific deliverable 1
+- [ ] Specific deliverable 2
+- [ ] Specific deliverable 3
+- [ ] Unit tests passing
+- [ ] Code reviewed and merged
 
 ## Technical Details
 
-### Location
-- Project: [e.g., GhcSamplePs.Core]
-- Namespace/Folder: [e.g., Services/Implementations]
-- Files to create/modify: [list]
+### Scope
+**Files to create:**
+- `path/to/NewFile1.cs`
+- `path/to/NewFile2.cs`
+
+**Files to modify:**
+- `path/to/ExistingFile.cs`
 
 ### Implementation Guidance
-- Follow patterns from: [reference existing similar code by file path]
-- Use conventions from: `.github/instructions/csharp.instructions.md`
-- Architecture guidelines: `.github/instructions/blazor-architecture.instructions.md`
-- Similar implementation reference: `[path/to/similar/file.cs]`
+**What to build:** [Describe the functionality in plain language]
 
-**Note**: Describe what needs to be implemented in plain language. Do NOT include code snippets or pseudo code.
+**Patterns to follow:** Reference existing similar implementations by file path:
+- Data models: See `src/GhcSamplePs.Core/Models/ExampleModel.cs`
+- Repositories: See `src/GhcSamplePs.Core/Repositories/ExampleRepository.cs`
+- Services: See `src/GhcSamplePs.Core/Services/ExampleService.cs`
+
+**Architecture guidelines:**
+- Follow `.github/instructions/csharp.instructions.md`
+- Follow `.github/instructions/blazor-architecture.instructions.md`
+- Follow `.github/instructions/dotnet-architecture-good-practices.instructions.md`
+
+**Key requirements:**
+1. [Requirement 1 - described in plain language]
+2. [Requirement 2 - described in plain language]
+3. [Requirement 3 - described in plain language]
 
 ### Dependencies
-- Depends on: #[issue number] (if applicable)
-- Required NuGet packages: [list]
-- External dependencies: [list]
+- Depends on: #[issue number] (must be completed first)
+- Required packages: [NuGet packages if needed]
 
 ## Testing Requirements
-- Unit tests required: [Yes/No]
-- Test coverage expected: [description]
-- Test scenarios to cover: [list]
+- [ ] Unit tests for all public methods
+- [ ] Edge cases covered
+- [ ] Test coverage > 80%
+- [ ] Integration tests (if applicable)
+
+## Documentation Requirements
+- [ ] XML comments on public APIs
+- [ ] README updated in affected project folder
+- [ ] Architecture docs updated (if significant changes)
 
 ## Definition of Done
-- [ ] Code implemented following project conventions
-- [ ] Unit tests written and passing
-- [ ] Code builds without errors
-- [ ] README files updated (if applicable)
-- [ ] Code reviewed (if applicable)
-- [ ] Merged to main branch
+- [ ] Implementation complete as described
+- [ ] All tests passing
+- [ ] Code follows project standards
+- [ ] Documentation updated
+- [ ] Parent epic checklist updated
+- [ ] Ready for review
 
-## Related Issues
-- Related to: #[issue number]
-- Blocks: #[issue number]
-- Blocked by: #[issue number]
-
-## Estimated Complexity
-[Small/Medium/Large] - Brief justification
+## Estimated Effort
+[Small: 1-2h | Medium: 2-4h | Large: 4-8h] - Brief justification
 
 ## Labels
-[Suggest labels: feature, enhancement, bug, documentation, testing, etc.]
+[Suggest labels: feature, enhancement, data-layer, business-logic, ui, testing, etc.]
 ```
 
 ### 4. Issue Sequencing and Dependencies
 
-- **Clearly mark dependencies**: Use "Depends on #X" or "Blocked by #X"
-- **Suggest implementation order**: Lower-level tasks first (data → logic → API → UI)
-- **Group related issues**: Use consistent prefixes and labels
-- **Size appropriately**: Each issue should be completable in 1-4 hours
+#### Epic-Level Dependencies
+- **Sequential Epics**: Core infrastructure → Feature modules → UI enhancements
+- **Parallel Epics**: Independent features can be developed simultaneously
+- **Foundation First**: Authentication, data models, core services before feature epics
+
+#### Sub-Issue Dependencies
+- **Within Epic**: Clear dependency chain (data → logic → UI → tests)
+- **Cross-Epic**: Sub-issues may depend on sub-issues from prerequisite epics
+- **Explicit Blocking**: Use "Depends on: #X" to make dependencies clear
+
+#### Implementation Order Guidelines
+1. **Data Foundation**: Models, migrations, repositories first
+2. **Business Logic**: Services that operate on the data
+3. **Presentation**: UI components and pages that use the services
+4. **Quality Assurance**: Comprehensive testing after implementation
+5. **Documentation**: Final polish and deployment readiness
 
 ## Best Practices
 
-### Issue Creation
-1. **One concern per issue**: Don't mix data layer + UI in one issue
-2. **Be specific**: Exact file names, clear implementation steps in plain language
-3. **Reference patterns**: Point to existing code files by path that demonstrate the pattern
-4. **Include context**: Why this task matters, how it fits in the feature
-5. **Make it actionable**: A developer should know exactly what to do
-6. **NO CODE**: Never include code snippets or pseudo code - describe functionality only
+### Epic Creation
+1. **Vertical slices**: Each epic should deliver shippable functionality
+2. **Right-sized**: 1-3 days of work, not too small, not too large
+3. **Clear value**: Business value and user impact should be obvious
+4. **Self-contained**: Minimize dependencies on other epics when possible
+5. **Testable**: Include testing as integral part, not afterthought
 
-### Task Breakdown Guidelines
-- **Vertical slices when possible**: Complete thin slices of functionality
-- **Horizontal when necessary**: All repositories, then all services, then all UI
-- **Consider testability**: Separate issues for implementation and comprehensive testing
-- **Documentation is a task**: Always include README update tasks
+### Sub-Issue Creation
+1. **Cohesive scope**: Group related files and functionality together
+2. **Implementable**: Should be completable in one focused work session (1-4 hours)
+3. **Layer-focused**: Typically stay within one architectural layer
+4. **Include tests**: Tests should be in the same sub-issue as implementation
+5. **Avoid fragmentation**: Don't create separate issues for tightly coupled code
+
+### What NOT to Split Into Separate Sub-Issues
+- ❌ Model + Repository (keep together - they're tightly coupled)
+- ❌ Service implementation + Service tests (keep together)
+- ❌ Component + Component tests (keep together)
+- ❌ Individual small helper classes (group related utilities)
+- ❌ README updates (include as checklist in relevant sub-issue)
+
+### Task Breakdown Anti-Patterns
+- **Too granular**: Avoid issues for single small files or methods
+- **Too broad**: Avoid "implement entire feature" without sub-issues
+- **Mixed concerns**: Keep data, logic, and UI in separate sub-issues
+- **Testing separate**: Don't separate tests into different phase from implementation
 
 ### Dependency Management
-- **Bottom-up order**: Data models → Repositories → Services → API → UI
-- **Parallel work opportunities**: Identify tasks that can be done simultaneously
-- **Critical path**: Highlight the sequence that blocks other work
+- **Explicit over implicit**: Always state dependencies clearly
+- **Minimize coupling**: Design epics to reduce inter-epic dependencies
+- **Enable parallelism**: Structure work so multiple developers can contribute
+- **Critical path visible**: Make it clear which issues must be sequential
 
-## Example Task Breakdown
+## Example Epic Breakdown
 
 For a "User Management" feature specification:
 
-### Phase 1: Foundation (Data Layer)
-1. `[Core/Models] Create User entity model`
-2. `[Core/Data] Create database migration for Users table`
-3. `[Core/Repository] Create IUserRepository interface`
-4. `[Core/Repository] Implement UserRepository`
-5. `[Tests/Repository] Add unit tests for UserRepository`
+### Epic: User Management Module
+**Parent Issue**: `[Epic] User Management Module`
+**Description**: Complete user management system including authentication, profile management, and user administration.
+**Estimated Time**: 2 days (16 hours)
 
-### Phase 2: Business Logic
-6. `[Core/Services] Create IUserService interface`
-7. `[Core/Services] Implement UserService with CRUD operations`
-8. `[Core/Validation] Add user validation rules`
-9. `[Tests/Services] Add unit tests for UserService`
+#### Sub-Issue 1: Data Foundation (4 hours)
+`[Core/Data] Implement User data model, repository, and database migration`
+- Create User entity model with all properties
+- Create database migration for Users table
+- Implement IUserRepository interface
+- Implement UserRepository with CRUD operations
+- Add unit tests for UserRepository
+- Update Core README with data model documentation
 
-### Phase 3: API/UI (can be parallel)
-10. `[Web/Services] Register UserService in dependency injection`
-11. `[Web/Components] Create UserList component`
-12. `[Web/Components] Create UserProfile component`
-13. `[Web/Pages] Create Users management page`
+#### Sub-Issue 2: Business Logic Layer (4 hours)
+`[Core/Services] Implement UserService with authentication and validation`
+- Create IUserService interface
+- Implement UserService with CRUD operations
+- Add user validation rules (email format, password strength)
+- Implement authentication logic
+- Add unit tests for UserService (all methods and edge cases)
+- Update Core README with service documentation
 
-### Phase 4: Documentation & Finalization
-14. `[Docs] Update Core README with UserService documentation`
-15. `[Docs] Update Web README with new user management pages`
-16. `[Docs] Update root README with user management feature`
+#### Sub-Issue 3: Dependency Injection Setup (1 hour)
+`[Web/Config] Register user management services and configure dependencies`
+- Register UserService in Program.cs
+- Configure Entity Framework DbContext
+- Add connection string configuration
+- Verify service resolution works correctly
+
+#### Sub-Issue 4: User Interface Components (4 hours)
+`[Web/UI] Create user management Blazor components and pages`
+- Create UserList component with data grid
+- Create UserProfile component for viewing/editing
+- Create Users management page (routing, layout)
+- Add client-side validation using EditForm
+- Add unit tests for components (if using bUnit)
+- Update Web README with UI component documentation
+
+#### Sub-Issue 5: Integration & Quality Assurance (3 hours)
+`[Integration] End-to-end testing and polish`
+- Integration tests for user management workflow
+- Manual testing on all pages
+- Performance testing (if needed)
+- Security review (authentication, authorization)
+- Final documentation review
+- Update root README with feature overview
+
+---
+
+### Epic: Product Catalog Feature
+**Parent Issue**: `[Epic] Product Catalog with Search and Filtering`
+**Description**: Product catalog with advanced search, filtering, and category management.
+**Estimated Time**: 2.5 days (20 hours)
+
+#### Sub-Issue 1: Data Models and Repository (5 hours)
+`[Core/Data] Implement Product and Category models with repository layer`
+- Create Product and Category entities
+- Create database migrations
+- Implement IProductRepository with search/filter methods
+- Implement ICategoryRepository
+- Add unit tests for repositories
+- Document data model
+
+#### Sub-Issue 2: Business Services (5 hours)
+`[Core/Services] Implement ProductService with search and category management`
+- Create IProductService and ICategoryService interfaces
+- Implement ProductService with CRUD, search, and filter logic
+- Implement CategoryService
+- Add validation rules for products and categories
+- Add comprehensive unit tests
+- Document services
+
+#### Sub-Issue 3: Search and Filter UI (5 hours)
+`[Web/UI] Create product catalog UI with search and filtering`
+- Create ProductList component with grid/card view
+- Create ProductSearch component with filters
+- Create ProductDetails component
+- Create CategoryBrowser component
+- Add routing and navigation
+- Test UI functionality
+
+#### Sub-Issue 4: Category Management Admin (3 hours)
+`[Web/Admin] Create category administration interface`
+- Create CategoryManagement page
+- Create CategoryForm component for CRUD
+- Add category tree visualization
+- Add validation and error handling
+- Test admin workflows
+
+#### Sub-Issue 5: Integration and Performance (2 hours)
+`[Integration] Testing, optimization, and documentation`
+- Integration tests for catalog workflows
+- Performance optimization (pagination, lazy loading)
+- SEO considerations for product pages
+- Final documentation and README updates
 
 ## Communication
 
-When you finish creating the issue plan:
+When you finish creating the epic/sub-issue plan:
 
 1. **Summarize the breakdown**: 
-   - Total number of issues
-   - Issues by category (data, logic, UI, tests, docs)
-   - Estimated total effort
+   - Total number of epics and sub-issues
+   - Epic distribution by category (foundation, features, UI, integration)
+   - Estimated total effort in days/hours
    
-2. **Highlight the critical path**: Which issues must be done in sequence
+2. **Highlight the critical path**: Which epics and sub-issues must be done in sequence
 
-3. **Note parallel work**: Which issues can be done simultaneously
+3. **Note parallel work**: Which epics and sub-issues can be done simultaneously
 
-4. **Request confirmation**: Ask if the breakdown looks appropriate before proceeding
+4. **Work distribution suggestions**: How to assign work if multiple developers available
+
+5. **Request confirmation**: Ask if the epic breakdown looks appropriate before proceeding
 
 ## Important Notes
 
 - **You analyze and plan**: You don't write code or implement features
 - **NO CODE OR PSEUDO CODE**: Never include code snippets in issues - only descriptions and file references
-- **Issues are for developers**: Write them so another agent or human can implement
+- **Think in epics**: Create larger shippable units of work with sub-issues
+- **Include tests with implementation**: Don't create separate test issues
+- **Epics are for developers**: Write them so another agent or human can implement
 - **Follow the architecture**: Respect the clean architecture separation (Core vs Web)
 - **Reference the spec**: Always link back to the specification document
-- **Think testability**: Every implementation task should have a corresponding test task
-- **Consider the whole stack**: Don't forget infrastructure, config, and documentation tasks
+- **Consider the whole stack**: Include all layers in each epic (data, logic, UI, tests)
 - **Use plain language**: Describe what to build, reference patterns by file path, but never write the code
+- **Sub-issues should be cohesive**: Group related functionality together, avoid fragmentation
 
 ## Output Format
 
-After analyzing a specification, present your issue plan in this format:
+After analyzing a specification, present your epic/sub-issue plan in this format:
 
 ```markdown
-# Issue Breakdown for [Feature Name]
+# Epic Breakdown for [Feature Name]
 
 ## Summary
-- Total Issues: X
-- Data Layer: X issues
-- Business Logic: X issues
-- API/Interface: X issues  
-- UI: X issues
-- Testing: X issues
-- Documentation: X issues
+- Total Epics: X
+- Total Sub-Issues: Y
+- Estimated Total Time: Z days / Z hours
 
-## Critical Path
-1. Issue #X → Issue #Y → Issue #Z
+### Epic Distribution
+- Foundation/Infrastructure: X epics
+- Feature Implementation: X epics
+- UI/UX: X epics
+- Integration/Quality: X epics
 
-## Parallel Work Opportunities
-- Issues #A, #B, #C can be done simultaneously after #X
+## Implementation Strategy
+**Sequential Work (must be done in order):**
+1. Epic #X (Foundation) → Epic #Y (Feature) → Epic #Z (Polish)
 
-## Issue Details
+**Parallel Work (can be done simultaneously):**
+- Epic #A and Epic #B (independent features)
+- After Epic #X is complete, Epic #Y and Epic #Z can proceed in parallel
 
-### Phase 1: [Phase Name]
-#### Issue 1: [Title]
-[Full issue content]
+## Epic Details
 
-#### Issue 2: [Title]
-[Full issue content]
+---
 
-[Continue for all issues...]
+### Epic 1: [Epic Name]
+**Issue Title**: `[Epic] Feature or component name`
+**Estimated Time**: X days (Y hours)
+**Dependencies**: [None or list prerequisite epics]
+
+#### Epic Overview
+[Comprehensive description of the complete epic]
+
+#### Sub-Issues
+1. **Sub-Issue 1**: `[Component/Layer] Task description` (X hours)
+   - Brief description of scope
+   - Key deliverables
+   - Dependencies: [None or #issue]
+
+2. **Sub-Issue 2**: `[Component/Layer] Task description` (X hours)
+   - Brief description of scope
+   - Key deliverables
+   - Dependencies: #[sub-issue-1]
+
+[Continue for all sub-issues in this epic...]
+
+#### Epic Success Criteria
+- [ ] All sub-issues complete
+- [ ] Feature works end-to-end
+- [ ] Tests passing
+- [ ] Documentation updated
+
+---
+
+### Epic 2: [Epic Name]
+[Same structure as Epic 1...]
+
+---
+
+[Continue for all epics...]
+
+## Critical Path Analysis
+**Longest sequential chain:**
+Epic #X → Epic #Y → Epic #Z (Total: N days)
+
+**Bottlenecks:**
+- Epic #X blocks Epics #Y and #Z
+- Sub-Issue X.2 blocks Sub-Issues Y.1 and Y.2
+
+## Work Distribution Recommendations
+**Developer 1**: Epic #X (Foundation), then Epic #Z (UI)
+**Developer 2**: Wait for Epic #X, then Epic #Y (Feature A)
+**Developer 3**: Wait for Epic #X, then Epic #W (Feature B) - parallel with Epic #Y
 
 ## Next Steps
-Ready to create these issues in GitHub? Please confirm or suggest adjustments.
+This breakdown creates [X] parent epics with [Y] total sub-issues.
+
+**Proposed approach:**
+1. Create all [X] parent epic issues first
+2. Create sub-issues and link them to parent epics
+3. Set up project board with epic columns
+4. Assign epics to iterations/milestones
+
+Ready to create these epics and sub-issues in GitHub? Please confirm or suggest adjustments.
 ```
 
 Your goal is to make it effortless for development agents to pick up issues and implement them correctly, following all project standards and maintaining clean architecture.
