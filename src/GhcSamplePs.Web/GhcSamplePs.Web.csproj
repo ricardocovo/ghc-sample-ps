@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
     <ProjectReference Include="..\GhcSamplePs.Core\GhcSamplePs.Core.csproj" />
@@ -12,6 +12,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>c02e691c-e18a-47bd-a03f-7e4a2002a65f</UserSecretsId>
   </PropertyGroup>
 
   <!-- Build optimization for production -->
