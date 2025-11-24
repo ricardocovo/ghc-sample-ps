@@ -1,10 +1,48 @@
 using GhcSamplePs.Web.Components;
+using GhcSamplePs.Web.Services;
+using GhcSamplePs.Core.Services.Interfaces;
+using GhcSamplePs.Core.Services.Implementations;
 using MudBlazor.Services;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.IO.Compression;
 using Microsoft.Net.Http.Headers;
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.UI;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add authentication services with Microsoft Identity Web
+builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
+
+builder.Services.AddControllersWithViews()
+    .AddMicrosoftIdentityUI();
+
+builder.Services.AddAuthorization(options =>
+{
+    // Require authenticated user by default
+    options.FallbackPolicy = options.DefaultPolicy;
+    
+    // Define custom authorization policies
+    options.AddPolicy("RequireAuthenticatedUser", policy =>
+        policy.RequireAuthenticatedUser());
+    
+    options.AddPolicy("RequireAdminRole", policy =>
+        policy.RequireRole("Admin"));
+    
+    options.AddPolicy("RequireUserRole", policy =>
+        policy.RequireRole("User", "Admin"));
+});
+
+// Add cascading authentication state for Blazor components
+builder.Services.AddCascadingAuthenticationState();
+
+// Register Core services
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserProvider, HttpContextCurrentUserProvider>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -66,7 +104,14 @@ app.UseStaticFiles(new StaticFileOptions
     }
 });
 
+// Authentication and authorization middleware - order matters!
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseAntiforgery();
+
+// Map Microsoft Identity UI controllers for sign-in/sign-out
+app.MapControllers();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

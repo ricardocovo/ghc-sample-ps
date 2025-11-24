@@ -8,26 +8,32 @@ This project contains the business logic, domain models, and services for the Gh
 
 ## Dependencies
 
-None - This project should not reference the Web project or any UI-specific libraries.
+- `Microsoft.Extensions.Logging.Abstractions` - For logging in services
+
+This project should not reference the Web project or any UI-specific libraries.
 
 ## Project Structure
 
 ```
 GhcSamplePs.Core/
 ├── Models/
-│   └── Identity/            # User identity domain models
+│   └── Identity/               # User identity domain models
 │       ├── ApplicationUser.cs
 │       └── UserClaim.cs
 ├── Services/
-│   └── Interfaces/          # Service contracts
-│       ├── IAuthenticationService.cs
-│       ├── IAuthorizationService.cs
-│       └── AuthorizationResult.cs
-├── Exceptions/              # Custom domain exceptions
+│   ├── Interfaces/             # Service contracts
+│   │   ├── IAuthenticationService.cs
+│   │   ├── IAuthorizationService.cs
+│   │   ├── ICurrentUserProvider.cs
+│   │   └── AuthorizationResult.cs
+│   └── Implementations/        # Service implementations
+│       ├── AuthenticationService.cs
+│       └── AuthorizationService.cs
+├── Exceptions/                 # Custom domain exceptions
 │   ├── AuthenticationException.cs
 │   ├── AuthorizationException.cs
 │   └── TokenValidationException.cs
-└── Extensions/              # Extension methods (future)
+└── Extensions/                 # Extension methods (future)
 ```
 
 ## Responsibilities
@@ -64,13 +70,6 @@ Services/
     └── UserService.cs
 ```
 
-### Creating Repositories
-
-1. Define interface in `Repositories/Interfaces/`
-2. Implement interface in `Repositories/Implementations/`
-3. Follow repository pattern for data access
-4. Return domain models, not DTOs
-
 ### Business Logic Best Practices
 
 - Validate input at service boundaries
@@ -88,155 +87,74 @@ All public methods in this project should have corresponding unit tests in `GhcS
 Services from this project are registered in `GhcSamplePs.Web/Program.cs`:
 
 ```csharp
-builder.Services.AddScoped<IMyService, MyService>();
-builder.Services.AddScoped<IMyRepository, MyRepository>();
+builder.Services.AddScoped<ICurrentUserProvider, HttpContextCurrentUserProvider>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 ```
-
-## Adding New Features
-
-1. Create domain model in `Models/` if needed
-2. Create service interface in `Services/Interfaces/`
-3. Implement service in `Services/Implementations/`
-4. Write unit tests in `GhcSamplePs.Core.Tests`
-5. Register service in Web project's `Program.cs`
-6. Use service in Blazor components
-
-## See Also
-
-- [Architecture Guidelines](../../.github/instructions/blazor-architecture.instructions.md)
-- [C# Guidelines](../../.github/instructions/csharp.instructions.md)
-- [DDD Best Practices](../../.github/instructions/dotnet-architecture-good-practices.instructions.md)
 
 ## Implemented Features
 
-### Authentication and Authorization Domain Models ✅
+### Authentication and Authorization Services ✅
 
-The Core project now contains authentication and authorization domain models and service interfaces. These provide the business logic layer for user identity, claims, and security context.
+#### Service Implementations
+
+**AuthenticationService** (`Services/Implementations/AuthenticationService.cs`):
+- Retrieves and validates authenticated user information from claims
+- Methods:
+  - `GetCurrentUserAsync()` - Get current authenticated user as ApplicationUser
+  - `GetUserClaimsAsync()` - Get all user claims as dictionary
+  - `GetUserRolesAsync()` - Get user roles as list
+  - `IsInRoleAsync(roleName)` - Check role membership
+  - `HasClaimAsync(type, value)` - Check specific claim
+- Maps standard claims (ObjectIdentifier, Email, Name, etc.) to ApplicationUser
+- Depends on `ICurrentUserProvider` for HTTP context abstraction
+
+**AuthorizationService** (`Services/Implementations/AuthorizationService.cs`):
+- Performs authorization checks and determines user permissions
+- Methods:
+  - `AuthorizeAsync(policyName)` - Check policy requirements
+  - `AuthorizeAsync(resource, policyName)` - Resource-based authorization
+  - `CanAccessAsync(resourceId)` - Check resource access (admins access all, users access own)
+  - `GetUserPermissionsAsync()` - Get permissions based on roles
+- Built-in policies: RequireAuthenticatedUser, RequireAdminRole, RequireUserRole
+- Built-in roles: Admin, User
+
+**ICurrentUserProvider** (`Services/Interfaces/ICurrentUserProvider.cs`):
+- Abstraction for accessing current user's ClaimsPrincipal
+- Allows Core to remain UI-agnostic while accessing user claims
+- Implemented in Web project via HttpContextAccessor
 
 #### Identity Models
 
 **ApplicationUser** (`Models/Identity/ApplicationUser.cs`):
 - Represents an authenticated user with identity information from Entra ID claims
 - Properties: Id, Email, DisplayName, GivenName, FamilyName, Roles, Claims, IsActive, LastLoginDate, CreatedDate
-- Methods:
-  - `IsInRole(roleName)` - Check if user has specific role
-  - `HasClaim(type, value)` - Check if user has specific claim
-  - `TryGetClaim(type, out value)` - Get claim value if exists
-- Immutable with read-only collections
-- No database persistence (user identity managed by Entra ID)
+- Methods: IsInRole, HasClaim, TryGetClaim
 
 **UserClaim** (`Models/Identity/UserClaim.cs`):
 - Represents a custom claim with type, value, issuer, and optional expiration
-- Properties: Type, Value, Issuer, IssuedAt, ExpiresAt
-- Methods:
-  - `IsValid()` - Check if claim has not expired
-  - `Equals()` - Compare claims based on type and value
-  - `GetHashCode()` - Hash based on type and value
-  - `ToString()` - Format as "Type: Value"
-- Supports claim validation and lifecycle management
-
-#### Service Interfaces
-
-**IAuthenticationService** (`Services/Interfaces/IAuthenticationService.cs`):
-- Retrieves and validates authenticated user information
-- Methods:
-  - `GetCurrentUserAsync()` - Get current authenticated user
-  - `GetUserClaimsAsync()` - Get all user claims
-  - `GetUserRolesAsync()` - Get user roles
-  - `IsInRoleAsync(roleName)` - Check role membership
-  - `HasClaimAsync(type, value)` - Check specific claim
-- All methods are async and accept CancellationToken
-- Implementation will be in future development phase
-
-**IAuthorizationService** (`Services/Interfaces/IAuthorizationService.cs`):
-- Performs authorization checks and determines user permissions
-- Methods:
-  - `AuthorizeAsync(policyName)` - Check policy requirements
-  - `AuthorizeAsync(resource, policyName)` - Resource-based authorization
-  - `CanAccessAsync(resourceId)` - Check resource access
-  - `GetUserPermissionsAsync()` - Get all user permissions
-- Returns `AuthorizationResult` for authorization decisions
-- Implementation will be in future development phase
-
-**AuthorizationResult** (`Services/Interfaces/IAuthorizationService.cs`):
-- Result type for authorization checks
-- Properties: Succeeded, FailureReason, MissingPermissions
-- Factory methods:
-  - `Success()` - Create successful result
-  - `Failure(reason, missingPermissions)` - Create failure result
-- Immutable with read-only collections
+- Methods: IsValid, Equals, GetHashCode, ToString
 
 #### Custom Exceptions
 
-**AuthenticationException** (`Exceptions/AuthenticationException.cs`):
-- Thrown when user authentication fails
-- Default message: "Authentication failed. Please try signing in again."
-- Supports custom messages and inner exceptions
+- **AuthenticationException** - User authentication failures
+- **AuthorizationException** - Permission/access denials
+- **TokenValidationException** - JWT token validation failures
 
-**AuthorizationException** (`Exceptions/AuthorizationException.cs`):
-- Thrown when user lacks required permissions
-- Default message: "You do not have permission to access this resource."
-- Properties: Resource, RequiredPermission
-- Provides context about access denial
+### Test Coverage
 
-**TokenValidationException** (`Exceptions/TokenValidationException.cs`):
-- Derived from AuthenticationException
-- Thrown when token validation fails
-- Default message: "Invalid or expired authentication token."
-- Used for JWT token validation failures
+**Total Tests**: 104 tests, all passing ✅
 
-#### Test Support
+- **AuthenticationServiceTests**: 20 tests
+- **AuthorizationServiceTests**: 17 tests
+- **ApplicationUserTests**: 24 tests
+- **UserClaimTests**: 18 tests
+- **AuthorizationResultTests**: 8 tests
+- **Exception Tests**: 21 tests
 
-**Test Helpers** (in `GhcSamplePs.Core.Tests/TestHelpers/`):
+## See Also
 
-**TestUserFactory**:
-- `CreateAdminUser()` - Admin user with Admin and User roles
-- `CreateRegularUser()` - Standard user with User role
-- `CreateIncompleteProfileUser()` - User with incomplete profile
-- `CreateInactiveUser()` - Inactive user account
-- `CreateCustomUser()` - Fully customizable test user
-
-**TestClaimFactory**:
-- `CreateEmailVerifiedClaim(verified)` - Email verification claim
-- `CreateProfileCompleteClaim(complete)` - Profile completion claim
-- `CreateExpiringClaim(type, value, minutes)` - Claim with expiration
-- `CreateExpiredClaim(type, value)` - Already expired claim
-- `CreateCustomClaim()` - Fully customizable test claim
-- `CreateStandardClaims()` - Collection of standard claims
-
-#### Test Coverage
-
-All models, exceptions, and service interfaces have comprehensive unit tests:
-- **ApplicationUserTests**: 24 tests covering all methods and properties
-- **UserClaimTests**: 18 tests covering validation, equality, and lifecycle
-- **AuthenticationExceptionTests**: 5 tests for exception behavior
-- **AuthorizationExceptionTests**: 10 tests including property validation
-- **TokenValidationExceptionTests**: 6 tests for inheritance and behavior
-- **AuthorizationResultTests**: 8 tests for result creation and validation
-
-**Total Test Coverage**: 71 tests, all passing ✅
-
-### Implementation Status
-
-**Status**: ✅ Domain Models and Interfaces Complete
-
-The authentication and authorization domain layer is complete with:
-- ✅ Identity models (ApplicationUser, UserClaim)
-- ✅ Custom exceptions (Authentication, Authorization, TokenValidation)
-- ✅ Service interfaces (IAuthenticationService, IAuthorizationService)
-- ✅ Authorization result pattern
-- ✅ Test helpers for unit testing
-- ✅ Comprehensive unit tests (85%+ coverage)
-
-**Next Steps**:
-1. Implement IAuthenticationService and IAuthorizationService in `Services/Implementations/`
-2. Integrate with Web project authentication middleware
-3. Connect to Entra ID for claims extraction and validation
-4. Add authorization policies in Web project
-5. Create UI components for authentication flows
-
-**Prerequisites**:
-- Azure Entra ID infrastructure must be configured (separate epic)
-- See: [Azure Entra ID Setup Guide](../../docs/Azure_EntraID_Setup_Guide.md)
-
-See specification: [Entra ID External Identities Integration](../../docs/specs/EntraID_ExternalIdentities_Integration_Specification.md)
+- [Architecture Guidelines](../../.github/instructions/blazor-architecture.instructions.md)
+- [C# Guidelines](../../.github/instructions/csharp.instructions.md)
+- [DDD Best Practices](../../.github/instructions/dotnet-architecture-good-practices.instructions.md)
+- [Entra ID Specification](../../docs/specs/EntraID_ExternalIdentities_Integration_Specification.md)
