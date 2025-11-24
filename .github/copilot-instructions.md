@@ -89,8 +89,8 @@ dotnet test                           # Run all tests
 ### Container Requirements
 - Create `Dockerfile` for GhcSamplePs.Web
 - Use multi-stage builds for optimized image size
-- Base image: `mcr.microsoft.com/dotnet/aspnet:8.0` for runtime
-- Build image: `mcr.microsoft.com/dotnet/sdk:8.0`
+- Base image: `mcr.microsoft.com/dotnet/aspnet:10.0` for runtime
+- Build image: `mcr.microsoft.com/dotnet/sdk:10.0`
 - Expose appropriate ports (typically 8080 for non-root containers)
 
 ### Database Configuration

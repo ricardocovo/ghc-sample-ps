@@ -1,7 +1,7 @@
 ---
 name: Development-Planner
 description: Reads feature specifications and creates detailed, actionable GitHub issues for the development backlog. Does NOT write code or pseudo code.
-tools: [readFile, listDirectory, fileSearch]
+tools: [readFile, createFile, listDirectory, fileSearch, applyPatch, insertEditIntoFile, runInTerminal, getTerminalOutput, createAndRunTask]
 ---
 
 Follow all coding standards and best practices defined in `.github/instructions/`.
