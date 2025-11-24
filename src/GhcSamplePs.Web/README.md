@@ -13,7 +13,7 @@ This project contains the user interface layer of the GhcSamplePs application, i
 ## Dependencies
 
 - **GhcSamplePs.Core** - Business logic and services
-- **MudBlazor** - Material Design component library for responsive, mobile-friendly UI
+- **MudBlazor** - Material Design component library (v8.15.0)
 
 ## Project Structure
 
@@ -29,6 +29,23 @@ GhcSamplePs.Web/
 ├── Program.cs           # Application entry point and DI configuration
 └── appsettings.json     # Configuration
 ```
+
+## UI Framework
+
+This project uses **MudBlazor** (Material Design components) for the UI instead of Bootstrap:
+
+- **CSS Framework**: MudBlazor (Material Design)
+- **Bootstrap**: Removed (no longer used)
+- **Mobile-First**: Optimized for mobile devices with responsive design
+- **Touch-Friendly**: Minimum 44x44 pixel touch targets
+
+### MudBlazor Features Available
+
+- Material Design components (buttons, cards, tables, forms)
+- Built-in responsive layouts
+- Dark mode support
+- Dialog and Snackbar notifications
+- Accessible components (WCAG 2.1 AA compliant)
 
 ## Running the Application
 
@@ -65,7 +82,7 @@ This application uses **MudBlazor** for Material Design components:
 - Use EventCallback for output events
 - Avoid business logic in `.razor` files - call services instead
 - Use `@inject` directive to inject services
-- Use MudBlazor components for consistent UI
+- Use MudBlazor components instead of HTML elements where appropriate
 
 ### Service Usage
 
@@ -81,30 +98,21 @@ This application uses **MudBlazor** for Material Design components:
 }
 ```
 
-### Using MudBlazor Components
+### MudBlazor Component Usage
 
 ```razor
-@* Loading indicator *@
-<MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+@* Use MudButton instead of HTML button *@
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="HandleClick">
+    Click Me
+</MudButton>
 
-@* Simple data table *@
-<MudSimpleTable>
-    <thead>
-        <tr>
-            <th>Column 1</th>
-            <th>Column 2</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in items)
-        {
-            <tr>
-                <td>@item.Property1</td>
-                <td>@item.Property2</td>
-            </tr>
-        }
-    </tbody>
-</MudSimpleTable>
+@* Use MudCard for content sections *@
+<MudCard>
+    <MudCardContent>
+        <MudText Typo="Typo.h5">Card Title</MudText>
+        <MudText>Card content goes here</MudText>
+    </MudCardContent>
+</MudCard>
 ```
 
 ### What NOT to Include
@@ -114,33 +122,71 @@ This application uses **MudBlazor** for Material Design components:
 - ❌ Complex calculations (use services from Core)
 - ❌ Domain models (use DTOs/ViewModels)
 
+## Styling and CSS
+
+### CSS Files
+
+- **app.css** - Global styles and mobile optimizations
+  - Safe area insets for notched devices
+  - Touch-friendly minimum sizes
+  - Mobile-specific optimizations
+  - No Bootstrap dependencies
+
+- **Component-scoped CSS** - Use `.razor.css` files for component-specific styles
+  - MainLayout.razor.css
+  - NavMenu.razor.css
+
+### Mobile-First Design
+
+The application is optimized for mobile devices:
+
+- **Safe Area Insets**: Support for notched devices (iPhone X+)
+- **Touch Targets**: Minimum 44x44 pixels for all interactive elements
+- **Responsive Text**: Minimum 16px font size on mobile
+- **Smooth Scrolling**: Native smooth scroll behavior
+- **Touch Optimizations**: No tap highlights, no long-press menus
+
+### Responsive Breakpoints
+
+MudBlazor uses these breakpoints:
+
+| Breakpoint | Width | Device Type |
+|-----------|-------|-------------|
+| xs | 0-599px | Small phones |
+| sm | 600-959px | Large phones |
+| md | 960-1279px | Tablets |
+| lg | 1280-1919px | Desktops |
+| xl | 1920px+ | Large desktops |
+
 ## Configuration
 
 Configuration is managed in:
 - `appsettings.json` - General settings
 - `appsettings.Development.json` - Development-specific settings
-- `Program.cs` - Service registration and middleware (includes MudBlazor services)
+- `Program.cs` - Service registration and middleware
+  - MudBlazor services registered with `builder.Services.AddMudServices()`
 
 ## Adding New Features
 
 1. Define service interface and implementation in `GhcSamplePs.Core`
 2. Register service in `Program.cs`
-3. Create Blazor component in appropriate folder
-4. Use MudBlazor components for UI elements
-5. Inject and use service in component
-6. Test business logic in `GhcSamplePs.Core.Tests`
+3. Create Blazor component in appropriate folder (use MudBlazor components)
+4. Inject and use service in component
+5. Test business logic in `GhcSamplePs.Core.Tests`
 
-## Mobile Optimization
+## Recent Changes
 
-The application is optimized for mobile devices:
-- Responsive layouts using MudBlazor's Material Design system
-- Touch-friendly interactive elements
-- Horizontal scrolling for wide tables on narrow screens
-- Mobile-first approach to component design
+### CSS Migration (November 2024)
+- ✅ Removed Bootstrap CSS dependencies
+- ✅ Added MudBlazor CSS and JS references
+- ✅ Added mobile-specific CSS optimizations
+- ✅ Enhanced viewport configuration for accessibility
+- ✅ Added touch-friendly minimum sizes
+- ✅ Implemented safe area insets for notched devices
 
 ## See Also
 
+- [MudBlazor Documentation](https://mudblazor.com/)
 - [Architecture Guidelines](../../.github/instructions/blazor-architecture.instructions.md)
 - [C# Guidelines](../../.github/instructions/csharp.instructions.md)
-- [MudBlazor Documentation](https://mudblazor.com/)
 - [MudBlazor Mobile Integration Spec](../../docs/specs/MudBlazor_Mobile_Integration_Specification.md)
