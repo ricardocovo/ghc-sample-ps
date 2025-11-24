@@ -1,4 +1,4 @@
-﻿@page "/weather"
+@page "/weather"
 @attribute [StreamRendering]
 
 <PageTitle>Weather</PageTitle>
@@ -9,11 +9,13 @@
 
 @if (forecasts == null)
 {
-    <p><em>Loading...</em></p>
+    <div style="display: flex; justify-content: center; align-items: center; min-height: 200px;">
+        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+    </div>
 }
 else
 {
-    <table class="table">
+    <MudSimpleTable Style="overflow-x: auto;">
         <thead>
             <tr>
                 <th>Date</th>
@@ -33,7 +35,7 @@ else
                 </tr>
             }
         </tbody>
-    </table>
+    </MudSimpleTable>
 }
 
 @code {
