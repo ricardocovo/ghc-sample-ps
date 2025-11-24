@@ -25,9 +25,9 @@ This document provides quick reference information for the Azure Entra ID Extern
 
 | Environment | Sign-in Redirect URI | Sign-out Redirect URI |
 |-------------|---------------------|----------------------|
-| Development | `https://localhost:5001/signin-oidc` | `https://localhost:5001/signout-oidc` |
-| Staging | `https://[app]-staging.azurecontainerapps.io/signin-oidc` | `https://[app]-staging.azurecontainerapps.io/signout-oidc` |
-| Production | `https://[app].azurecontainerapps.io/signin-oidc` | `https://[app].azurecontainerapps.io/signout-oidc` |
+| Development | `https://localhost:5001/signin-oidc` | `https://localhost:5001/signout-callback-oidc` |
+| Staging | `https://[app]-staging.azurecontainerapps.io/signin-oidc` | `https://[app]-staging.azurecontainerapps.io/signout-callback-oidc` |
+| Production | `https://[app].azurecontainerapps.io/signin-oidc` | `https://[app].azurecontainerapps.io/signout-callback-oidc` |
 
 ### App Roles
 
