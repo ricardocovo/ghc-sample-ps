@@ -20,6 +20,22 @@ When working with version control:
 - Create PRs using `gh pr create` (GitHub CLI) with proper title and description
 - Use conventional commit messages (e.g., `feat:`, `fix:`, `refactor:`, `test:`)
 
+### Managing Sub-Issues
+
+When working on an issue that has sub-issues (listed in the parent issue body):
+1. **As you complete each sub-issue**, close it on GitHub immediately using:
+   ```bash
+   gh issue close [issue-number] --comment "Completed: [brief description of what was done]"
+   ```
+2. **Track progress**: After closing a sub-issue, verify the parent issue's checklist is updated
+3. **Update parent issue**: When all sub-issues are completed, add a comment to the parent issue:
+   ```bash
+   gh issue comment [parent-issue-number] --body "All sub-issues completed. Ready for review."
+   ```
+4. **Workflow**: Close sub-issues incrementally as they're resolved, not in batch at the end
+
+This ensures real-time visibility of progress and accurate issue tracking throughout development.
+
 ## Documentation Requirements
 
 **ALWAYS update README files** at all levels of the repository when making changes:
