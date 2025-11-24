@@ -190,7 +190,7 @@ See the comprehensive testing guide: [PWA Testing Guide](../../docs/PWA_Testing_
 ## Configuration
 
 Configuration is managed in:
-- `appsettings.json` - General settings including AzureAd
+- `appsettings.json` - General settings including the `AzureAd` configuration section
 - `appsettings.Development.json` - Development-specific settings
 - `Program.cs` - Service registration and middleware
 - `manifest.json` - PWA configuration
