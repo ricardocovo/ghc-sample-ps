@@ -189,4 +189,53 @@ Configuration is managed in:
 - [MudBlazor Documentation](https://mudblazor.com/)
 - [Architecture Guidelines](../../.github/instructions/blazor-architecture.instructions.md)
 - [C# Guidelines](../../.github/instructions/csharp.instructions.md)
-- [MudBlazor Mobile Integration Spec](../../docs/specs/MudBlazor_Mobile_Integration_Specification.md)
+
+## Performance Optimization
+
+This project is optimized for mobile performance with the following features:
+
+### Response Compression
+- Brotli and Gzip compression enabled for all responses
+- Optimized compression levels for production
+- Support for HTTPS compression
+
+### Caching Strategy
+- Static assets cached for 1 year in production
+- Disabled caching in development for faster iteration
+- Proper cache-control headers set automatically
+
+### Resource Loading
+- Critical resources preloaded (MudBlazor, Blazor framework)
+- Optimized script and stylesheet loading order
+- Minimal render-blocking resources
+
+### Build Configuration
+- Release builds optimized for production
+- Debug symbols removed for smaller binaries
+- Code optimization enabled
+
+### Performance Targets
+- First Contentful Paint (FCP): < 1.5s
+- Largest Contentful Paint (LCP): < 2.5s
+- Time to Interactive (TTI): < 3s on 4G
+- Total bundle size: < 2MB (actual: ~232KB Brotli compressed)
+- Lighthouse performance score: > 90
+
+For detailed performance information and testing procedures, see [docs/PERFORMANCE.md](../../docs/PERFORMANCE.md).
+
+## MudBlazor Integration
+
+This project uses MudBlazor 8.15.0 for Material Design components:
+
+- **CSS**: `_content/MudBlazor/MudBlazor.min.css` (44KB compressed)
+- **JS**: `_content/MudBlazor/MudBlazor.min.js` (16KB compressed)
+- **Services**: Configured in `Program.cs` with `AddMudServices()`
+
+MudBlazor provides:
+- Material Design components
+- Mobile-first responsive design
+- Touch-friendly interfaces
+- Built-in dark mode support
+- Accessible components (WCAG 2.1 AA)
+
+For MudBlazor documentation, visit: https://mudblazor.com/
