@@ -21,9 +21,11 @@ This project contains the user interface layer of the GhcSamplePs application, i
 GhcSamplePs.Web/
 ├── Components/
 │   ├── Layout/          # Layout components
-│   └── Pages/           # Page components
+│   └── Pages/           # Page components (Home, Counter, Weather)
 ├── wwwroot/             # Static files (CSS, JS, images)
-├── App.razor            # Root component
+├── App.razor            # Root component with MudBlazor CSS/JS references
+├── Routes.razor         # Router with MudBlazor providers
+├── _Imports.razor       # Global using statements including MudBlazor
 ├── Program.cs           # Application entry point and DI configuration
 └── appsettings.json     # Configuration
 ```
@@ -53,6 +55,23 @@ dotnet run
 ```
 
 Visit `https://localhost:5001` in your browser.
+
+## UI Framework
+
+This application uses **MudBlazor** for Material Design components:
+- Responsive, mobile-first design
+- Touch-friendly interactions
+- Material Design styling
+- Pre-built accessible components
+
+### MudBlazor Components Used
+
+- **MudSimpleTable** - Weather data display with horizontal scroll support
+- **MudProgressCircular** - Loading indicators
+- **MudThemeProvider** - Theme management
+- **MudDialogProvider** - Dialog support
+- **MudSnackbarProvider** - Toast notifications
+- **MudPopoverProvider** - Popover support
 
 ## Development Guidelines
 
