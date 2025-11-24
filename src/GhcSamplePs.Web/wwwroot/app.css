@@ -35,6 +35,7 @@ a {
 
 .content {
     padding-top: 1.1rem;
+    overscroll-behavior: contain;
 }
 
 h1:focus {
@@ -76,4 +77,46 @@ button, a, input[type="button"], input[type="submit"] {
     body {
         font-size: 16px; /* Minimum for mobile readability */
     }
+}
+
+/* Mobile-Specific CSS for Touch Optimization and Safe Area Insets */
+
+/* Apply safe area insets to main layout container */
+.page {
+    padding-top: env(safe-area-inset-top);
+}
+
+/* Safe area insets for sidebar navigation */
+.sidebar {
+    padding-top: env(safe-area-inset-top);
+}
+
+/* Safe area insets for top navigation bar */
+.top-row {
+    padding-top: calc(0.5rem + env(safe-area-inset-top));
+}
+
+/* Touch optimization: disable callout on interactive elements */
+button,
+a,
+.btn,
+.btn-link,
+.nav-link {
+    -webkit-touch-callout: none;
+}
+
+/* Touch optimization: remove default tap highlight (MudBlazor provides ripple effect) */
+button,
+a,
+.btn,
+.btn-link,
+.nav-link,
+.form-control,
+.form-check-input {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Overscroll behavior: prevent bounce effect on iOS */
+main {
+    overscroll-behavior: contain;
 }
