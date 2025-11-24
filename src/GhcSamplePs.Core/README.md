@@ -14,15 +14,20 @@ None - This project should not reference the Web project or any UI-specific libr
 
 ```
 GhcSamplePs.Core/
-├── Models/              # Domain entities and models
+├── Models/
+│   └── Identity/            # User identity domain models
+│       ├── ApplicationUser.cs
+│       └── UserClaim.cs
 ├── Services/
-│   ├── Interfaces/      # Service contracts
-│   └── Implementations/ # Service implementations
-├── Repositories/
-│   ├── Interfaces/      # Repository contracts
-│   └── Implementations/ # Repository implementations
-├── Validation/          # Business validation rules
-└── Extensions/          # Extension methods
+│   └── Interfaces/          # Service contracts
+│       ├── IAuthenticationService.cs
+│       ├── IAuthorizationService.cs
+│       └── AuthorizationResult.cs
+├── Exceptions/              # Custom domain exceptions
+│   ├── AuthenticationException.cs
+│   ├── AuthorizationException.cs
+│   └── TokenValidationException.cs
+└── Extensions/              # Extension methods (future)
 ```
 
 ## Responsibilities
@@ -102,51 +107,136 @@ builder.Services.AddScoped<IMyRepository, MyRepository>();
 - [C# Guidelines](../../.github/instructions/csharp.instructions.md)
 - [DDD Best Practices](../../.github/instructions/dotnet-architecture-good-practices.instructions.md)
 
-## Planned Features
+## Implemented Features
 
-### Authentication and Authorization Services
+### Authentication and Authorization Domain Models ✅
 
-The Core project will contain authentication and authorization logic (business rules and validation), while the Web project will handle authentication middleware and UI components.
+The Core project now contains authentication and authorization domain models and service interfaces. These provide the business logic layer for user identity, claims, and security context.
 
-#### Planned Domain Models
+#### Identity Models
 
-Future authentication-related models will be added to `Models/Identity/`:
+**ApplicationUser** (`Models/Identity/ApplicationUser.cs`):
+- Represents an authenticated user with identity information from Entra ID claims
+- Properties: Id, Email, DisplayName, GivenName, FamilyName, Roles, Claims, IsActive, LastLoginDate, CreatedDate
+- Methods:
+  - `IsInRole(roleName)` - Check if user has specific role
+  - `HasClaim(type, value)` - Check if user has specific claim
+  - `TryGetClaim(type, out value)` - Get claim value if exists
+- Immutable with read-only collections
+- No database persistence (user identity managed by Entra ID)
 
-- **ApplicationUser**: User identity information extracted from Entra ID claims
-  - Id, Email, DisplayName, Roles, Claims, IsActive, LastLoginDate
-- **UserClaim**: Custom claim information
-- **Role definitions**: Admin, User role constants
+**UserClaim** (`Models/Identity/UserClaim.cs`):
+- Represents a custom claim with type, value, issuer, and optional expiration
+- Properties: Type, Value, Issuer, IssuedAt, ExpiresAt
+- Methods:
+  - `IsValid()` - Check if claim has not expired
+  - `Equals()` - Compare claims based on type and value
+  - `GetHashCode()` - Hash based on type and value
+  - `ToString()` - Format as "Type: Value"
+- Supports claim validation and lifecycle management
 
-#### Planned Services
-
-Future authentication services will be added:
+#### Service Interfaces
 
 **IAuthenticationService** (`Services/Interfaces/IAuthenticationService.cs`):
-- GetCurrentUserAsync() - Retrieve current authenticated user
-- GetUserClaimsAsync() - Get user claims
-- GetUserRolesAsync() - Get user roles
-- IsInRoleAsync(roleName) - Check role membership
+- Retrieves and validates authenticated user information
+- Methods:
+  - `GetCurrentUserAsync()` - Get current authenticated user
+  - `GetUserClaimsAsync()` - Get all user claims
+  - `GetUserRolesAsync()` - Get user roles
+  - `IsInRoleAsync(roleName)` - Check role membership
+  - `HasClaimAsync(type, value)` - Check specific claim
+- All methods are async and accept CancellationToken
+- Implementation will be in future development phase
 
 **IAuthorizationService** (`Services/Interfaces/IAuthorizationService.cs`):
-- AuthorizeAsync(policy) - Check policy requirements
-- CanAccessAsync(resource) - Resource-based authorization
-- GetUserPermissionsAsync() - Get user permissions
+- Performs authorization checks and determines user permissions
+- Methods:
+  - `AuthorizeAsync(policyName)` - Check policy requirements
+  - `AuthorizeAsync(resource, policyName)` - Resource-based authorization
+  - `CanAccessAsync(resourceId)` - Check resource access
+  - `GetUserPermissionsAsync()` - Get all user permissions
+- Returns `AuthorizationResult` for authorization decisions
+- Implementation will be in future development phase
 
-#### Implementation Status
+**AuthorizationResult** (`Services/Interfaces/IAuthorizationService.cs`):
+- Result type for authorization checks
+- Properties: Succeeded, FailureReason, MissingPermissions
+- Factory methods:
+  - `Success()` - Create successful result
+  - `Failure(reason, missingPermissions)` - Create failure result
+- Immutable with read-only collections
 
-**Status**: 🔄 Not Yet Implemented
+#### Custom Exceptions
 
-The authentication and authorization services will be implemented in a future development phase after the Azure infrastructure is set up.
+**AuthenticationException** (`Exceptions/AuthenticationException.cs`):
+- Thrown when user authentication fails
+- Default message: "Authentication failed. Please try signing in again."
+- Supports custom messages and inner exceptions
 
-**Prerequisites:**
-- Azure Entra ID infrastructure must be configured
+**AuthorizationException** (`Exceptions/AuthorizationException.cs`):
+- Thrown when user lacks required permissions
+- Default message: "You do not have permission to access this resource."
+- Properties: Resource, RequiredPermission
+- Provides context about access denial
+
+**TokenValidationException** (`Exceptions/TokenValidationException.cs`):
+- Derived from AuthenticationException
+- Thrown when token validation fails
+- Default message: "Invalid or expired authentication token."
+- Used for JWT token validation failures
+
+#### Test Support
+
+**Test Helpers** (in `GhcSamplePs.Core.Tests/TestHelpers/`):
+
+**TestUserFactory**:
+- `CreateAdminUser()` - Admin user with Admin and User roles
+- `CreateRegularUser()` - Standard user with User role
+- `CreateIncompleteProfileUser()` - User with incomplete profile
+- `CreateInactiveUser()` - Inactive user account
+- `CreateCustomUser()` - Fully customizable test user
+
+**TestClaimFactory**:
+- `CreateEmailVerifiedClaim(verified)` - Email verification claim
+- `CreateProfileCompleteClaim(complete)` - Profile completion claim
+- `CreateExpiringClaim(type, value, minutes)` - Claim with expiration
+- `CreateExpiredClaim(type, value)` - Already expired claim
+- `CreateCustomClaim()` - Fully customizable test claim
+- `CreateStandardClaims()` - Collection of standard claims
+
+#### Test Coverage
+
+All models, exceptions, and service interfaces have comprehensive unit tests:
+- **ApplicationUserTests**: 24 tests covering all methods and properties
+- **UserClaimTests**: 18 tests covering validation, equality, and lifecycle
+- **AuthenticationExceptionTests**: 5 tests for exception behavior
+- **AuthorizationExceptionTests**: 10 tests including property validation
+- **TokenValidationExceptionTests**: 6 tests for inheritance and behavior
+- **AuthorizationResultTests**: 8 tests for result creation and validation
+
+**Total Test Coverage**: 71 tests, all passing ✅
+
+### Implementation Status
+
+**Status**: ✅ Domain Models and Interfaces Complete
+
+The authentication and authorization domain layer is complete with:
+- ✅ Identity models (ApplicationUser, UserClaim)
+- ✅ Custom exceptions (Authentication, Authorization, TokenValidation)
+- ✅ Service interfaces (IAuthenticationService, IAuthorizationService)
+- ✅ Authorization result pattern
+- ✅ Test helpers for unit testing
+- ✅ Comprehensive unit tests (85%+ coverage)
+
+**Next Steps**:
+1. Implement IAuthenticationService and IAuthorizationService in `Services/Implementations/`
+2. Integrate with Web project authentication middleware
+3. Connect to Entra ID for claims extraction and validation
+4. Add authorization policies in Web project
+5. Create UI components for authentication flows
+
+**Prerequisites**:
+- Azure Entra ID infrastructure must be configured (separate epic)
 - See: [Azure Entra ID Setup Guide](../../docs/Azure_EntraID_Setup_Guide.md)
-
-**Next Steps:**
-1. Azure infrastructure setup (current epic)
-2. Add authentication models to Core
-3. Implement authentication/authorization services
-4. Write comprehensive unit tests
-5. Integrate with Web project authentication middleware
 
 See specification: [Entra ID External Identities Integration](../../docs/specs/EntraID_ExternalIdentities_Integration_Specification.md)
