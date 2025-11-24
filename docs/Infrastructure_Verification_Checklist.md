@@ -426,7 +426,7 @@ git diff
 
 2. **Test Application Build:**
    ```bash
-   cd /home/runner/work/ghc-sample-ps/ghc-sample-ps
+   cd <repo-root>   # Change to the root of your cloned repository
    dotnet clean
    dotnet build
    # Should build successfully
