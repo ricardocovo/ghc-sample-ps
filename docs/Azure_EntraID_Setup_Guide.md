@@ -154,8 +154,8 @@ Before starting, ensure you have:
 
 2. **Configure Front-channel Logout**
    - Under "Authentication" > "Front-channel logout URL"
-   - Add: `https://localhost:5001/signout-oidc` (development)
-   - Add: `https://your-app-name.azurecontainerapps.io/signout-oidc` (production)
+   - Add: `https://localhost:5001/signout-callback-oidc` (development)
+   - Add: `https://your-app-name.azurecontainerapps.io/signout-callback-oidc` (production)
 
 3. **Configure Token Configuration**
    - Stay in "Authentication" section
