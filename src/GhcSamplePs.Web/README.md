@@ -9,7 +9,7 @@ This project contains the user interface layer of the GhcSamplePs application, i
 - Pages and layouts
 - UI-specific services and state management
 - Client-side validation and user interaction logic
-- Progressive Web App (PWA) configuration
+- **Progressive Web App (PWA) support**
 
 ## Dependencies
 
@@ -22,9 +22,12 @@ This project contains the user interface layer of the GhcSamplePs application, i
 GhcSamplePs.Web/
 ├── Components/
 │   ├── Layout/          # Layout components
-│   └── Pages/           # Page components (Home, Counter, Weather)
-├── wwwroot/             # Static files (CSS, JS, images)
-├── App.razor            # Root component (includes PWA manifest link)
+│   └── Pages/           # Page components
+├── wwwroot/             # Static files (CSS, JS, images, PWA assets)
+│   ├── manifest.json    # PWA manifest
+│   ├── icon-192.png     # PWA icon (192x192)
+│   └── icon-512.png     # PWA icon (512x512)
+├── App.razor            # Root component (includes PWA meta tags)
 ├── Program.cs           # Application entry point and DI configuration
 └── appsettings.json     # Configuration
 ```
@@ -58,22 +61,39 @@ dotnet run
 
 Visit `https://localhost:5001` in your browser.
 
-## UI Framework
+## Progressive Web App (PWA) Support
 
-This application uses **MudBlazor** for Material Design components:
-- Responsive, mobile-first design
-- Touch-friendly interactions
-- Material Design styling
-- Pre-built accessible components
+This application is configured as a Progressive Web App, allowing users to install it on their mobile devices for an app-like experience.
 
-### MudBlazor Components Used
+### PWA Features
 
-- **MudSimpleTable** - Weather data display with horizontal scroll support
-- **MudProgressCircular** - Loading indicators
-- **MudThemeProvider** - Theme management
-- **MudDialogProvider** - Dialog support
-- **MudSnackbarProvider** - Toast notifications
-- **MudPopoverProvider** - Popover support
+- ✅ **Installable**: Can be installed on Android and iOS home screens
+- ✅ **Standalone Mode**: Launches without browser UI
+- ✅ **App Icons**: Custom icons for home screen
+- ✅ **Theme Colors**: Branded colors for mobile browsers
+- ✅ **Mobile Optimized**: Responsive design for all screen sizes
+
+### Testing PWA Installation
+
+See the comprehensive testing guide: [PWA Testing Guide](../../docs/PWA_Testing_Guide.md)
+
+**Quick testing steps:**
+
+**Android (Chrome):**
+1. Open app in Chrome on Android
+2. Tap menu (⋮) → "Install app"
+3. Launch from home screen
+
+**iOS (Safari 16.4+):**
+1. Open app in Safari on iOS
+2. Tap Share (⬆) → "Add to Home Screen"
+3. Launch from home screen
+
+### PWA Configuration Files
+
+- **manifest.json**: App metadata, display mode, icons
+- **App.razor**: PWA meta tags for Android and iOS
+- **Icons**: 192x192 and 512x512 PNG files
 
 ## Development Guidelines
 
@@ -166,7 +186,7 @@ Configuration is managed in:
 - `appsettings.json` - General settings
 - `appsettings.Development.json` - Development-specific settings
 - `Program.cs` - Service registration and middleware
-  - MudBlazor services registered with `builder.Services.AddMudServices()`
+- `manifest.json` - PWA configuration
 
 ## Adding New Features
 
@@ -176,19 +196,18 @@ Configuration is managed in:
 4. Inject and use service in component
 5. Test business logic in `GhcSamplePs.Core.Tests`
 
-## Recent Changes
+## Mobile Optimization
 
-### CSS Migration (November 2024)
-- ✅ Removed Bootstrap CSS dependencies
-- ✅ Added MudBlazor CSS and JS references
-- ✅ Added mobile-specific CSS optimizations
-- ✅ Enhanced viewport configuration for accessibility
-- ✅ Added touch-friendly minimum sizes
-- ✅ Implemented safe area insets for notched devices
+The application is optimized for mobile devices:
+- Responsive layouts (works on screens from 320px to desktop)
+- Touch-friendly UI elements
+- Optimized viewport settings
+- PWA support for installation
 
 ## See Also
 
-- [MudBlazor Documentation](https://mudblazor.com/)
+- [PWA Testing Guide](../../docs/PWA_Testing_Guide.md)
+- [PWA Test Results](../../docs/PWA_Test_Results.md)
 - [Architecture Guidelines](../../.github/instructions/blazor-architecture.instructions.md)
 - [C# Guidelines](../../.github/instructions/csharp.instructions.md)
 - [MudBlazor Mobile Integration Spec](../../docs/specs/MudBlazor_Mobile_Integration_Specification.md)
