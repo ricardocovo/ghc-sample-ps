@@ -185,8 +185,8 @@ public class AuthenticationServiceTests
         var result = await _service.GetUserClaimsAsync();
 
         Assert.NotNull(result);
-        Assert.True(result.ContainsKey("sub"));
-        Assert.Equal("test-id", result["sub"]);
+        Assert.True(result.TryGetValue("sub", out var subValue));
+        Assert.Equal("test-id", subValue);
     }
 
     [Fact(DisplayName = "GetUserClaimsAsync returns empty dictionary when not authenticated")]
