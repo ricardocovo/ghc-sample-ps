@@ -99,7 +99,7 @@ public class AuthorizationScenariosTests
     }
 
     [Fact(DisplayName = "Regular user has limited permissions")]
-    public async Task RegularUser_HasLimitedPermissions()
+    public async Task GetUserPermissionsAsync_WhenRegularUser_HasLimitedPermissions()
     {
         var user = TestUserFactory.CreateRegularUser();
         _mockAuthService.Setup(s => s.GetCurrentUserAsync(It.IsAny<CancellationToken>()))
