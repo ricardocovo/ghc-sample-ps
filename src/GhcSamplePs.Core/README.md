@@ -124,6 +124,30 @@ builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 - Allows Core to remain UI-agnostic while accessing user claims
 - Implemented in Web project via HttpContextAccessor
 
+#### Authorization Policy Evaluation
+
+The AuthorizationService evaluates policies based on user roles:
+
+| Policy | Required Role(s) | Description |
+|--------|-----------------|-------------|
+| `RequireAuthenticatedUser` | None | Any authenticated user |
+| `RequireAdminRole` | Admin | User must have Admin role |
+| `RequireUserRole` | User or Admin | User must have User or Admin role |
+
+#### Permission Model
+
+Permissions are derived from roles:
+
+| Role | Permissions |
+|------|-------------|
+| Admin | read, write, delete, admin.users, admin.settings |
+| User | read, write |
+
+#### Resource Access Model
+
+- **Admin users** can access any resource
+- **Regular users** can only access resources matching their user ID (case-insensitive comparison)
+
 #### Identity Models
 
 **ApplicationUser** (`Models/Identity/ApplicationUser.cs`):
@@ -143,14 +167,35 @@ builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
 ### Test Coverage
 
-**Total Tests**: 104 tests, all passing ✅
+**Total Tests**: 121 tests, all passing ✅
 
 - **AuthenticationServiceTests**: 20 tests
 - **AuthorizationServiceTests**: 17 tests
+- **AuthorizationScenariosTests**: 17 tests (comprehensive role-based scenarios)
 - **ApplicationUserTests**: 24 tests
 - **UserClaimTests**: 18 tests
 - **AuthorizationResultTests**: 8 tests
 - **Exception Tests**: 21 tests
+
+#### Authorization Scenario Tests
+
+The `AuthorizationScenariosTests` class provides comprehensive coverage for authorization scenarios:
+
+- Anonymous user denied access to all policies
+- Regular user can access authenticated and user policies
+- Regular user denied access to admin policy
+- Admin user can access all standard policies
+- Admin has full permissions including admin-specific
+- Regular user has limited permissions
+- Admin can access any resource
+- Regular user can only access own resources
+- Inactive user treated as authenticated
+- User without roles fails role-based policies
+- Resource-based authorization respects admin role
+- Resource-based authorization denies regular user for admin policy
+- User ID case insensitivity for resource access
+- Custom policy falls back to role check
+- Authorization failure includes meaningful reason
 
 ## See Also
 

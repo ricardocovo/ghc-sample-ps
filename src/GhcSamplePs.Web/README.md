@@ -11,6 +11,7 @@ This project contains the user interface layer of the GhcSamplePs application, i
 - Client-side validation and user interaction logic
 - **Progressive Web App (PWA) support**
 - **Authentication with Azure Entra ID**
+- **Role-Based Access Control (RBAC)**
 
 ## Dependencies
 
@@ -25,11 +26,13 @@ This project contains the user interface layer of the GhcSamplePs application, i
 GhcSamplePs.Web/
 ├── Components/
 │   ├── Layout/             # Layout components
-│   │   ├── MainLayout.razor
-│   │   └── LoginDisplay.razor    # Authentication UI
+│   │   ├── MainLayout.razor     # Main layout with navigation drawer
+│   │   └── LoginDisplay.razor   # Authentication UI
 │   └── Pages/              # Page components
 │       ├── Home.razor
 │       ├── Weather.razor   # Protected page
+│       ├── Admin/
+│       │   └── AdminDashboard.razor  # Admin-only dashboard
 │       └── Account/
 │           └── AccessDenied.razor
 ├── Services/               # Web-specific services
@@ -60,16 +63,51 @@ This application uses **Azure Entra ID External Identities** for authentication 
 - ✅ Protected page implemented with [Authorize] attribute
 - ✅ AccessDenied page created
 - ✅ HttpContextCurrentUserProvider bridges Core services with HttpContext
+- ✅ Admin Dashboard with role-based protection
+- ✅ Navigation drawer with AuthorizeView conditional rendering
 
-#### Authentication Features
+#### Authorization Features
 
-- **Sign-in**: Users authenticate via Entra ID (Microsoft Account, etc.)
-- **Sign-out**: Session properly cleared and user redirected
-- **Authorization Policies**:
-  - `RequireAuthenticatedUser` - User must be logged in
-  - `RequireAdminRole` - User must have Admin role
-  - `RequireUserRole` - User must have User or Admin role
-- **Protected Pages**: Add `@attribute [Authorize]` to any page requiring authentication
+- **Role-Based Access Control (RBAC)**: Users are assigned roles (Admin, User)
+- **Policy-Based Authorization**: Custom policies for fine-grained control
+- **Defense in Depth**: Authorization enforced at both UI and Core layers
+- **Conditional UI Rendering**: AuthorizeView components show/hide based on roles
+
+#### Authorization Policies
+
+| Policy | Description | Required Roles |
+|--------|-------------|----------------|
+| `RequireAuthenticatedUser` | User must be logged in | Any authenticated user |
+| `RequireAdminRole` | User must have Admin role | Admin |
+| `RequireUserRole` | User must have User or Admin role | User, Admin |
+
+#### Protected Pages
+
+| Page | Route | Protection | Description |
+|------|-------|------------|-------------|
+| Home | `/` | Authenticated | Main landing page |
+| Weather | `/weather` | Authenticated | Weather forecasts |
+| Admin Dashboard | `/admin` | Admin Role | Admin-only dashboard |
+| Access Denied | `/Account/AccessDenied` | None | Unauthorized access page |
+
+#### Navigation with AuthorizeView
+
+The main layout includes a navigation drawer with conditional rendering based on user roles:
+
+```razor
+<MudNavMenu>
+    <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+    <AuthorizeView Policy="RequireAdminRole">
+        <Authorized>
+            <MudNavGroup Title="Admin" Icon="@Icons.Material.Filled.AdminPanelSettings">
+                <MudNavLink Href="/admin" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+            </MudNavGroup>
+        </Authorized>
+    </AuthorizeView>
+</MudNavMenu>
+```
+
+Admin navigation items are only visible to users with the Admin role.
 
 #### Configuration
 
@@ -128,9 +166,18 @@ builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
 ```razor
 @page "/admin"
-@attribute [Authorize(Roles = "Admin")]
+@attribute [Authorize(Policy = "RequireAdminRole")]
 
 <h1>This page requires Admin role</h1>
+```
+
+#### Policy-Based Protection
+
+```razor
+@page "/users"
+@attribute [Authorize(Policy = "RequireUserRole")]
+
+<h1>This page requires User or Admin role</h1>
 ```
 
 #### Conditional Content
@@ -143,6 +190,12 @@ builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
     <NotAuthorized>
         <p>Please sign in.</p>
     </NotAuthorized>
+</AuthorizeView>
+
+<AuthorizeView Policy="RequireAdminRole">
+    <Authorized>
+        <MudButton Href="/admin">Admin Dashboard</MudButton>
+    </Authorized>
 </AuthorizeView>
 ```
 
