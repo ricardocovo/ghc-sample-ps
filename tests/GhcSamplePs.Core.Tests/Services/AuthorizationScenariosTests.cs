@@ -53,8 +53,8 @@ public class AuthorizationScenariosTests
         Assert.True(userRoleResult.Succeeded);
     }
 
-    [Fact(DisplayName = "Regular user is denied access to admin policy")]
-    public async Task RegularUser_IsDeniedAccessToAdminPolicy()
+    [Fact(DisplayName = "AuthorizeAsync_WhenRegularUser_DeniesAccessToAdminPolicy")]
+    public async Task AuthorizeAsync_WhenRegularUser_DeniesAccessToAdminPolicy()
     {
         var user = TestUserFactory.CreateRegularUser();
         _mockAuthService.Setup(s => s.GetCurrentUserAsync(It.IsAny<CancellationToken>()))
