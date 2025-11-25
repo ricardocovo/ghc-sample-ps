@@ -83,7 +83,7 @@ public class AuthorizationScenariosTests
     }
 
     [Fact(DisplayName = "Admin has full permissions including admin-specific")]
-    public async Task AdminUser_HasFullPermissions()
+    public async Task GetUserPermissionsAsync_WhenAdminUser_HasFullPermissions()
     {
         var user = TestUserFactory.CreateAdminUser();
         _mockAuthService.Setup(s => s.GetCurrentUserAsync(It.IsAny<CancellationToken>()))
