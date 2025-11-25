@@ -115,7 +115,7 @@ public class AuthorizationScenariosTests
     }
 
     [Fact(DisplayName = "Admin can access any resource")]
-    public async Task AdminUser_CanAccessAnyResource()
+    public async Task CanAccessAsync_WhenAdminUser_CanAccessAnyResource()
     {
         var user = TestUserFactory.CreateAdminUser();
         _mockAuthService.Setup(s => s.GetCurrentUserAsync(It.IsAny<CancellationToken>()))
