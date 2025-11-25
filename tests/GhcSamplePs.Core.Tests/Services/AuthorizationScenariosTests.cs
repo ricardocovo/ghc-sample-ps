@@ -131,7 +131,7 @@ public class AuthorizationScenariosTests
     }
 
     [Fact(DisplayName = "Regular user can only access own resources")]
-    public async Task RegularUser_CanOnlyAccessOwnResources()
+    public async Task CanAccessAsync_WhenRegularUser_CanOnlyAccessOwnResources()
     {
         var user = TestUserFactory.CreateRegularUser();
         _mockAuthService.Setup(s => s.GetCurrentUserAsync(It.IsAny<CancellationToken>()))
