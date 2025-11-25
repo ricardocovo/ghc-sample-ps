@@ -40,7 +40,7 @@ public class AuthorizationScenariosTests
     }
 
     [Fact(DisplayName = "Regular user can access authenticated and user policies")]
-    public async Task RegularUser_CanAccessAuthenticatedAndUserPolicies()
+    public async Task AuthorizeAsync_WhenRegularUser_CanAccessAuthenticatedAndUserPolicies()
     {
         var user = TestUserFactory.CreateRegularUser();
         _mockAuthService.Setup(s => s.GetCurrentUserAsync(It.IsAny<CancellationToken>()))
