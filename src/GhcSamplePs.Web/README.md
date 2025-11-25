@@ -29,8 +29,8 @@ GhcSamplePs.Web/
 │   │   ├── MainLayout.razor     # Main layout with navigation drawer
 │   │   └── LoginDisplay.razor   # Authentication UI
 │   └── Pages/              # Page components
-│       ├── Home.razor
-│       ├── Weather.razor   # Protected page
+│       ├── Home.razor           # Landing page with role-specific content
+│       ├── Weather.razor        # Protected page
 │       ├── Admin/
 │       │   └── AdminDashboard.razor  # Admin-only dashboard
 │       └── Account/
@@ -65,6 +65,7 @@ This application uses **Azure Entra ID External Identities** for authentication 
 - ✅ HttpContextCurrentUserProvider bridges Core services with HttpContext
 - ✅ Admin Dashboard with role-based protection
 - ✅ Navigation drawer with AuthorizeView conditional rendering
+- ✅ Home page with AuthorizeView role-specific content examples
 
 #### Authorization Features
 
@@ -85,20 +86,26 @@ This application uses **Azure Entra ID External Identities** for authentication 
 
 | Page | Route | Protection | Description |
 |------|-------|------------|-------------|
-| Home | `/` | Authenticated | Main landing page |
+| Home | `/` | Authenticated | Main landing page with role-specific content |
 | Weather | `/weather` | Authenticated | Weather forecasts |
 | Admin Dashboard | `/admin` | Admin Role | Admin-only dashboard |
 | Access Denied | `/Account/AccessDenied` | None | Unauthorized access page |
 
-#### Navigation with AuthorizeView
+### AuthorizeView Patterns
+
+The application uses `AuthorizeView` components to conditionally render UI based on authentication state and user roles. This follows the "defense in depth" principle - UI hides unauthorized features, but backend policies enforce access control.
+
+#### Pattern 1: Navigation with Role-Based Visibility
 
 The main layout includes a navigation drawer with conditional rendering based on user roles:
 
 ```razor
 <MudNavMenu>
     <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+    <MudNavLink Href="/weather" Icon="@Icons.Material.Filled.WbSunny">Weather</MudNavLink>
     <AuthorizeView Policy="RequireAdminRole">
         <Authorized>
+            <MudDivider Class="my-2" />
             <MudNavGroup Title="Admin" Icon="@Icons.Material.Filled.AdminPanelSettings">
                 <MudNavLink Href="/admin" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
             </MudNavGroup>
@@ -108,6 +115,91 @@ The main layout includes a navigation drawer with conditional rendering based on
 ```
 
 Admin navigation items are only visible to users with the Admin role.
+
+#### Pattern 2: Authenticated vs Anonymous Content
+
+Show different content based on whether the user is authenticated:
+
+```razor
+<AuthorizeView>
+    <Authorized>
+        <MudPaper Elevation="2" Class="pa-4 mb-4">
+            <MudText Typo="Typo.h6">Welcome, @context.User.Identity?.Name!</MudText>
+            <MudText>You are signed in and can access authenticated content.</MudText>
+        </MudPaper>
+    </Authorized>
+    <NotAuthorized>
+        <MudPaper Elevation="2" Class="pa-4 mb-4">
+            <MudText Typo="Typo.h6">Welcome, Guest!</MudText>
+            <MudText>Please sign in to access personalized content.</MudText>
+        </MudPaper>
+    </NotAuthorized>
+</AuthorizeView>
+```
+
+#### Pattern 3: Role-Specific Content (Admin Only)
+
+Show content only to users with a specific role:
+
+```razor
+<AuthorizeView Policy="RequireAdminRole">
+    <Authorized>
+        <MudAlert Severity="Severity.Info" Class="mb-4">
+            <strong>Admin Access:</strong> You have administrative privileges.
+            Visit the <MudLink Href="/admin">Admin Dashboard</MudLink> to manage the application.
+        </MudAlert>
+    </Authorized>
+</AuthorizeView>
+```
+
+This pattern is used when you want to show content only to specific roles without showing any fallback content to other users.
+
+#### Pattern 4: User Dashboard (Multiple Roles)
+
+Show content to users with specific roles (using policies that allow multiple roles):
+
+```razor
+<AuthorizeView Policy="RequireUserRole">
+    <Authorized>
+        <MudPaper Elevation="2" Class="pa-4">
+            <MudText Typo="Typo.h6">Your Dashboard</MudText>
+            <!-- Dashboard content visible to User and Admin roles -->
+        </MudPaper>
+    </Authorized>
+</AuthorizeView>
+```
+
+The `RequireUserRole` policy requires either the User or Admin role, allowing content to be visible to all registered users.
+
+#### Pattern 5: Login/Logout Display
+
+The `LoginDisplay` component shows sign-in/sign-out options based on authentication state:
+
+```razor
+<AuthorizeView>
+    <Authorized>
+        <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit">
+            <MudMenuItem Disabled="true">
+                <MudText>@context.User.Identity?.Name</MudText>
+            </MudMenuItem>
+            <MudMenuItem OnClick="SignOut">Sign out</MudMenuItem>
+        </MudMenu>
+    </Authorized>
+    <NotAuthorized>
+        <MudButton OnClick="SignIn">Sign in</MudButton>
+    </NotAuthorized>
+</AuthorizeView>
+```
+
+### Defense in Depth
+
+The application implements a "defense in depth" strategy:
+
+1. **UI Layer**: `AuthorizeView` hides unauthorized UI elements
+2. **Page Protection**: `[Authorize]` attribute prevents page access
+3. **Core Layer**: `IAuthorizationService` verifies permissions in business logic
+
+This ensures that even if a user bypasses the UI, the backend will still enforce access control.
 
 #### Configuration
 
@@ -178,25 +270,6 @@ builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 @attribute [Authorize(Policy = "RequireUserRole")]
 
 <h1>This page requires User or Admin role</h1>
-```
-
-#### Conditional Content
-
-```razor
-<AuthorizeView>
-    <Authorized>
-        <p>Welcome, @context.User.Identity?.Name!</p>
-    </Authorized>
-    <NotAuthorized>
-        <p>Please sign in.</p>
-    </NotAuthorized>
-</AuthorizeView>
-
-<AuthorizeView Policy="RequireAdminRole">
-    <Authorized>
-        <MudButton Href="/admin">Admin Dashboard</MudButton>
-    </Authorized>
-</AuthorizeView>
 ```
 
 ## Running the Application
