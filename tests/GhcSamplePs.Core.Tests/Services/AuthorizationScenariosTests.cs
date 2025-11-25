@@ -145,7 +145,7 @@ public class AuthorizationScenariosTests
     }
 
     [Fact(DisplayName = "Inactive user is treated as authenticated user")]
-    public async Task InactiveUser_IsTreatedAsAuthenticatedUser()
+    public async Task AuthorizeAsync_WhenInactiveUser_IsTreatedAsAuthenticatedUser()
     {
         var user = TestUserFactory.CreateInactiveUser();
         _mockAuthService.Setup(s => s.GetCurrentUserAsync(It.IsAny<CancellationToken>()))
