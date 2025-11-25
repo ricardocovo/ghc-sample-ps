@@ -24,8 +24,8 @@ public class AuthorizationScenariosTests
         _service = new AuthorizationService(_mockAuthService.Object, _mockLogger.Object);
     }
 
-    [Fact(DisplayName = "Anonymous user is denied access to all policies")]
-    public async Task AnonymousUser_IsDeniedAccessToAllPolicies()
+    [Fact(DisplayName = "AuthorizeAsync when anonymous user denies access to all policies")]
+    public async Task AuthorizeAsync_WhenAnonymousUser_DeniesAccessToAllPolicies()
     {
         _mockAuthService.Setup(s => s.GetCurrentUserAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync((ApplicationUser?)null);
