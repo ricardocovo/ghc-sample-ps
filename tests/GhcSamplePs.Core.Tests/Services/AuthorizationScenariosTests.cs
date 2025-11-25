@@ -236,7 +236,7 @@ public class AuthorizationScenariosTests
     }
 
     [Fact(DisplayName = "Authorization failure includes meaningful reason for missing admin role")]
-    public async Task AuthorizationFailure_IncludesMeaningfulReason()
+    public async Task AuthorizeAsync_WhenAuthorizationFails_IncludesMeaningfulReason()
     {
         var user = TestUserFactory.CreateRegularUser();
         _mockAuthService.Setup(s => s.GetCurrentUserAsync(It.IsAny<CancellationToken>()))
