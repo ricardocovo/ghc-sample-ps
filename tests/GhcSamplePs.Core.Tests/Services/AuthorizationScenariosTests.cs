@@ -67,7 +67,7 @@ public class AuthorizationScenariosTests
     }
 
     [Fact(DisplayName = "Admin user can access all standard policies")]
-    public async Task AdminUser_CanAccessAllStandardPolicies()
+    public async Task AuthorizeAsync_WhenAdminUser_CanAccessAllStandardPolicies()
     {
         var user = TestUserFactory.CreateAdminUser();
         _mockAuthService.Setup(s => s.GetCurrentUserAsync(It.IsAny<CancellationToken>()))
