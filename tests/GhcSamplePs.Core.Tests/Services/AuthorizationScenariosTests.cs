@@ -192,7 +192,7 @@ public class AuthorizationScenariosTests
     }
 
     [Fact(DisplayName = "Resource-based authorization denies regular user for admin policy")]
-    public async Task ResourceBasedAuthorization_DeniesRegularUserForAdminPolicy()
+    public async Task AuthorizeAsync_WhenResourceBasedAuthorizationForRegularUser_DeniesAdminPolicy()
     {
         var regularUser = TestUserFactory.CreateRegularUser();
         _mockAuthService.Setup(s => s.GetCurrentUserAsync(It.IsAny<CancellationToken>()))
