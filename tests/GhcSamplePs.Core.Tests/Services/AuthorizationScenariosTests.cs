@@ -179,7 +179,7 @@ public class AuthorizationScenariosTests
     }
 
     [Fact(DisplayName = "Resource-based authorization respects admin role")]
-    public async Task ResourceBasedAuthorization_RespectsAdminRole()
+    public async Task AuthorizeAsync_WhenResourceBasedAuthorizationForAdmin_RespectsAdminRole()
     {
         var adminUser = TestUserFactory.CreateAdminUser();
         _mockAuthService.Setup(s => s.GetCurrentUserAsync(It.IsAny<CancellationToken>()))
