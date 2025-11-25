@@ -159,7 +159,7 @@ public class AuthorizationScenariosTests
     }
 
     [Fact(DisplayName = "User without roles fails role-based policies")]
-    public async Task UserWithoutRoles_FailsRoleBasedPolicies()
+    public async Task AuthorizeAsync_WhenUserWithoutRoles_FailsRoleBasedPolicies()
     {
         var user = TestUserFactory.CreateCustomUser(
             id: "no-roles-user",
