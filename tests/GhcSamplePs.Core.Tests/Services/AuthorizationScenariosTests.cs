@@ -220,7 +220,7 @@ public class AuthorizationScenariosTests
     }
 
     [Fact(DisplayName = "Custom policy falls back to role check")]
-    public async Task CustomPolicy_FallsBackToRoleCheck()
+    public async Task AuthorizeAsync_WhenCustomPolicy_FallsBackToRoleCheck()
     {
         var user = TestUserFactory.CreateCustomUser(
             id: "custom-user",
