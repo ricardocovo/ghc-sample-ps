@@ -207,3 +207,39 @@ public async Task WhenInvalidInputAsync_ThenThrowsArgumentException()
 
 - [C# Testing Guidelines](../../.github/instructions/csharp.instructions.md#testing-best-practices)
 - [Architecture Guidelines](../../.github/instructions/blazor-architecture.instructions.md#testing-strategy)
+
+## Authorization Testing
+
+This project includes comprehensive unit tests for the authorization system:
+
+### Test Classes
+
+| Class | Description |
+|-------|-------------|
+| `AuthorizationServiceTests` | Core authorization service unit tests |
+| `AuthorizationScenariosTests` | Integration-style scenario tests |
+| `AuthorizationMultipleRolesTests` | Comprehensive tests for multiple user roles |
+| `AuthorizationResultTests` | Tests for AuthorizationResult class |
+| `AuthorizationExceptionTests` | Tests for AuthorizationException class |
+
+### Running Authorization Tests
+
+```bash
+# Run all authorization tests
+dotnet test --filter "FullyQualifiedName~Authorization"
+
+# Run specific test class
+dotnet test --filter "AuthorizationMultipleRolesTests"
+```
+
+### Test Coverage Summary
+
+- Admin user access scenarios
+- Regular user access scenarios
+- Unauthenticated user scenarios
+- User without roles scenarios
+- Resource-based authorization
+- Permission checks
+- Authorization result validation
+
+See [Authorization Testing Guide](../../docs/Authorization_Testing_Guide.md) for complete testing documentation.

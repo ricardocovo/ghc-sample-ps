@@ -159,7 +159,8 @@ ghc-sample-ps/
 │   ├── Azure_EntraID_Setup_Guide.md
 │   ├── Development_Environment_Setup.md
 │   ├── Infrastructure_Verification_Checklist.md
-│   └── Azure_EntraID_Configuration_Reference.md
+│   ├── Azure_EntraID_Configuration_Reference.md
+│   └── Authorization_Testing_Guide.md
 ├── src/
 │   ├── GhcSamplePs.Web/      # Blazor Server application
 │   └── GhcSamplePs.Core/     # Business logic library
@@ -329,6 +330,9 @@ AZUREAD__CLIENTSECRET=@Microsoft.KeyVault(SecretUri=https://...)
 - [Entra ID External Identities Integration](docs/specs/EntraID_ExternalIdentities_Integration_Specification.md)
 - [MudBlazor Mobile Integration](docs/specs/MudBlazor_Mobile_Integration_Specification.md)
 - [Upgrade to .NET 10](docs/specs/UpgradeToDotNet10_Specification.md)
+
+### Testing & Quality
+- [Authorization Testing Guide](docs/Authorization_Testing_Guide.md) - Comprehensive authorization testing documentation
 
 ### Additional Documentation
 - [Performance Guide](docs/PERFORMANCE.md)
