@@ -44,11 +44,12 @@ builder.Services.AddScoped<ICurrentUserProvider, HttpContextCurrentUserProvider>
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
+// Add MudBlazor services
+builder.Services.AddMudServices();
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-
-builder.Services.AddMudServices();
 
 // Add response compression for better performance
 builder.Services.AddResponseCompression(options =>
@@ -62,7 +63,7 @@ builder.Services.AddResponseCompression(options =>
         "image/svg+xml"
     });
 });
-
+    
 // Configure compression levels
 builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
 {
@@ -113,6 +114,7 @@ app.UseAntiforgery();
 // Map Microsoft Identity UI controllers for sign-in/sign-out
 app.MapControllers();
 
+app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

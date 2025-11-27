@@ -1,14 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-
-  <ItemGroup>
-    <ProjectReference Include="..\GhcSamplePs.Core\GhcSamplePs.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Identity.Web" Version="4.1.0" />
-    <PackageReference Include="Microsoft.Identity.Web.UI" Version="4.1.0" />
-    <PackageReference Include="MudBlazor" Version="8.15.0" />
-  </ItemGroup>
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -17,7 +7,17 @@
     <UserSecretsId>c02e691c-e18a-47bd-a03f-7e4a2002a65f</UserSecretsId>
   </PropertyGroup>
 
-  <!-- Build optimization for production -->
+  <ItemGroup>
+    <ProjectReference Include="..\GhcSamplePs.Core\GhcSamplePs.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Identity.Web" Version="4.1.0" />
+    <PackageReference Include="Microsoft.Identity.Web.UI" Version="4.1.0" />
+    <PackageReference Include="MudBlazor" Version="8.*" />
+  </ItemGroup>
+
+   <!-- Build optimization for production -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
@@ -25,5 +25,4 @@
     <PublishTrimmed>false</PublishTrimmed>
     <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
-
 </Project>
