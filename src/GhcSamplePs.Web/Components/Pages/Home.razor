@@ -14,7 +14,7 @@
             <MudPaper Elevation="2" Class="pa-4 mb-4">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
                     <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Success" />
-                    <MudText Typo="Typo.h6">Welcome, @context.User.Identity?.Name!</MudText>
+                    <MudText Typo="Typo.h6">Welcome, @context.User.Identity?.Name! - @string.Join(", ", context.User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.Role).Select(c => c.Value))</MudText>
                 </MudStack>
                 <MudText Typo="Typo.body1">You are signed in and can access authenticated content.</MudText>
             </MudPaper>
