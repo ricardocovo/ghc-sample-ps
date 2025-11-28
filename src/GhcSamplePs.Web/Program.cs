@@ -4,6 +4,7 @@ using GhcSamplePs.Core.Services.Interfaces;
 using GhcSamplePs.Core.Services.Implementations;
 using GhcSamplePs.Core.Repositories.Interfaces;
 using GhcSamplePs.Core.Repositories.Implementations;
+using GhcSamplePs.Core.Data;
 using GhcSamplePs.Core.Extensions;
 using MudBlazor.Services;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -12,6 +13,7 @@ using Microsoft.Net.Http.Headers;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -104,6 +106,26 @@ builder.Services.Configure<GzipCompressionProviderOptions>(options =>
 });
 
 var app = builder.Build();
+
+// Apply database migrations automatically in development environment
+// In production, migrations should be applied manually or via deployment pipeline
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetService<ApplicationDbContext>();
+    if (context is not null)
+    {
+        try
+        {
+            await context.Database.MigrateAsync();
+            app.Logger.LogInformation("Database migrations applied successfully");
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogWarning(ex, "Failed to apply database migrations. This is expected if no database connection is configured.");
+        }
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
