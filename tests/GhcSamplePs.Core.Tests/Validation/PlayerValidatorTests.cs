@@ -596,8 +596,8 @@ public class PlayerValidatorTests
         var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey("PhotoUrl"));
-        Assert.Contains("Photo URL must be a valid HTTP or HTTPS URL", result.Errors["PhotoUrl"]);
+        Assert.True(result.Errors.TryGetValue("PhotoUrl", out var photoUrlErrors), "Expected 'PhotoUrl' key in errors.");
+        Assert.Contains("Photo URL must be a valid HTTP or HTTPS URL", photoUrlErrors);
     }
 
     [Theory(DisplayName = "PhotoUrl validation returns error for non-HTTP(S) schemes")]
