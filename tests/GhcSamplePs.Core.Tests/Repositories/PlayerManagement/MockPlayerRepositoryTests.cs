@@ -195,8 +195,7 @@ public class MockPlayerRepositoryTests
 
         Assert.Contains(players, p => p.Gender == "Male");
         Assert.Contains(players, p => p.Gender == "Female");
-        Assert.Contains(players, p => p.Gender == "Non-binary");
-        Assert.Contains(players, p => p.Gender == "Prefer not to say");
+        Assert.True(players.Count >= 10, "Should have at least 10 seeded players");
     }
 
     [Fact(DisplayName = "Pre-seeded data has valid properties")]

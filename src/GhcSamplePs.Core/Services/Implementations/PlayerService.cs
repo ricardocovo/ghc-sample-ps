@@ -93,7 +93,7 @@ public sealed class PlayerService : IPlayerService
 
         _logger.LogInformation("Creating new player: {PlayerName} by user {UserId}", createDto.Name, currentUserId);
 
-        var validationResult = PlayerValidator.Validate(createDto);
+        var validationResult = PlayerValidator.ValidateCreatePlayer(createDto);
         if (!validationResult.IsValid)
         {
             _logger.LogWarning("Player creation validation failed for {PlayerName}: {Errors}",
@@ -138,7 +138,7 @@ public sealed class PlayerService : IPlayerService
             return ServiceResult<PlayerDto>.Fail("Player ID mismatch.");
         }
 
-        var validationResult = PlayerValidator.Validate(updateDto);
+        var validationResult = PlayerValidator.ValidateUpdatePlayer(updateDto);
         if (!validationResult.IsValid)
         {
             _logger.LogWarning("Player update validation failed for ID {PlayerId}: {Errors}",
@@ -213,7 +213,7 @@ public sealed class PlayerService : IPlayerService
 
         _logger.LogDebug("Validating player data for {PlayerName}", createDto.Name);
 
-        var validationResult = PlayerValidator.Validate(createDto);
+        var validationResult = PlayerValidator.ValidateCreatePlayer(createDto);
 
         if (!validationResult.IsValid)
         {

@@ -2,7 +2,7 @@
 name: Senior-Developer
 description: An agent designed to assist with software development tasks for .NET projects, including committing code and creating pull requests.
 # version: 2025-10-27a
-tools: [readFile, createFile, listDirectory, fileSearch, applyPatch, insertEditIntoFile, runInTerminal, getTerminalOutput, createAndRunTask]
+tools: ['edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search/fileSearch', 'search/listDirectory', 'search/readFile', 'runCommands/getTerminalOutput', 'runCommands/runInTerminal', 'runTasks/createAndRunTask']
 ---
 
 Follow all coding standards and best practices defined in `.github/instructions/`.
