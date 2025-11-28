@@ -5,198 +5,235 @@ using GhcSamplePs.Core.Repositories.Interfaces;
 namespace GhcSamplePs.Core.Repositories.Implementations;
 
 /// <summary>
-/// In-memory mock implementation of the player repository for development and testing.
-/// Uses thread-safe ConcurrentDictionary for data storage.
+/// In-memory mock implementation of IPlayerRepository for development and testing.
+/// Uses ConcurrentDictionary for thread-safe operations.
 /// </summary>
-/// <remarks>
-/// <para>This implementation stores data in memory and will lose all data when the application restarts.</para>
-/// <para>Pre-seeds with sample data for testing purposes (10 diverse players).</para>
-/// </remarks>
 public sealed class MockPlayerRepository : IPlayerRepository
 {
-    private readonly ConcurrentDictionary<int, Player> _players;
-    private int _nextId;
+    private readonly ConcurrentDictionary<int, Player> _players = new();
+    private int _nextId = 1;
+    private readonly object _idLock = new();
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MockPlayerRepository"/> class with pre-seeded sample data.
+    /// Initializes a new instance of the MockPlayerRepository class with seed data.
     /// </summary>
     public MockPlayerRepository()
     {
-        _players = new ConcurrentDictionary<int, Player>();
         SeedData();
     }
 
-    /// <inheritdoc/>
-    public Task<IReadOnlyList<Player>> GetAllAsync(CancellationToken cancellationToken = default)
+    /// <inheritdoc />
+    public Task<IEnumerable<Player>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        var players = _players.Values.ToList();
-        return Task.FromResult<IReadOnlyList<Player>>(players);
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult<IEnumerable<Player>>(_players.Values.ToList());
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public Task<Player?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         _players.TryGetValue(id, out var player);
         return Task.FromResult(player);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
+    public Task<IEnumerable<Player>> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(userId);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var players = _players.Values
+            .Where(p => string.Equals(p.UserId, userId, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        return Task.FromResult<IEnumerable<Player>>(players);
+    }
+
+    /// <inheritdoc />
     public Task<Player> AddAsync(Player player, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(player);
+        cancellationToken.ThrowIfCancellationRequested();
 
-        var id = Interlocked.Increment(ref _nextId);
-        player.Id = id;
-
-        if (!_players.TryAdd(id, player))
+        var newPlayer = new Player
         {
-            throw new InvalidOperationException($"Failed to add player with ID {id}.");
-        }
+            Id = GetNextId(),
+            UserId = player.UserId,
+            Name = player.Name,
+            DateOfBirth = player.DateOfBirth,
+            Gender = player.Gender,
+            PhotoUrl = player.PhotoUrl,
+            CreatedAt = player.CreatedAt,
+            CreatedBy = player.CreatedBy
+        };
 
-        return Task.FromResult(player);
+        _players.TryAdd(newPlayer.Id, newPlayer);
+        return Task.FromResult(newPlayer);
     }
 
-    /// <inheritdoc/>
-    public Task<Player> UpdateAsync(Player player, CancellationToken cancellationToken = default)
+    /// <inheritdoc />
+    public Task<Player?> UpdateAsync(Player player, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(player);
+        cancellationToken.ThrowIfCancellationRequested();
 
-        if (!_players.ContainsKey(player.Id))
+        if (!_players.TryGetValue(player.Id, out var existingPlayer))
         {
-            throw new InvalidOperationException($"Player with ID {player.Id} does not exist.");
+            return Task.FromResult<Player?>(null);
         }
 
-        _players[player.Id] = player;
-        return Task.FromResult(player);
+        var updatedPlayer = new Player
+        {
+            Id = player.Id,
+            UserId = player.UserId,
+            Name = player.Name,
+            DateOfBirth = player.DateOfBirth,
+            Gender = player.Gender,
+            PhotoUrl = player.PhotoUrl,
+            CreatedAt = existingPlayer.CreatedAt,
+            CreatedBy = existingPlayer.CreatedBy
+        };
+
+        if (_players.TryUpdate(player.Id, updatedPlayer, existingPlayer))
+        {
+            return Task.FromResult<Player?>(updatedPlayer);
+        }
+
+        return Task.FromResult<Player?>(null);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         return Task.FromResult(_players.TryRemove(id, out _));
     }
 
-    /// <inheritdoc/>
-    public Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)
-    {
-        return Task.FromResult(_players.ContainsKey(id));
-    }
-
     /// <summary>
-    /// Seeds the repository with sample player data for testing.
+    /// Seeds the repository with sample player data.
     /// </summary>
     private void SeedData()
     {
-        var now = DateTime.UtcNow;
-        var samplePlayers = new List<Player>
+        var samplePlayers = new[]
         {
-            new()
+            new Player
             {
-                UserId = "system",
-                Name = "Emma Rodriguez",
-                DateOfBirth = new DateTime(2014, 3, 15),
-                Gender = "Female",
-                PhotoUrl = null,
-                CreatedBy = "system",
-                CreatedAt = now.AddDays(-60)
-            },
-            new()
-            {
-                UserId = "system",
-                Name = "Liam Johnson",
-                DateOfBirth = new DateTime(2015, 7, 22),
+                Id = GetNextId(),
+                UserId = "user-001",
+                Name = "Michael Jordan",
+                DateOfBirth = new DateTime(1963, 2, 17),
                 Gender = "Male",
-                PhotoUrl = null,
-                CreatedBy = "system",
-                CreatedAt = now.AddDays(-55)
+                PhotoUrl = "https://example.com/photos/mjordan.jpg",
+                CreatedBy = "system"
             },
-            new()
+            new Player
             {
-                UserId = "system",
-                Name = "Olivia Martinez",
-                DateOfBirth = new DateTime(2013, 11, 8),
-                Gender = "Female",
-                PhotoUrl = "https://example.com/photos/olivia.jpg",
-                CreatedBy = "system",
-                CreatedAt = now.AddDays(-50)
-            },
-            new()
-            {
-                UserId = "system",
-                Name = "Noah Williams",
-                DateOfBirth = new DateTime(2016, 1, 30),
+                Id = GetNextId(),
+                UserId = "user-001",
+                Name = "LeBron James",
+                DateOfBirth = new DateTime(1984, 12, 30),
                 Gender = "Male",
-                PhotoUrl = null,
-                CreatedBy = "system",
-                CreatedAt = now.AddDays(-45)
+                PhotoUrl = "https://example.com/photos/ljames.jpg",
+                CreatedBy = "system"
             },
-            new()
+            new Player
             {
-                UserId = "system",
-                Name = "Ava Brown",
-                DateOfBirth = new DateTime(2014, 9, 12),
+                Id = GetNextId(),
+                UserId = "user-002",
+                Name = "Serena Williams",
+                DateOfBirth = new DateTime(1981, 9, 26),
                 Gender = "Female",
-                PhotoUrl = "https://example.com/photos/ava.jpg",
-                CreatedBy = "system",
-                CreatedAt = now.AddDays(-40)
+                PhotoUrl = "https://example.com/photos/swilliams.jpg",
+                CreatedBy = "system"
             },
-            new()
+            new Player
             {
-                UserId = "system",
-                Name = "Ethan Davis",
-                DateOfBirth = new DateTime(2015, 4, 5),
-                Gender = "Male",
-                PhotoUrl = null,
-                CreatedBy = "system",
-                CreatedAt = now.AddDays(-35)
-            },
-            new()
-            {
-                UserId = "system",
-                Name = "Sophia Garcia",
-                DateOfBirth = new DateTime(2013, 6, 18),
-                Gender = "Non-binary",
-                PhotoUrl = null,
-                CreatedBy = "system",
-                CreatedAt = now.AddDays(-30)
-            },
-            new()
-            {
-                UserId = "system",
-                Name = "Mason Miller",
-                DateOfBirth = new DateTime(2016, 12, 25),
-                Gender = "Male",
-                PhotoUrl = "https://example.com/photos/mason.jpg",
-                CreatedBy = "system",
-                CreatedAt = now.AddDays(-25)
-            },
-            new()
-            {
-                UserId = "system",
-                Name = "Isabella Wilson",
-                DateOfBirth = new DateTime(2014, 2, 14),
+                Id = GetNextId(),
+                UserId = "user-002",
+                Name = "Simone Biles",
+                DateOfBirth = new DateTime(1997, 3, 14),
                 Gender = "Female",
-                PhotoUrl = null,
-                CreatedBy = "system",
-                CreatedAt = now.AddDays(-20)
+                PhotoUrl = "https://example.com/photos/sbiles.jpg",
+                CreatedBy = "system"
             },
-            new()
+            new Player
             {
-                UserId = "system",
-                Name = "Lucas Anderson",
-                DateOfBirth = new DateTime(2015, 10, 9),
-                Gender = "Prefer not to say",
-                PhotoUrl = null,
-                CreatedBy = "system",
-                CreatedAt = now.AddDays(-15)
+                Id = GetNextId(),
+                UserId = "user-003",
+                Name = "Lionel Messi",
+                DateOfBirth = new DateTime(1987, 6, 24),
+                Gender = "Male",
+                PhotoUrl = "https://example.com/photos/lmessi.jpg",
+                CreatedBy = "system"
+            },
+            new Player
+            {
+                Id = GetNextId(),
+                UserId = "user-003",
+                Name = "Cristiano Ronaldo",
+                DateOfBirth = new DateTime(1985, 2, 5),
+                Gender = "Male",
+                PhotoUrl = "https://example.com/photos/cronaldo.jpg",
+                CreatedBy = "system"
+            },
+            new Player
+            {
+                Id = GetNextId(),
+                UserId = "user-004",
+                Name = "Usain Bolt",
+                DateOfBirth = new DateTime(1986, 8, 21),
+                Gender = "Male",
+                PhotoUrl = "https://example.com/photos/ubolt.jpg",
+                CreatedBy = "system"
+            },
+            new Player
+            {
+                Id = GetNextId(),
+                UserId = "user-004",
+                Name = "Katie Ledecky",
+                DateOfBirth = new DateTime(1997, 3, 17),
+                Gender = "Female",
+                PhotoUrl = "https://example.com/photos/kledecky.jpg",
+                CreatedBy = "system"
+            },
+            new Player
+            {
+                Id = GetNextId(),
+                UserId = "user-005",
+                Name = "Roger Federer",
+                DateOfBirth = new DateTime(1981, 8, 8),
+                Gender = "Male",
+                PhotoUrl = "https://example.com/photos/rfederer.jpg",
+                CreatedBy = "system"
+            },
+            new Player
+            {
+                Id = GetNextId(),
+                UserId = "user-005",
+                Name = "Naomi Osaka",
+                DateOfBirth = new DateTime(1997, 10, 16),
+                Gender = "Female",
+                PhotoUrl = "https://example.com/photos/nosaka.jpg",
+                CreatedBy = "system"
             }
         };
 
         foreach (var player in samplePlayers)
         {
-            var id = Interlocked.Increment(ref _nextId);
-            player.Id = id;
-            _players.TryAdd(id, player);
+            _players.TryAdd(player.Id, player);
+        }
+    }
+
+    /// <summary>
+    /// Gets the next available ID in a thread-safe manner.
+    /// </summary>
+    /// <returns>The next available ID.</returns>
+    private int GetNextId()
+    {
+        lock (_idLock)
+        {
+            return _nextId++;
         }
     }
 }
