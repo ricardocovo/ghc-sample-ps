@@ -70,8 +70,13 @@ else
     builder.Services.AddApplicationDbContext(
         connectionString: connectionString,
         enableSensitiveDataLogging: builder.Environment.IsDevelopment(),
+        enableDetailedErrors: builder.Environment.IsDevelopment(),
         maxRetryCount: 5,
         maxRetryDelaySeconds: 30);
+
+    // Add health checks including database connectivity check
+    builder.Services.AddHealthChecks()
+        .AddDbContextCheck<ApplicationDbContext>("database");
 }
 
 // Add MudBlazor services
@@ -163,6 +168,9 @@ app.UseAntiforgery();
 
 // Map Microsoft Identity UI controllers for sign-in/sign-out
 app.MapControllers();
+
+// Map health check endpoint (allows anonymous access for load balancers)
+app.MapHealthChecks("/health").AllowAnonymous();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
