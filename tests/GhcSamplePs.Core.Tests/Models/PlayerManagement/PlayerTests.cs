@@ -118,7 +118,8 @@ public class PlayerTests
         var player = TestPlayerFactory.CreatePlayerWithDateOfBirth(dateOfBirth);
         var expectedAge = DateTime.UtcNow.Year - 1920;
         
-        if (DateTime.UtcNow.Date < new DateTime(DateTime.UtcNow.Year, 1, 1))
+        var birthdayThisYear = new DateTime(DateTime.UtcNow.Year, 1, 1);
+        if (DateTime.UtcNow.Date < birthdayThisYear)
         {
             expectedAge--;
         }
