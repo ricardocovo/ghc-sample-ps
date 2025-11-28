@@ -681,8 +681,8 @@ public class PlayerValidatorTests
         var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey("PhotoUrl"));
-        Assert.Equal(2, result.Errors["PhotoUrl"].Length);
+        Assert.True(result.Errors.TryGetValue("PhotoUrl", out var photoUrlErrors));
+        Assert.Equal(2, photoUrlErrors.Length);
     }
 
     #endregion
