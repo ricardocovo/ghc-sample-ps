@@ -199,7 +199,6 @@ public sealed class EfPlayerRepository : IPlayerRepository
             }
 
             // Update properties
-            existingPlayer.GetType().GetProperty(nameof(Player.Name))?.SetValue(existingPlayer, player.Name);
             _context.Entry(existingPlayer).CurrentValues.SetValues(new
             {
                 player.Name,
