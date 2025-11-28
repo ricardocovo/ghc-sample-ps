@@ -65,6 +65,10 @@ public class PlayerConfiguration : IEntityTypeConfiguration<Player>
         builder.HasIndex(p => p.DateOfBirth)
             .HasDatabaseName("IX_Players_DateOfBirth");
 
+        // Composite index on UserId and Name for common query pattern
+        builder.HasIndex(p => new { p.UserId, p.Name })
+            .HasDatabaseName("IX_Players_UserId_Name");
+
         // Gender - optional
         builder.Property(p => p.Gender)
             .HasMaxLength(50);
