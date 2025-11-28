@@ -82,9 +82,11 @@ public sealed class MockPlayerRepository : IPlayerRepository
             CreatedBy = existingPlayer.CreatedBy
         };
 
+        updatedPlayer.UpdateLastModified(player.UpdatedBy ?? "system");
+
         if (!_players.TryUpdate(player.Id, updatedPlayer, existingPlayer))
         {
-            throw new InvalidOperationException($"Failed to update player with ID {player.Id}.");
+            throw new InvalidOperationException($"Failed to update player with ID {player.Id}. Concurrent modification detected.");
         }
 
         return Task.FromResult(updatedPlayer);
@@ -115,100 +117,93 @@ public sealed class MockPlayerRepository : IPlayerRepository
             {
                 Id = GetNextId(),
                 UserId = "user-001",
-                Name = "Michael Jordan",
-                DateOfBirth = new DateTime(1963, 2, 17),
-                Gender = "Male",
-                PhotoUrl = "https://example.com/photos/mjordan.jpg",
+                Name = "Emma Rodriguez",
+                DateOfBirth = new DateTime(2014, 3, 15),
+                Gender = "Female",
                 CreatedBy = "system"
             },
             new Player
             {
                 Id = GetNextId(),
                 UserId = "user-001",
-                Name = "LeBron James",
-                DateOfBirth = new DateTime(1984, 12, 30),
+                Name = "Liam Johnson",
+                DateOfBirth = new DateTime(2015, 7, 22),
                 Gender = "Male",
-                PhotoUrl = "https://example.com/photos/ljames.jpg",
                 CreatedBy = "system"
             },
             new Player
             {
                 Id = GetNextId(),
                 UserId = "user-002",
-                Name = "Serena Williams",
-                DateOfBirth = new DateTime(1981, 9, 26),
+                Name = "Olivia Martinez",
+                DateOfBirth = new DateTime(2013, 11, 8),
                 Gender = "Female",
-                PhotoUrl = "https://example.com/photos/swilliams.jpg",
+                PhotoUrl = "https://example.com/photos/olivia.jpg",
                 CreatedBy = "system"
             },
             new Player
             {
                 Id = GetNextId(),
                 UserId = "user-002",
-                Name = "Simone Biles",
-                DateOfBirth = new DateTime(1997, 3, 14),
-                Gender = "Female",
-                PhotoUrl = "https://example.com/photos/sbiles.jpg",
+                Name = "Noah Williams",
+                DateOfBirth = new DateTime(2016, 1, 30),
+                Gender = "Male",
                 CreatedBy = "system"
             },
             new Player
             {
                 Id = GetNextId(),
                 UserId = "user-003",
-                Name = "Lionel Messi",
-                DateOfBirth = new DateTime(1987, 6, 24),
-                Gender = "Male",
-                PhotoUrl = "https://example.com/photos/lmessi.jpg",
+                Name = "Ava Brown",
+                DateOfBirth = new DateTime(2014, 9, 12),
+                Gender = "Female",
+                PhotoUrl = "https://example.com/photos/ava.jpg",
                 CreatedBy = "system"
             },
             new Player
             {
                 Id = GetNextId(),
                 UserId = "user-003",
-                Name = "Cristiano Ronaldo",
-                DateOfBirth = new DateTime(1985, 2, 5),
+                Name = "Ethan Davis",
+                DateOfBirth = new DateTime(2015, 4, 5),
                 Gender = "Male",
-                PhotoUrl = "https://example.com/photos/cronaldo.jpg",
                 CreatedBy = "system"
             },
             new Player
             {
                 Id = GetNextId(),
                 UserId = "user-004",
-                Name = "Usain Bolt",
-                DateOfBirth = new DateTime(1986, 8, 21),
-                Gender = "Male",
-                PhotoUrl = "https://example.com/photos/ubolt.jpg",
+                Name = "Sophia Garcia",
+                DateOfBirth = new DateTime(2013, 6, 18),
+                Gender = "Non-binary",
                 CreatedBy = "system"
             },
             new Player
             {
                 Id = GetNextId(),
                 UserId = "user-004",
-                Name = "Katie Ledecky",
-                DateOfBirth = new DateTime(1997, 3, 17),
-                Gender = "Female",
-                PhotoUrl = "https://example.com/photos/kledecky.jpg",
-                CreatedBy = "system"
-            },
-            new Player
-            {
-                Id = GetNextId(),
-                UserId = "user-005",
-                Name = "Roger Federer",
-                DateOfBirth = new DateTime(1981, 8, 8),
+                Name = "Mason Miller",
+                DateOfBirth = new DateTime(2016, 12, 25),
                 Gender = "Male",
-                PhotoUrl = "https://example.com/photos/rfederer.jpg",
+                PhotoUrl = "https://example.com/photos/mason.jpg",
                 CreatedBy = "system"
             },
             new Player
             {
                 Id = GetNextId(),
                 UserId = "user-005",
-                Name = "Naomi Osaka",
-                DateOfBirth = new DateTime(1997, 10, 16),
+                Name = "Isabella Wilson",
+                DateOfBirth = new DateTime(2014, 2, 14),
                 Gender = "Female",
-                PhotoUrl = "https://example.com/photos/nosaka.jpg",
+                CreatedBy = "system"
+            },
+            new Player
+            {
+                Id = GetNextId(),
+                UserId = "user-005",
+                Name = "Lucas Anderson",
+                DateOfBirth = new DateTime(2015, 10, 9),
+                Gender = "Prefer not to say",
                 CreatedBy = "system"
             }
         };

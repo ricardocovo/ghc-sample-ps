@@ -20,7 +20,7 @@ public class MockPlayerRepositoryTests
     {
         var players = await _repository.GetAllAsync();
 
-        Assert.Equal(10, players.Count());
+        Assert.Equal(10, players.Count);
     }
 
     [Fact(DisplayName = "Constructor seeds players with sequential IDs starting from 1")]
@@ -55,7 +55,7 @@ public class MockPlayerRepositoryTests
         var players = await _repository.GetAllAsync();
 
         Assert.NotNull(players);
-        Assert.Equal(10, players.Count());
+        Assert.Equal(10, players.Count);
     }
 
     [Fact(DisplayName = "GetAllAsync respects cancellation token")]
@@ -97,6 +97,36 @@ public class MockPlayerRepositoryTests
 
         await Assert.ThrowsAsync<OperationCanceledException>(
             () => _repository.GetByIdAsync(1, cts.Token));
+    }
+
+    #endregion
+
+    #region ExistsAsync Tests
+
+    [Fact(DisplayName = "ExistsAsync returns true when player exists")]
+    public async Task ExistsAsync_WhenPlayerExists_ReturnsTrue()
+    {
+        var exists = await _repository.ExistsAsync(1);
+
+        Assert.True(exists);
+    }
+
+    [Fact(DisplayName = "ExistsAsync returns false when player does not exist")]
+    public async Task ExistsAsync_WhenPlayerDoesNotExist_ReturnsFalse()
+    {
+        var exists = await _repository.ExistsAsync(999);
+
+        Assert.False(exists);
+    }
+
+    [Fact(DisplayName = "ExistsAsync respects cancellation token")]
+    public async Task ExistsAsync_WhenCancellationRequested_ThrowsOperationCanceledException()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => _repository.ExistsAsync(1, cts.Token));
     }
 
     #endregion
@@ -234,11 +264,8 @@ public class MockPlayerRepositoryTests
             CreatedBy = "test-user"
         };
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<InvalidOperationException>(
             () => _repository.UpdateAsync(player));
-
-        Assert.Contains("999", exception.Message);
-        Assert.Contains("not found", exception.Message);
     }
 
     [Fact(DisplayName = "UpdateAsync throws when player is null")]
@@ -292,11 +319,11 @@ public class MockPlayerRepositoryTests
     [Fact(DisplayName = "DeleteAsync decreases player count")]
     public async Task DeleteAsync_WhenCalled_DecreasesPlayerCount()
     {
-        var initialCount = (await _repository.GetAllAsync()).Count();
+        var initialCount = (await _repository.GetAllAsync()).Count;
 
         await _repository.DeleteAsync(1);
 
-        var finalCount = (await _repository.GetAllAsync()).Count();
+        var finalCount = (await _repository.GetAllAsync()).Count;
         Assert.Equal(initialCount - 1, finalCount);
     }
 

@@ -155,6 +155,22 @@ public static class PlayerValidator
         return BuildResult(errors);
     }
 
+    /// <summary>
+    /// Validates a CreatePlayerDto against all business rules. Alias for ValidateCreatePlayer.
+    /// </summary>
+    /// <param name="dto">The CreatePlayerDto to validate.</param>
+    /// <returns>A ValidationResult containing all validation errors found, or a valid result if no errors.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when dto is null.</exception>
+    public static ValidationResult Validate(CreatePlayerDto dto) => ValidateCreatePlayer(dto);
+
+    /// <summary>
+    /// Validates an UpdatePlayerDto against all business rules. Alias for ValidateUpdatePlayer.
+    /// </summary>
+    /// <param name="dto">The UpdatePlayerDto to validate.</param>
+    /// <returns>A ValidationResult containing all validation errors found, or a valid result if no errors.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when dto is null.</exception>
+    public static ValidationResult Validate(UpdatePlayerDto dto) => ValidateUpdatePlayer(dto);
+
     private static void ValidateName(string? name, Dictionary<string, List<string>> errors)
     {
         if (string.IsNullOrWhiteSpace(name))
