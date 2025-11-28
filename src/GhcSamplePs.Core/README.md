@@ -312,7 +312,6 @@ builder.Services.AddApplicationDbContext(
 **InitialCreate** (`Migrations/[timestamp]_InitialCreate.cs`):
 - Creates the `Players` table with all columns and constraints
 - Creates indexes for UserId, Name, and DateOfBirth
-- Seeds 10 sample players for development
 
 #### Running Migrations
 
@@ -336,26 +335,9 @@ dotnet ef migrations script --project src/GhcSamplePs.Core --startup-project src
 #### Migration Scripts
 
 Pre-generated idempotent migration scripts are available in `docs/migrations/`:
-- `InitialCreate.sql` - Creates Players table, indexes, and seed data
+- `InitialCreate.sql` - Creates Players table and indexes
 
 These scripts are safe to run multiple times and can be used for production deployments.
-
-#### Seed Data
-
-The initial migration includes 10 sample players for development:
-
-| Name | UserId | DateOfBirth | Gender |
-|------|--------|-------------|--------|
-| Emma Rodriguez | user-001 | 2014-03-15 | Female |
-| Liam Johnson | user-001 | 2015-07-22 | Male |
-| Olivia Martinez | user-002 | 2013-11-08 | Female |
-| Noah Williams | user-002 | 2016-01-30 | Male |
-| Ava Brown | user-003 | 2014-09-12 | Female |
-| Ethan Davis | user-003 | 2015-04-05 | Male |
-| Sophia Garcia | user-004 | 2013-06-18 | Non-binary |
-| Mason Miller | user-004 | 2016-12-25 | Male |
-| Isabella Wilson | user-005 | 2014-02-14 | Female |
-| Lucas Anderson | user-005 | 2015-10-09 | Prefer not to say |
 
 ### Test Coverage
 

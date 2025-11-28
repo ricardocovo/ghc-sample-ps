@@ -111,7 +111,7 @@ var app = builder.Build();
 // In production, migrations should be applied manually or via deployment pipeline
 if (app.Environment.IsDevelopment())
 {
-    var scope = app.Services.CreateScope();
+    using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetService<ApplicationDbContext>();
     if (context is not null)
     {
@@ -123,10 +123,6 @@ if (app.Environment.IsDevelopment())
         catch (Exception ex)
         {
             app.Logger.LogWarning(ex, "Failed to apply database migrations. This is expected if no database connection is configured.");
-        }
-        finally
-        {
-            scope.Dispose();
         }
     }
 }

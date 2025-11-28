@@ -7,7 +7,6 @@ namespace GhcSamplePs.Core.Migrations
 {
     /// <summary>
     /// Initial migration that creates the Players table with all columns, constraints, and indexes.
-    /// Also seeds 10 sample players for development purposes.
     /// </summary>
     public partial class InitialCreate : Migration
     {
@@ -49,60 +48,6 @@ namespace GhcSamplePs.Core.Migrations
                 name: "IX_Players_UserId",
                 table: "Players",
                 column: "UserId");
-
-            // Seed data: 10 sample players for development purposes
-            // As specified in EFCore_AzureSQL_Repository_Implementation_Specification.md
-            var seedDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
-            migrationBuilder.InsertData(
-                table: "Players",
-                columns: new[] { "UserId", "Name", "DateOfBirth", "Gender", "PhotoUrl", "CreatedAt", "CreatedBy" },
-                values: new object[] { "user-001", "Emma Rodriguez", new DateTime(2014, 3, 15), "Female", null, seedDate, "system" });
-
-            migrationBuilder.InsertData(
-                table: "Players",
-                columns: new[] { "UserId", "Name", "DateOfBirth", "Gender", "PhotoUrl", "CreatedAt", "CreatedBy" },
-                values: new object[] { "user-001", "Liam Johnson", new DateTime(2015, 7, 22), "Male", null, seedDate, "system" });
-
-            migrationBuilder.InsertData(
-                table: "Players",
-                columns: new[] { "UserId", "Name", "DateOfBirth", "Gender", "PhotoUrl", "CreatedAt", "CreatedBy" },
-                values: new object[] { "user-002", "Olivia Martinez", new DateTime(2013, 11, 8), "Female", null, seedDate, "system" });
-
-            migrationBuilder.InsertData(
-                table: "Players",
-                columns: new[] { "UserId", "Name", "DateOfBirth", "Gender", "PhotoUrl", "CreatedAt", "CreatedBy" },
-                values: new object[] { "user-002", "Noah Williams", new DateTime(2016, 1, 30), "Male", null, seedDate, "system" });
-
-            migrationBuilder.InsertData(
-                table: "Players",
-                columns: new[] { "UserId", "Name", "DateOfBirth", "Gender", "PhotoUrl", "CreatedAt", "CreatedBy" },
-                values: new object[] { "user-003", "Ava Brown", new DateTime(2014, 9, 12), "Female", null, seedDate, "system" });
-
-            migrationBuilder.InsertData(
-                table: "Players",
-                columns: new[] { "UserId", "Name", "DateOfBirth", "Gender", "PhotoUrl", "CreatedAt", "CreatedBy" },
-                values: new object[] { "user-003", "Ethan Davis", new DateTime(2015, 4, 5), "Male", null, seedDate, "system" });
-
-            migrationBuilder.InsertData(
-                table: "Players",
-                columns: new[] { "UserId", "Name", "DateOfBirth", "Gender", "PhotoUrl", "CreatedAt", "CreatedBy" },
-                values: new object[] { "user-004", "Sophia Garcia", new DateTime(2013, 6, 18), "Non-binary", null, seedDate, "system" });
-
-            migrationBuilder.InsertData(
-                table: "Players",
-                columns: new[] { "UserId", "Name", "DateOfBirth", "Gender", "PhotoUrl", "CreatedAt", "CreatedBy" },
-                values: new object[] { "user-004", "Mason Miller", new DateTime(2016, 12, 25), "Male", null, seedDate, "system" });
-
-            migrationBuilder.InsertData(
-                table: "Players",
-                columns: new[] { "UserId", "Name", "DateOfBirth", "Gender", "PhotoUrl", "CreatedAt", "CreatedBy" },
-                values: new object[] { "user-005", "Isabella Wilson", new DateTime(2014, 2, 14), "Female", null, seedDate, "system" });
-
-            migrationBuilder.InsertData(
-                table: "Players",
-                columns: new[] { "UserId", "Name", "DateOfBirth", "Gender", "PhotoUrl", "CreatedAt", "CreatedBy" },
-                values: new object[] { "user-005", "Lucas Anderson", new DateTime(2015, 10, 9), "Prefer not to say", null, seedDate, "system" });
         }
 
         /// <inheritdoc />
