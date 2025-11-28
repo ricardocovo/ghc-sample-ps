@@ -16,35 +16,35 @@ This project should not reference the Web project or any UI-specific libraries.
 
 ```
 GhcSamplePs.Core/
+├── Common/                      # Common utilities and result types
+│   ├── ServiceResult.cs
+│   └── ValidationResult.cs
 ├── Models/
-│   ├── Identity/               # User identity domain models
+│   ├── Identity/                # User identity domain models
 │   │   ├── ApplicationUser.cs
 │   │   └── UserClaim.cs
-│   └── PlayerManagement/       # Player domain models
-│       ├── Player.cs
-│       └── DTOs/
-│           ├── CreatePlayerDto.cs
-│           ├── PlayerDto.cs
-│           └── UpdatePlayerDto.cs
-├── Repositories/
-│   ├── Interfaces/             # Repository contracts
-│   │   └── IPlayerRepository.cs
-│   └── Implementations/        # Repository implementations
-│       └── MockPlayerRepository.cs
+│   └── PlayerManagement/        # Player management domain models
+│       ├── DTOs/
+│       │   ├── CreatePlayerDto.cs
+│       │   ├── PlayerDto.cs
+│       │   └── UpdatePlayerDto.cs
+│       └── Player.cs
 ├── Services/
-│   ├── Interfaces/             # Service contracts
+│   ├── Interfaces/              # Service contracts
 │   │   ├── IAuthenticationService.cs
 │   │   ├── IAuthorizationService.cs
 │   │   ├── ICurrentUserProvider.cs
 │   │   └── AuthorizationResult.cs
-│   └── Implementations/        # Service implementations
+│   └── Implementations/         # Service implementations
 │       ├── AuthenticationService.cs
 │       └── AuthorizationService.cs
-├── Exceptions/                 # Custom domain exceptions
+├── Validation/                  # Business validation rules
+│   └── PlayerValidator.cs
+├── Exceptions/                  # Custom domain exceptions
 │   ├── AuthenticationException.cs
 │   ├── AuthorizationException.cs
 │   └── TokenValidationException.cs
-└── Extensions/                 # Extension methods (future)
+└── Extensions/                  # Extension methods (future)
 ```
 
 ## Responsibilities
@@ -176,34 +176,61 @@ Permissions are derived from roles:
 - **AuthorizationException** - Permission/access denials
 - **TokenValidationException** - JWT token validation failures
 
+### Player Validation ✅
 
-### Player Repository ✅
+**PlayerValidator** (`Validation/PlayerValidator.cs`):
+- Provides business rule validation for player data
+- Validates CreatePlayerDto, UpdatePlayerDto, and Player entities
+- Returns ValidationResult with field-specific error messages
 
-#### IPlayerRepository Interface (`Repositories/Interfaces/IPlayerRepository.cs`)
+#### Validation Rules
 
-Defines the contract for player data access operations:
+| Field | Requirement | Error Message |
+|-------|-------------|---------------|
+| Name | Required, 1-200 characters, not whitespace | "Name is required" or "Name must not exceed 200 characters" |
+| DateOfBirth | Required, past date, not more than 100 years ago | "Date of birth is required", "Date of birth must be in the past", "Date of birth cannot be more than 100 years ago" |
+| Gender | Optional, if provided must be valid option | "Gender must be Male, Female, Non-binary, or Prefer not to say" |
+| PhotoUrl | Optional, max 500 chars, valid HTTP/HTTPS URL | "Photo URL must not exceed 500 characters", "Photo URL must be a valid HTTP or HTTPS URL" |
 
-- `GetAllAsync(CancellationToken)` - Gets all players
-- `GetByIdAsync(int id, CancellationToken)` - Gets a player by ID
-- `GetByUserIdAsync(string userId, CancellationToken)` - Gets players for a user
-- `AddAsync(Player player, CancellationToken)` - Adds a new player
-- `UpdateAsync(Player player, CancellationToken)` - Updates an existing player
-- `DeleteAsync(int id, CancellationToken)` - Deletes a player
+#### Valid Gender Options
 
-#### MockPlayerRepository (`Repositories/Implementations/MockPlayerRepository.cs`)
+- Male
+- Female
+- Non-binary
+- Prefer not to say
 
-In-memory mock implementation for development and testing:
+(Case-insensitive comparison)
 
-- Uses `ConcurrentDictionary<int, Player>` for thread-safe storage
-- Auto-incrementing ID generation with thread-safe lock
-- Pre-seeded with 10 sample players (famous athletes)
-- All operations are async and support cancellation
-- Case-insensitive user ID comparison for `GetByUserIdAsync`
-- Preserves original audit fields (CreatedAt, CreatedBy) on updates
+#### Methods
+
+- `ValidateCreatePlayer(CreatePlayerDto)` - Validates player creation data
+- `ValidateUpdatePlayer(UpdatePlayerDto)` - Validates player update data
+- `ValidatePlayer(Player)` - Validates a Player entity
+
+#### Usage Example
+
+```csharp
+var dto = new CreatePlayerDto
+{
+    UserId = "user-123",
+    Name = "John Doe",
+    DateOfBirth = new DateTime(1990, 6, 15),
+    Gender = "Male"
+};
+
+var result = PlayerValidator.ValidateCreatePlayer(dto);
+if (!result.IsValid)
+{
+    foreach (var (field, messages) in result.Errors)
+    {
+        Console.WriteLine($"{field}: {string.Join(", ", messages)}");
+    }
+}
+```
 
 ### Test Coverage
 
-**Total Tests**: 262 tests, all passing ✅
+**Total Tests**: 292 tests, all passing ✅
 
 - **AuthenticationServiceTests**: 20 tests
 - **AuthorizationServiceTests**: 17 tests
@@ -212,7 +239,7 @@ In-memory mock implementation for development and testing:
 - **UserClaimTests**: 18 tests
 - **AuthorizationResultTests**: 8 tests
 - **Exception Tests**: 21 tests
-- **MockPlayerRepositoryTests**: 30 tests
+- **PlayerValidatorTests**: 43 tests
 
 #### Authorization Scenario Tests
 

@@ -1,3 +1,4 @@
+using GhcSamplePs.Core.Models.PlayerManagement;
 using GhcSamplePs.Core.Models.PlayerManagement.DTOs;
 using GhcSamplePs.Core.Validation;
 
@@ -5,125 +6,261 @@ namespace GhcSamplePs.Core.Tests.Validation;
 
 public class PlayerValidatorTests
 {
-    [Fact(DisplayName = "Validate returns success for valid CreatePlayerDto")]
-    public void Validate_WithValidCreatePlayerDto_ReturnsSuccess()
+    #region ValidateCreatePlayer Tests
+
+    [Fact(DisplayName = "ValidateCreatePlayer returns valid for valid CreatePlayerDto")]
+    public void ValidateCreatePlayer_WithValidDto_ReturnsValid()
     {
         var dto = new CreatePlayerDto
         {
             UserId = "user-123",
             Name = "John Doe",
-            DateOfBirth = new DateTime(2010, 5, 15),
+            DateOfBirth = new DateTime(1990, 6, 15),
             Gender = "Male",
             PhotoUrl = "https://example.com/photo.jpg"
         };
 
-        var result = PlayerValidator.Validate(dto);
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.True(result.IsValid);
         Assert.Empty(result.Errors);
     }
 
-    [Fact(DisplayName = "Validate returns success for valid UpdatePlayerDto")]
-    public void Validate_WithValidUpdatePlayerDto_ReturnsSuccess()
+    [Fact(DisplayName = "ValidateCreatePlayer returns valid with minimal required fields")]
+    public void ValidateCreatePlayer_WithMinimalRequiredFields_ReturnsValid()
+    {
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "John Doe",
+            DateOfBirth = new DateTime(1990, 6, 15)
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.True(result.IsValid);
+        Assert.Empty(result.Errors);
+    }
+
+    [Fact(DisplayName = "ValidateCreatePlayer throws when dto is null")]
+    public void ValidateCreatePlayer_WhenDtoIsNull_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => PlayerValidator.ValidateCreatePlayer(null!));
+    }
+
+    #endregion
+
+    #region ValidateUpdatePlayer Tests
+
+    [Fact(DisplayName = "ValidateUpdatePlayer returns valid for valid UpdatePlayerDto")]
+    public void ValidateUpdatePlayer_WithValidDto_ReturnsValid()
+    {
+        var dto = new UpdatePlayerDto
+        {
+            Id = 1,
+            Name = "John Doe Updated",
+            DateOfBirth = new DateTime(1990, 6, 15),
+            Gender = "Female",
+            PhotoUrl = "https://example.com/updated-photo.jpg"
+        };
+
+        var result = PlayerValidator.ValidateUpdatePlayer(dto);
+
+        Assert.True(result.IsValid);
+        Assert.Empty(result.Errors);
+    }
+
+    [Fact(DisplayName = "ValidateUpdatePlayer returns valid with minimal required fields")]
+    public void ValidateUpdatePlayer_WithMinimalRequiredFields_ReturnsValid()
     {
         var dto = new UpdatePlayerDto
         {
             Id = 1,
             Name = "John Doe",
-            DateOfBirth = new DateTime(2010, 5, 15),
-            Gender = "Female"
+            DateOfBirth = new DateTime(1990, 6, 15)
         };
 
-        var result = PlayerValidator.Validate(dto);
+        var result = PlayerValidator.ValidateUpdatePlayer(dto);
 
         Assert.True(result.IsValid);
         Assert.Empty(result.Errors);
     }
 
-    [Fact(DisplayName = "Validate returns error when UserId is empty")]
-    public void Validate_WithEmptyUserId_ReturnsError()
+    [Fact(DisplayName = "ValidateUpdatePlayer throws when dto is null")]
+    public void ValidateUpdatePlayer_WhenDtoIsNull_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => PlayerValidator.ValidateUpdatePlayer(null!));
+    }
+
+    #endregion
+
+    #region ValidatePlayer Tests
+
+    [Fact(DisplayName = "ValidatePlayer returns valid for valid Player entity")]
+    public void ValidatePlayer_WithValidPlayer_ReturnsValid()
+    {
+        var player = new Player
+        {
+            UserId = "user-123",
+            Name = "John Doe",
+            DateOfBirth = new DateTime(1990, 6, 15),
+            Gender = "Male",
+            PhotoUrl = "https://example.com/photo.jpg",
+            CreatedBy = "system"
+        };
+
+        var result = PlayerValidator.ValidatePlayer(player);
+
+        Assert.True(result.IsValid);
+        Assert.Empty(result.Errors);
+    }
+
+    [Fact(DisplayName = "ValidatePlayer throws when player is null")]
+    public void ValidatePlayer_WhenPlayerIsNull_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => PlayerValidator.ValidatePlayer(null!));
+    }
+
+    #endregion
+
+    #region Name Validation Tests
+
+    [Fact(DisplayName = "Name validation returns error when name is null")]
+    public void ValidateCreatePlayer_WhenNameIsNull_ReturnsNameRequiredError()
     {
         var dto = new CreatePlayerDto
         {
-            UserId = "",
-            Name = "John Doe",
-            DateOfBirth = new DateTime(2010, 5, 15)
+            UserId = "user-123",
+            Name = null!,
+            DateOfBirth = new DateTime(1990, 6, 15)
         };
 
-        var result = PlayerValidator.Validate(dto);
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey(nameof(CreatePlayerDto.UserId)));
+        Assert.True(result.Errors.TryGetValue("Name", out var nameErrors));
+        Assert.Contains("Name is required", nameErrors);
     }
 
-    [Fact(DisplayName = "Validate returns error when UserId is whitespace")]
-    public void Validate_WithWhitespaceUserId_ReturnsError()
-    {
-        var dto = new CreatePlayerDto
-        {
-            UserId = "   ",
-            Name = "John Doe",
-            DateOfBirth = new DateTime(2010, 5, 15)
-        };
-
-        var result = PlayerValidator.Validate(dto);
-
-        Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey(nameof(CreatePlayerDto.UserId)));
-    }
-
-    [Fact(DisplayName = "Validate returns error when Name is empty")]
-    public void Validate_WithEmptyName_ReturnsError()
+    [Fact(DisplayName = "Name validation returns error when name is empty")]
+    public void ValidateCreatePlayer_WhenNameIsEmpty_ReturnsNameRequiredError()
     {
         var dto = new CreatePlayerDto
         {
             UserId = "user-123",
             Name = "",
-            DateOfBirth = new DateTime(2010, 5, 15)
+            DateOfBirth = new DateTime(1990, 6, 15)
         };
 
-        var result = PlayerValidator.Validate(dto);
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey(nameof(CreatePlayerDto.Name)));
+        Assert.True(result.Errors.TryGetValue("Name", out var nameErrors));
+        Assert.Contains("Name is required", nameErrors);
     }
 
-    [Fact(DisplayName = "Validate returns error when Name exceeds max length")]
-    public void Validate_WithNameTooLong_ReturnsError()
+    [Fact(DisplayName = "Name validation returns error when name is whitespace only")]
+    public void ValidateCreatePlayer_WhenNameIsWhitespace_ReturnsNameRequiredError()
+    {
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "   ",
+            DateOfBirth = new DateTime(1990, 6, 15)
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.False(result.IsValid);
+        Assert.True(result.Errors.TryGetValue("Name", out var nameErrors));
+        Assert.Contains("Name is required", nameErrors);
+    }
+
+    [Fact(DisplayName = "Name validation returns error when name exceeds 200 characters")]
+    public void ValidateCreatePlayer_WhenNameExceeds200Characters_ReturnsNameTooLongError()
     {
         var dto = new CreatePlayerDto
         {
             UserId = "user-123",
             Name = new string('A', 201),
-            DateOfBirth = new DateTime(2010, 5, 15)
+            DateOfBirth = new DateTime(1990, 6, 15)
         };
 
-        var result = PlayerValidator.Validate(dto);
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey(nameof(CreatePlayerDto.Name)));
-        Assert.Contains("200", result.Errors[nameof(CreatePlayerDto.Name)][0]);
+        Assert.True(result.Errors.TryGetValue("Name", out var nameErrors));
+        Assert.Contains("Name must not exceed 200 characters", nameErrors);
     }
 
-    [Fact(DisplayName = "Validate returns error when DateOfBirth is in the future")]
-    public void Validate_WithFutureDateOfBirth_ReturnsError()
+    [Fact(DisplayName = "Name validation succeeds when name is exactly 200 characters")]
+    public void ValidateCreatePlayer_WhenNameIsExactly200Characters_ReturnsValid()
+    {
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = new string('A', 200),
+            DateOfBirth = new DateTime(1990, 6, 15)
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.True(result.IsValid);
+    }
+
+    [Fact(DisplayName = "Name validation succeeds when name is 1 character")]
+    public void ValidateCreatePlayer_WhenNameIsOneCharacter_ReturnsValid()
+    {
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "A",
+            DateOfBirth = new DateTime(1990, 6, 15)
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.True(result.IsValid);
+    }
+
+    [Fact(DisplayName = "Name validation trims whitespace before checking length")]
+    public void ValidateCreatePlayer_NameWithPaddingWhitespace_TrimsBeforeValidation()
+    {
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "  " + new string('A', 200) + "  ",
+            DateOfBirth = new DateTime(1990, 6, 15)
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.True(result.IsValid);
+    }
+
+    #endregion
+
+    #region DateOfBirth Validation Tests
+
+    [Fact(DisplayName = "DateOfBirth validation returns error when DateOfBirth is default")]
+    public void ValidateCreatePlayer_WhenDateOfBirthIsDefault_ReturnsDateOfBirthRequiredError()
     {
         var dto = new CreatePlayerDto
         {
             UserId = "user-123",
             Name = "John Doe",
-            DateOfBirth = DateTime.UtcNow.AddYears(1)
+            DateOfBirth = default
         };
 
-        var result = PlayerValidator.Validate(dto);
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey(nameof(CreatePlayerDto.DateOfBirth)));
-        Assert.Contains("past", result.Errors[nameof(CreatePlayerDto.DateOfBirth)][0]);
+        Assert.True(result.Errors.TryGetValue("DateOfBirth", out var dateOfBirthErrors));
+        Assert.Contains("Date of birth is required", dateOfBirthErrors);
     }
 
-    [Fact(DisplayName = "Validate returns error when DateOfBirth is today")]
-    public void Validate_WithTodayDateOfBirth_ReturnsError()
+    [Fact(DisplayName = "DateOfBirth validation returns error when DateOfBirth is today")]
+    public void ValidateCreatePlayer_WhenDateOfBirthIsToday_ReturnsDateOfBirthMustBePastError()
     {
         var dto = new CreatePlayerDto
         {
@@ -132,243 +269,455 @@ public class PlayerValidatorTests
             DateOfBirth = DateTime.UtcNow.Date
         };
 
-        var result = PlayerValidator.Validate(dto);
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey(nameof(CreatePlayerDto.DateOfBirth)));
+        Assert.True(result.Errors.TryGetValue("DateOfBirth", out var dateOfBirthErrors));
+        Assert.Contains("Date of birth must be in the past", dateOfBirthErrors);
     }
 
-    [Fact(DisplayName = "Validate returns error when DateOfBirth is more than 100 years ago")]
-    public void Validate_WithDateOfBirthTooOld_ReturnsError()
+    [Fact(DisplayName = "DateOfBirth validation returns error when DateOfBirth is in the future")]
+    public void ValidateCreatePlayer_WhenDateOfBirthIsFuture_ReturnsDateOfBirthMustBePastError()
     {
         var dto = new CreatePlayerDto
         {
             UserId = "user-123",
             Name = "John Doe",
-            DateOfBirth = DateTime.UtcNow.AddYears(-101)
+            DateOfBirth = DateTime.UtcNow.Date.AddDays(1)
         };
 
-        var result = PlayerValidator.Validate(dto);
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey(nameof(CreatePlayerDto.DateOfBirth)));
-        Assert.Contains("100 years", result.Errors[nameof(CreatePlayerDto.DateOfBirth)][0]);
+        Assert.True(result.Errors.TryGetValue("DateOfBirth", out var dateOfBirthErrors));
+        Assert.Contains("Date of birth must be in the past", dateOfBirthErrors);
     }
 
-    [Fact(DisplayName = "Validate returns error when Gender is invalid")]
-    public void Validate_WithInvalidGender_ReturnsError()
+    [Fact(DisplayName = "DateOfBirth validation returns error when DateOfBirth is more than 100 years ago")]
+    public void ValidateCreatePlayer_WhenDateOfBirthMoreThan100YearsAgo_ReturnsDateOfBirthTooOldError()
     {
         var dto = new CreatePlayerDto
         {
             UserId = "user-123",
             Name = "John Doe",
-            DateOfBirth = new DateTime(2010, 5, 15),
-            Gender = "Invalid Gender"
+            DateOfBirth = DateTime.UtcNow.Date.AddYears(-101)
         };
 
-        var result = PlayerValidator.Validate(dto);
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey(nameof(CreatePlayerDto.Gender)));
-        Assert.Contains("must be one of", result.Errors[nameof(CreatePlayerDto.Gender)][0]);
+        Assert.True(result.Errors.TryGetValue("DateOfBirth", out var dateOfBirthErrors));
+        Assert.Contains("Date of birth cannot be more than 100 years ago", dateOfBirthErrors);
     }
 
-    [Theory(DisplayName = "Validate accepts all valid gender options")]
+    [Fact(DisplayName = "DateOfBirth validation succeeds when DateOfBirth is exactly 100 years ago")]
+    public void ValidateCreatePlayer_WhenDateOfBirthIsExactly100YearsAgo_ReturnsValid()
+    {
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "John Doe",
+            DateOfBirth = DateTime.UtcNow.Date.AddYears(-100)
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.True(result.IsValid);
+    }
+
+    [Fact(DisplayName = "DateOfBirth validation succeeds when DateOfBirth is yesterday")]
+    public void ValidateCreatePlayer_WhenDateOfBirthIsYesterday_ReturnsValid()
+    {
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "John Doe",
+            DateOfBirth = DateTime.UtcNow.Date.AddDays(-1)
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.True(result.IsValid);
+    }
+
+    #endregion
+
+    #region Gender Validation Tests
+
+    [Fact(DisplayName = "Gender validation succeeds when Gender is null")]
+    public void ValidateCreatePlayer_WhenGenderIsNull_ReturnsValid()
+    {
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "John Doe",
+            DateOfBirth = new DateTime(1990, 6, 15),
+            Gender = null
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.True(result.IsValid);
+    }
+
+    [Fact(DisplayName = "Gender validation succeeds when Gender is empty")]
+    public void ValidateCreatePlayer_WhenGenderIsEmpty_ReturnsValid()
+    {
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "John Doe",
+            DateOfBirth = new DateTime(1990, 6, 15),
+            Gender = ""
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.True(result.IsValid);
+    }
+
+    [Theory(DisplayName = "Gender validation succeeds for valid gender options")]
     [InlineData("Male")]
     [InlineData("Female")]
     [InlineData("Non-binary")]
     [InlineData("Prefer not to say")]
-    public void Validate_WithValidGender_ReturnsSuccess(string gender)
+    public void ValidateCreatePlayer_WithValidGenderOption_ReturnsValid(string gender)
     {
         var dto = new CreatePlayerDto
         {
             UserId = "user-123",
             Name = "John Doe",
-            DateOfBirth = new DateTime(2010, 5, 15),
+            DateOfBirth = new DateTime(1990, 6, 15),
             Gender = gender
         };
 
-        var result = PlayerValidator.Validate(dto);
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.True(result.IsValid);
     }
 
-    [Fact(DisplayName = "Validate accepts null gender")]
-    public void Validate_WithNullGender_ReturnsSuccess()
+    [Theory(DisplayName = "Gender validation is case-insensitive")]
+    [InlineData("male")]
+    [InlineData("MALE")]
+    [InlineData("MaLe")]
+    [InlineData("female")]
+    [InlineData("FEMALE")]
+    [InlineData("non-binary")]
+    [InlineData("NON-BINARY")]
+    [InlineData("prefer not to say")]
+    [InlineData("PREFER NOT TO SAY")]
+    public void ValidateCreatePlayer_WithCaseInsensitiveGender_ReturnsValid(string gender)
     {
         var dto = new CreatePlayerDto
         {
             UserId = "user-123",
             Name = "John Doe",
-            DateOfBirth = new DateTime(2010, 5, 15),
-            Gender = null
+            DateOfBirth = new DateTime(1990, 6, 15),
+            Gender = gender
         };
 
-        var result = PlayerValidator.Validate(dto);
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.True(result.IsValid);
     }
 
-    [Fact(DisplayName = "Validate returns error when PhotoUrl exceeds max length")]
-    public void Validate_WithPhotoUrlTooLong_ReturnsError()
+    [Fact(DisplayName = "Gender validation returns error for invalid gender option")]
+    public void ValidateCreatePlayer_WithInvalidGender_ReturnsGenderInvalidError()
     {
         var dto = new CreatePlayerDto
         {
             UserId = "user-123",
             Name = "John Doe",
-            DateOfBirth = new DateTime(2010, 5, 15),
-            PhotoUrl = "https://example.com/" + new string('a', 500)
+            DateOfBirth = new DateTime(1990, 6, 15),
+            Gender = "InvalidGender"
         };
 
-        var result = PlayerValidator.Validate(dto);
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey(nameof(CreatePlayerDto.PhotoUrl)));
-        Assert.Contains("500", result.Errors[nameof(CreatePlayerDto.PhotoUrl)][0]);
+        Assert.True(result.Errors.TryGetValue("Gender", out var genderErrors));
+        Assert.Contains("Gender must be Male, Female, Non-binary, or Prefer not to say", genderErrors);
     }
 
-    [Fact(DisplayName = "Validate returns error when PhotoUrl is not a valid URL")]
-    public void Validate_WithInvalidPhotoUrl_ReturnsError()
+    [Theory(DisplayName = "Gender validation returns error for invalid gender values")]
+    [InlineData("M")]
+    [InlineData("F")]
+    [InlineData("Other")]
+    [InlineData("Unknown")]
+    [InlineData("Not specified")]
+    public void ValidateCreatePlayer_WithInvalidGenderValues_ReturnsGenderInvalidError(string gender)
     {
         var dto = new CreatePlayerDto
         {
             UserId = "user-123",
             Name = "John Doe",
-            DateOfBirth = new DateTime(2010, 5, 15),
-            PhotoUrl = "not-a-valid-url"
+            DateOfBirth = new DateTime(1990, 6, 15),
+            Gender = gender
         };
 
-        var result = PlayerValidator.Validate(dto);
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey(nameof(CreatePlayerDto.PhotoUrl)));
-        Assert.Contains("valid HTTP or HTTPS URL", result.Errors[nameof(CreatePlayerDto.PhotoUrl)][0]);
+        Assert.True(result.Errors.TryGetValue("Gender", out var genderErrors));
+        Assert.Contains("Gender must be Male, Female, Non-binary, or Prefer not to say", genderErrors);
     }
 
-    [Fact(DisplayName = "Validate returns error when PhotoUrl uses non-HTTP scheme")]
-    public void Validate_WithNonHttpPhotoUrl_ReturnsError()
+    [Fact(DisplayName = "Gender validation trims whitespace before validation")]
+    public void ValidateCreatePlayer_GenderWithWhitespace_TrimsBeforeValidation()
     {
         var dto = new CreatePlayerDto
         {
             UserId = "user-123",
             Name = "John Doe",
-            DateOfBirth = new DateTime(2010, 5, 15),
-            PhotoUrl = "ftp://example.com/photo.jpg"
+            DateOfBirth = new DateTime(1990, 6, 15),
+            Gender = "  Male  "
         };
 
-        var result = PlayerValidator.Validate(dto);
-
-        Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey(nameof(CreatePlayerDto.PhotoUrl)));
-    }
-
-    [Theory(DisplayName = "Validate accepts valid HTTP and HTTPS URLs")]
-    [InlineData("http://example.com/photo.jpg")]
-    [InlineData("https://example.com/photo.jpg")]
-    [InlineData("https://subdomain.example.com/path/to/photo.jpg")]
-    public void Validate_WithValidPhotoUrl_ReturnsSuccess(string photoUrl)
-    {
-        var dto = new CreatePlayerDto
-        {
-            UserId = "user-123",
-            Name = "John Doe",
-            DateOfBirth = new DateTime(2010, 5, 15),
-            PhotoUrl = photoUrl
-        };
-
-        var result = PlayerValidator.Validate(dto);
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.True(result.IsValid);
     }
 
-    [Fact(DisplayName = "Validate accepts null PhotoUrl")]
-    public void Validate_WithNullPhotoUrl_ReturnsSuccess()
+    #endregion
+
+    #region PhotoUrl Validation Tests
+
+    [Fact(DisplayName = "PhotoUrl validation succeeds when PhotoUrl is null")]
+    public void ValidateCreatePlayer_WhenPhotoUrlIsNull_ReturnsValid()
     {
         var dto = new CreatePlayerDto
         {
             UserId = "user-123",
             Name = "John Doe",
-            DateOfBirth = new DateTime(2010, 5, 15),
+            DateOfBirth = new DateTime(1990, 6, 15),
             PhotoUrl = null
         };
 
-        var result = PlayerValidator.Validate(dto);
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.True(result.IsValid);
     }
 
-    [Fact(DisplayName = "Validate throws when CreatePlayerDto is null")]
-    public void Validate_WithNullCreatePlayerDto_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            PlayerValidator.Validate((CreatePlayerDto)null!));
-    }
-
-    [Fact(DisplayName = "Validate throws when UpdatePlayerDto is null")]
-    public void Validate_WithNullUpdatePlayerDto_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() =>
-            PlayerValidator.Validate((UpdatePlayerDto)null!));
-    }
-
-    [Fact(DisplayName = "Validate returns multiple errors when multiple fields are invalid")]
-    public void Validate_WithMultipleInvalidFields_ReturnsMultipleErrors()
-    {
-        var dto = new CreatePlayerDto
-        {
-            UserId = "",
-            Name = "",
-            DateOfBirth = DateTime.UtcNow.AddYears(1),
-            Gender = "Invalid",
-            PhotoUrl = "invalid-url"
-        };
-
-        var result = PlayerValidator.Validate(dto);
-
-        Assert.False(result.IsValid);
-        Assert.True(result.Errors.Count >= 4);
-    }
-
-    [Fact(DisplayName = "Validate trims whitespace from name when checking length")]
-    public void Validate_WithWhitespacePaddedName_TrimsAndValidates()
+    [Fact(DisplayName = "PhotoUrl validation succeeds when PhotoUrl is empty")]
+    public void ValidateCreatePlayer_WhenPhotoUrlIsEmpty_ReturnsValid()
     {
         var dto = new CreatePlayerDto
         {
             UserId = "user-123",
-            Name = "   " + new string('A', 200) + "   ",
-            DateOfBirth = new DateTime(2010, 5, 15)
+            Name = "John Doe",
+            DateOfBirth = new DateTime(1990, 6, 15),
+            PhotoUrl = ""
         };
 
-        var result = PlayerValidator.Validate(dto);
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.True(result.IsValid);
     }
 
-    [Fact(DisplayName = "ValidGenderOptions constant contains expected values")]
-    public void ValidGenderOptions_ContainsExpectedValues()
+    [Fact(DisplayName = "PhotoUrl validation succeeds for valid HTTPS URL")]
+    public void ValidateCreatePlayer_WithValidHttpsUrl_ReturnsValid()
     {
-        Assert.Equal(4, PlayerValidator.ValidGenderOptions.Count);
-        Assert.Contains("Male", PlayerValidator.ValidGenderOptions);
-        Assert.Contains("Female", PlayerValidator.ValidGenderOptions);
-        Assert.Contains("Non-binary", PlayerValidator.ValidGenderOptions);
-        Assert.Contains("Prefer not to say", PlayerValidator.ValidGenderOptions);
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "John Doe",
+            DateOfBirth = new DateTime(1990, 6, 15),
+            PhotoUrl = "https://example.com/photos/player.jpg"
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.True(result.IsValid);
     }
 
-    [Fact(DisplayName = "MaxNameLength constant has expected value")]
-    public void MaxNameLength_HasExpectedValue()
+    [Fact(DisplayName = "PhotoUrl validation succeeds for valid HTTP URL")]
+    public void ValidateCreatePlayer_WithValidHttpUrl_ReturnsValid()
+    {
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "John Doe",
+            DateOfBirth = new DateTime(1990, 6, 15),
+            PhotoUrl = "http://example.com/photos/player.jpg"
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.True(result.IsValid);
+    }
+
+    [Fact(DisplayName = "PhotoUrl validation returns error when PhotoUrl exceeds 500 characters")]
+    public void ValidateCreatePlayer_WhenPhotoUrlExceeds500Characters_ReturnsPhotoUrlTooLongError()
+    {
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "John Doe",
+            DateOfBirth = new DateTime(1990, 6, 15),
+            PhotoUrl = "https://example.com/" + new string('a', 490)
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.False(result.IsValid);
+        Assert.True(result.Errors.TryGetValue("PhotoUrl", out var errors));
+        Assert.Contains("Photo URL must not exceed 500 characters", errors);
+    }
+
+    [Fact(DisplayName = "PhotoUrl validation succeeds when PhotoUrl is exactly 500 characters")]
+    public void ValidateCreatePlayer_WhenPhotoUrlIsExactly500Characters_ReturnsValid()
+    {
+        var baseUrl = "https://example.com/";
+        var padding = new string('a', 500 - baseUrl.Length);
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "John Doe",
+            DateOfBirth = new DateTime(1990, 6, 15),
+            PhotoUrl = baseUrl + padding
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.True(result.IsValid);
+    }
+
+    [Fact(DisplayName = "PhotoUrl validation returns error for invalid URL format")]
+    public void ValidateCreatePlayer_WithInvalidUrlFormat_ReturnsPhotoUrlInvalidError()
+    {
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "John Doe",
+            DateOfBirth = new DateTime(1990, 6, 15),
+            PhotoUrl = "not-a-valid-url"
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.False(result.IsValid);
+        Assert.True(result.Errors.TryGetValue("PhotoUrl", out var photoUrlErrors), "Expected 'PhotoUrl' key in errors.");
+        Assert.Contains("Photo URL must be a valid HTTP or HTTPS URL", photoUrlErrors);
+    }
+
+    [Theory(DisplayName = "PhotoUrl validation returns error for non-HTTP(S) schemes")]
+    [InlineData("ftp://example.com/photo.jpg")]
+    [InlineData("file:///path/to/photo.jpg")]
+    [InlineData("mailto:test@example.com")]
+    public void ValidateCreatePlayer_WithNonHttpScheme_ReturnsPhotoUrlInvalidError(string photoUrl)
+    {
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "John Doe",
+            DateOfBirth = new DateTime(1990, 6, 15),
+            PhotoUrl = photoUrl
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.False(result.IsValid);
+        Assert.True(result.Errors.TryGetValue("PhotoUrl", out var photoUrlErrors));
+        Assert.Contains("Photo URL must be a valid HTTP or HTTPS URL", photoUrlErrors);
+    }
+
+    [Fact(DisplayName = "PhotoUrl validation can return multiple errors")]
+    public void ValidateCreatePlayer_WithLongInvalidUrl_ReturnsBothPhotoUrlErrors()
+    {
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "John Doe",
+            DateOfBirth = new DateTime(1990, 6, 15),
+            PhotoUrl = new string('a', 501)
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.False(result.IsValid);
+        Assert.True(result.Errors.TryGetValue("PhotoUrl", out var photoUrlErrors));
+        Assert.Equal(2, photoUrlErrors.Length);
+        Assert.Contains("Photo URL must not exceed 500 characters", photoUrlErrors);
+        Assert.Contains("Photo URL must be a valid HTTP or HTTPS URL", photoUrlErrors);
+    }
+
+    #endregion
+
+    #region Multiple Errors Tests
+
+    [Fact(DisplayName = "Validation returns all errors together")]
+    public void ValidateCreatePlayer_WithMultipleInvalidFields_ReturnsAllErrors()
+    {
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "",
+            DateOfBirth = DateTime.UtcNow.Date.AddDays(1),
+            Gender = "InvalidGender",
+            PhotoUrl = "invalid-url"
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.False(result.IsValid);
+        Assert.Equal(4, result.Errors.Count);
+        Assert.True(result.Errors.TryGetValue("Name", out var nameErrors));
+        Assert.True(result.Errors.TryGetValue("DateOfBirth", out var dateOfBirthErrors));
+        Assert.True(result.Errors.TryGetValue("Gender", out var genderErrors));
+        Assert.True(result.Errors.TryGetValue("PhotoUrl", out var photoUrlErrors));
+    }
+
+    [Fact(DisplayName = "Validation collects all errors for a single field")]
+    public void ValidateCreatePlayer_WithMultipleErrorsOnSameField_CollectsAllErrors()
+    {
+        var dto = new CreatePlayerDto
+        {
+            UserId = "user-123",
+            Name = "John Doe",
+            DateOfBirth = new DateTime(1990, 6, 15),
+            PhotoUrl = "ftp://" + new string('a', 500)
+        };
+
+        var result = PlayerValidator.ValidateCreatePlayer(dto);
+
+        Assert.False(result.IsValid);
+        Assert.True(result.Errors.TryGetValue("PhotoUrl", out var photoUrlErrors));
+        Assert.Equal(2, photoUrlErrors.Length);
+    }
+
+    #endregion
+
+    #region Constants Tests
+
+    [Fact(DisplayName = "MaxNameLength constant is 200")]
+    public void MaxNameLength_IsCorrectValue()
     {
         Assert.Equal(200, PlayerValidator.MaxNameLength);
     }
 
-    [Fact(DisplayName = "MaxPhotoUrlLength constant has expected value")]
-    public void MaxPhotoUrlLength_HasExpectedValue()
+    [Fact(DisplayName = "MaxPhotoUrlLength constant is 500")]
+    public void MaxPhotoUrlLength_IsCorrectValue()
     {
         Assert.Equal(500, PlayerValidator.MaxPhotoUrlLength);
     }
 
-    [Fact(DisplayName = "MaxAgeInYears constant has expected value")]
-    public void MaxAgeInYears_HasExpectedValue()
+    [Fact(DisplayName = "MaxAgeYears constant is 100")]
+    public void MaxAgeYears_IsCorrectValue()
     {
-        Assert.Equal(100, PlayerValidator.MaxAgeInYears);
+        Assert.Equal(100, PlayerValidator.MaxAgeYears);
     }
+
+    [Fact(DisplayName = "ValidGenderOptions contains all expected options")]
+    public void ValidGenderOptions_ContainsExpectedOptions()
+    {
+        var expectedOptions = new[] { "Male", "Female", "Non-binary", "Prefer not to say" };
+
+        Assert.Equal(expectedOptions.Length, PlayerValidator.ValidGenderOptions.Length);
+        foreach (var option in expectedOptions)
+        {
+            Assert.Contains(option, PlayerValidator.ValidGenderOptions);
+        }
+    }
+
+    #endregion
 }

@@ -1,110 +1,114 @@
 using GhcSamplePs.Core.Common;
+using GhcSamplePs.Core.Models.PlayerManagement;
 using GhcSamplePs.Core.Models.PlayerManagement.DTOs;
 
 namespace GhcSamplePs.Core.Validation;
 
 /// <summary>
-/// Validator for player data validation according to business rules.
+/// Provides validation logic for player data, implementing all business rules defined in the specification.
 /// </summary>
 /// <remarks>
 /// <para>Validation Rules:</para>
 /// <list type="bullet">
-/// <item>UserId: Required, cannot be empty or whitespace</item>
-/// <item>Name: Required, not empty/whitespace, length 1-200 characters</item>
-/// <item>DateOfBirth: Required, must be past date, not more than 100 years ago</item>
-/// <item>Gender: If provided, must be one of: "Male", "Female", "Non-binary", "Prefer not to say"</item>
-/// <item>PhotoUrl: If provided, max 500 characters, must be valid HTTP/HTTPS URL</item>
+///   <item><description><b>Name:</b> Required, 1-200 characters, not whitespace only</description></item>
+///   <item><description><b>DateOfBirth:</b> Required, must be a past date, not more than 100 years ago</description></item>
+///   <item><description><b>Gender:</b> Optional, if provided must be: Male, Female, Non-binary, or Prefer not to say (case-insensitive)</description></item>
+///   <item><description><b>PhotoUrl:</b> Optional, if provided must be max 500 characters and a valid HTTP or HTTPS URL</description></item>
 /// </list>
 /// </remarks>
+/// <example>
+/// <code>
+/// // Validate a CreatePlayerDto
+/// var createDto = new CreatePlayerDto
+/// {
+///     UserId = "user-123",
+///     Name = "John Doe",
+///     DateOfBirth = new DateTime(1990, 6, 15)
+/// };
+/// var result = PlayerValidator.ValidateCreatePlayer(createDto);
+/// if (!result.IsValid)
+/// {
+///     foreach (var (field, messages) in result.Errors)
+///     {
+///         Console.WriteLine($"{field}: {string.Join(", ", messages)}");
+///     }
+/// }
+/// </code>
+/// </example>
 public static class PlayerValidator
 {
     /// <summary>
-    /// The maximum length allowed for a player's name.
+    /// Maximum allowed length for a player's name.
     /// </summary>
     public const int MaxNameLength = 200;
 
     /// <summary>
-    /// The maximum length allowed for a photo URL.
+    /// Maximum allowed length for a player's photo URL.
     /// </summary>
     public const int MaxPhotoUrlLength = 500;
 
     /// <summary>
-    /// The maximum age allowed for a player (in years).
+    /// Maximum age in years for date of birth validation.
     /// </summary>
-    public const int MaxAgeInYears = 100;
+    public const int MaxAgeYears = 100;
 
     /// <summary>
-    /// The valid gender options for a player.
+    /// Valid gender options (case-insensitive).
+    /// Valid values: Male, Female, Non-binary, Prefer not to say.
     /// </summary>
-    public static readonly IReadOnlyList<string> ValidGenderOptions = new[]
-    {
-        "Male",
-        "Female",
-        "Non-binary",
-        "Prefer not to say"
-    };
+    public static readonly string[] ValidGenderOptions = ["Male", "Female", "Non-binary", "Prefer not to say"];
 
     /// <summary>
     /// Validates a CreatePlayerDto against all business rules.
     /// </summary>
-    /// <param name="dto">The DTO to validate.</param>
-    /// <returns>A ValidationResult indicating if the data is valid.</returns>
+    /// <param name="dto">The CreatePlayerDto to validate.</param>
+    /// <returns>A ValidationResult containing all validation errors found, or a valid result if no errors.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when dto is null.</exception>
     /// <example>
     /// <code>
-    /// var dto = new CreatePlayerDto
+    /// var createDto = new CreatePlayerDto
     /// {
     ///     UserId = "user-123",
     ///     Name = "John Doe",
-    ///     DateOfBirth = new DateTime(2010, 5, 15)
+    ///     DateOfBirth = new DateTime(1990, 6, 15)
     /// };
-    /// var result = PlayerValidator.Validate(dto);
-    /// if (!result.IsValid)
-    /// {
-    ///     foreach (var (field, errors) in result.Errors)
-    ///     {
-    ///         Console.WriteLine($"{field}: {string.Join(", ", errors)}");
-    ///     }
-    /// }
+    /// var result = PlayerValidator.ValidateCreatePlayer(createDto);
+    /// Console.WriteLine(result.IsValid); // True
     /// </code>
     /// </example>
-    public static ValidationResult Validate(CreatePlayerDto dto)
+    public static ValidationResult ValidateCreatePlayer(CreatePlayerDto dto)
     {
         ArgumentNullException.ThrowIfNull(dto);
 
         var errors = new Dictionary<string, List<string>>();
 
-        ValidateUserId(dto.UserId, errors);
         ValidateName(dto.Name, errors);
         ValidateDateOfBirth(dto.DateOfBirth, errors);
         ValidateGender(dto.Gender, errors);
         ValidatePhotoUrl(dto.PhotoUrl, errors);
 
-        if (errors.Count == 0)
-        {
-            return ValidationResult.Valid();
-        }
-
-        return ValidationResult.Invalid(
-            errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToArray()));
+        return BuildResult(errors);
     }
 
     /// <summary>
     /// Validates an UpdatePlayerDto against all business rules.
     /// </summary>
-    /// <param name="dto">The DTO to validate.</param>
-    /// <returns>A ValidationResult indicating if the data is valid.</returns>
+    /// <param name="dto">The UpdatePlayerDto to validate.</param>
+    /// <returns>A ValidationResult containing all validation errors found, or a valid result if no errors.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when dto is null.</exception>
     /// <example>
     /// <code>
-    /// var dto = new UpdatePlayerDto
+    /// var updateDto = new UpdatePlayerDto
     /// {
     ///     Id = 1,
-    ///     Name = "John Doe",
-    ///     DateOfBirth = new DateTime(2010, 5, 15)
+    ///     Name = "John Doe Updated",
+    ///     DateOfBirth = new DateTime(1990, 6, 15)
     /// };
-    /// var result = PlayerValidator.Validate(dto);
+    /// var result = PlayerValidator.ValidateUpdatePlayer(updateDto);
+    /// Console.WriteLine(result.IsValid); // True
     /// </code>
     /// </example>
-    public static ValidationResult Validate(UpdatePlayerDto dto)
+    public static ValidationResult ValidateUpdatePlayer(UpdatePlayerDto dto)
     {
         ArgumentNullException.ThrowIfNull(dto);
 
@@ -115,52 +119,76 @@ public static class PlayerValidator
         ValidateGender(dto.Gender, errors);
         ValidatePhotoUrl(dto.PhotoUrl, errors);
 
-        if (errors.Count == 0)
-        {
-            return ValidationResult.Valid();
-        }
-
-        return ValidationResult.Invalid(
-            errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToArray()));
+        return BuildResult(errors);
     }
 
-    private static void ValidateUserId(string userId, Dictionary<string, List<string>> errors)
+    /// <summary>
+    /// Validates a Player entity against all business rules.
+    /// </summary>
+    /// <param name="player">The Player entity to validate.</param>
+    /// <returns>A ValidationResult containing all validation errors found, or a valid result if no errors.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when player is null.</exception>
+    /// <example>
+    /// <code>
+    /// var player = new Player
+    /// {
+    ///     UserId = "user-123",
+    ///     Name = "John Doe",
+    ///     DateOfBirth = new DateTime(1990, 6, 15),
+    ///     CreatedBy = "system"
+    /// };
+    /// var result = PlayerValidator.ValidatePlayer(player);
+    /// Console.WriteLine(result.IsValid); // True
+    /// </code>
+    /// </example>
+    public static ValidationResult ValidatePlayer(Player player)
     {
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            AddError(errors, nameof(CreatePlayerDto.UserId), "User ID is required.");
-        }
+        ArgumentNullException.ThrowIfNull(player);
+
+        var errors = new Dictionary<string, List<string>>();
+
+        ValidateName(player.Name, errors);
+        ValidateDateOfBirth(player.DateOfBirth, errors);
+        ValidateGender(player.Gender, errors);
+        ValidatePhotoUrl(player.PhotoUrl, errors);
+
+        return BuildResult(errors);
     }
 
-    private static void ValidateName(string name, Dictionary<string, List<string>> errors)
+    private static void ValidateName(string? name, Dictionary<string, List<string>> errors)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            AddError(errors, nameof(CreatePlayerDto.Name), "Name is required.");
+            AddError(errors, nameof(Player.Name), "Name is required");
             return;
         }
 
         var trimmedName = name.Trim();
         if (trimmedName.Length > MaxNameLength)
         {
-            AddError(errors, nameof(CreatePlayerDto.Name), $"Name cannot exceed {MaxNameLength} characters.");
+            AddError(errors, nameof(Player.Name), "Name must not exceed 200 characters");
         }
     }
 
     private static void ValidateDateOfBirth(DateTime dateOfBirth, Dictionary<string, List<string>> errors)
     {
+        if (dateOfBirth == default)
+        {
+            AddError(errors, nameof(Player.DateOfBirth), "Date of birth is required");
+            return;
+        }
+
         var today = DateTime.UtcNow.Date;
 
         if (dateOfBirth.Date >= today)
         {
-            AddError(errors, nameof(CreatePlayerDto.DateOfBirth), "Date of birth must be in the past.");
-            return;
+            AddError(errors, nameof(Player.DateOfBirth), "Date of birth must be in the past");
         }
 
-        var maxPastDate = today.AddYears(-MaxAgeInYears);
+        var maxPastDate = today.AddYears(-MaxAgeYears);
         if (dateOfBirth.Date < maxPastDate)
         {
-            AddError(errors, nameof(CreatePlayerDto.DateOfBirth), $"Date of birth cannot be more than {MaxAgeInYears} years ago.");
+            AddError(errors, nameof(Player.DateOfBirth), "Date of birth cannot be more than 100 years ago");
         }
     }
 
@@ -172,10 +200,12 @@ public static class PlayerValidator
         }
 
         var trimmedGender = gender.Trim();
-        if (!ValidGenderOptions.Contains(trimmedGender, StringComparer.OrdinalIgnoreCase))
+        var isValidGender = ValidGenderOptions.Any(validOption =>
+            string.Equals(validOption, trimmedGender, StringComparison.OrdinalIgnoreCase));
+
+        if (!isValidGender)
         {
-            var validOptions = string.Join(", ", ValidGenderOptions);
-            AddError(errors, nameof(CreatePlayerDto.Gender), $"Gender must be one of: {validOptions}.");
+            AddError(errors, nameof(Player.Gender), "Gender must be Male, Female, Non-binary, or Prefer not to say");
         }
     }
 
@@ -190,14 +220,13 @@ public static class PlayerValidator
 
         if (trimmedUrl.Length > MaxPhotoUrlLength)
         {
-            AddError(errors, nameof(CreatePlayerDto.PhotoUrl), $"Photo URL cannot exceed {MaxPhotoUrlLength} characters.");
-            return;
+            AddError(errors, nameof(Player.PhotoUrl), "Photo URL must not exceed 500 characters");
         }
 
         if (!Uri.TryCreate(trimmedUrl, UriKind.Absolute, out var uri) ||
             (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
         {
-            AddError(errors, nameof(CreatePlayerDto.PhotoUrl), "Photo URL must be a valid HTTP or HTTPS URL.");
+            AddError(errors, nameof(Player.PhotoUrl), "Photo URL must be a valid HTTP or HTTPS URL");
         }
     }
 
@@ -210,5 +239,19 @@ public static class PlayerValidator
         }
 
         fieldErrors.Add(errorMessage);
+    }
+
+    private static ValidationResult BuildResult(Dictionary<string, List<string>> errors)
+    {
+        if (errors.Count == 0)
+        {
+            return ValidationResult.Valid();
+        }
+
+        var errorDictionary = errors.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value.ToArray());
+
+        return ValidationResult.Invalid(errorDictionary);
     }
 }
