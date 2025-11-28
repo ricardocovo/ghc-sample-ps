@@ -138,8 +138,8 @@ public class PlayerValidatorTests
         var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey("Name"));
-        Assert.Contains("Name is required", result.Errors["Name"]);
+        Assert.True(result.Errors.TryGetValue("Name", out var nameErrors));
+        Assert.Contains("Name is required", nameErrors);
     }
 
     [Fact(DisplayName = "Name validation returns error when name is empty")]
@@ -155,8 +155,8 @@ public class PlayerValidatorTests
         var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey("Name"));
-        Assert.Contains("Name is required", result.Errors["Name"]);
+        Assert.True(result.Errors.TryGetValue("Name", out var nameErrors));
+        Assert.Contains("Name is required", nameErrors);
     }
 
     [Fact(DisplayName = "Name validation returns error when name is whitespace only")]
@@ -172,8 +172,8 @@ public class PlayerValidatorTests
         var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey("Name"));
-        Assert.Contains("Name is required", result.Errors["Name"]);
+        Assert.True(result.Errors.TryGetValue("Name", out var nameErrors));
+        Assert.Contains("Name is required", nameErrors);
     }
 
     [Fact(DisplayName = "Name validation returns error when name exceeds 200 characters")]
@@ -189,8 +189,8 @@ public class PlayerValidatorTests
         var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey("Name"));
-        Assert.Contains("Name must not exceed 200 characters", result.Errors["Name"]);
+        Assert.True(result.Errors.TryGetValue("Name", out var nameErrors));
+        Assert.Contains("Name must not exceed 200 characters", nameErrors);
     }
 
     [Fact(DisplayName = "Name validation succeeds when name is exactly 200 characters")]
@@ -255,8 +255,8 @@ public class PlayerValidatorTests
         var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey("DateOfBirth"));
-        Assert.Contains("Date of birth is required", result.Errors["DateOfBirth"]);
+        Assert.True(result.Errors.TryGetValue("DateOfBirth", out var dateOfBirthErrors));
+        Assert.Contains("Date of birth is required", dateOfBirthErrors);
     }
 
     [Fact(DisplayName = "DateOfBirth validation returns error when DateOfBirth is today")]
@@ -272,8 +272,8 @@ public class PlayerValidatorTests
         var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey("DateOfBirth"));
-        Assert.Contains("Date of birth must be in the past", result.Errors["DateOfBirth"]);
+        Assert.True(result.Errors.TryGetValue("DateOfBirth", out var dateOfBirthErrors));
+        Assert.Contains("Date of birth must be in the past", dateOfBirthErrors);
     }
 
     [Fact(DisplayName = "DateOfBirth validation returns error when DateOfBirth is in the future")]
@@ -289,8 +289,8 @@ public class PlayerValidatorTests
         var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey("DateOfBirth"));
-        Assert.Contains("Date of birth must be in the past", result.Errors["DateOfBirth"]);
+        Assert.True(result.Errors.TryGetValue("DateOfBirth", out var dateOfBirthErrors));
+        Assert.Contains("Date of birth must be in the past", dateOfBirthErrors);
     }
 
     [Fact(DisplayName = "DateOfBirth validation returns error when DateOfBirth is more than 100 years ago")]
@@ -306,8 +306,8 @@ public class PlayerValidatorTests
         var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey("DateOfBirth"));
-        Assert.Contains("Date of birth cannot be more than 100 years ago", result.Errors["DateOfBirth"]);
+        Assert.True(result.Errors.TryGetValue("DateOfBirth", out var dateOfBirthErrors));
+        Assert.Contains("Date of birth cannot be more than 100 years ago", dateOfBirthErrors);
     }
 
     [Fact(DisplayName = "DateOfBirth validation succeeds when DateOfBirth is exactly 100 years ago")]
@@ -435,8 +435,8 @@ public class PlayerValidatorTests
         var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey("Gender"));
-        Assert.Contains("Gender must be Male, Female, Non-binary, or Prefer not to say", result.Errors["Gender"]);
+        Assert.True(result.Errors.TryGetValue("Gender", out var genderErrors));
+        Assert.Contains("Gender must be Male, Female, Non-binary, or Prefer not to say", genderErrors);
     }
 
     [Theory(DisplayName = "Gender validation returns error for invalid gender values")]
@@ -458,8 +458,8 @@ public class PlayerValidatorTests
         var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey("Gender"));
-        Assert.Contains("Gender must be Male, Female, Non-binary, or Prefer not to say", result.Errors["Gender"]);
+        Assert.True(result.Errors.TryGetValue("Gender", out var genderErrors));
+        Assert.Contains("Gender must be Male, Female, Non-binary, or Prefer not to say", genderErrors);
     }
 
     [Fact(DisplayName = "Gender validation trims whitespace before validation")]
@@ -617,8 +617,8 @@ public class PlayerValidatorTests
         var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey("PhotoUrl"));
-        Assert.Contains("Photo URL must be a valid HTTP or HTTPS URL", result.Errors["PhotoUrl"]);
+        Assert.True(result.Errors.TryGetValue("PhotoUrl", out var photoUrlErrors));
+        Assert.Contains("Photo URL must be a valid HTTP or HTTPS URL", photoUrlErrors);
     }
 
     [Fact(DisplayName = "PhotoUrl validation can return multiple errors")]
@@ -635,10 +635,10 @@ public class PlayerValidatorTests
         var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey("PhotoUrl"));
-        Assert.Equal(2, result.Errors["PhotoUrl"].Length);
-        Assert.Contains("Photo URL must not exceed 500 characters", result.Errors["PhotoUrl"]);
-        Assert.Contains("Photo URL must be a valid HTTP or HTTPS URL", result.Errors["PhotoUrl"]);
+        Assert.True(result.Errors.TryGetValue("PhotoUrl", out var photoUrlErrors));
+        Assert.Equal(2, photoUrlErrors.Length);
+        Assert.Contains("Photo URL must not exceed 500 characters", photoUrlErrors);
+        Assert.Contains("Photo URL must be a valid HTTP or HTTPS URL", photoUrlErrors);
     }
 
     #endregion
@@ -661,10 +661,10 @@ public class PlayerValidatorTests
 
         Assert.False(result.IsValid);
         Assert.Equal(4, result.Errors.Count);
-        Assert.True(result.Errors.ContainsKey("Name"));
-        Assert.True(result.Errors.ContainsKey("DateOfBirth"));
-        Assert.True(result.Errors.ContainsKey("Gender"));
-        Assert.True(result.Errors.ContainsKey("PhotoUrl"));
+        Assert.True(result.Errors.TryGetValue("Name", out var nameErrors));
+        Assert.True(result.Errors.TryGetValue("DateOfBirth", out var dateOfBirthErrors));
+        Assert.True(result.Errors.TryGetValue("Gender", out var genderErrors));
+        Assert.True(result.Errors.TryGetValue("PhotoUrl", out var photoUrlErrors));
     }
 
     [Fact(DisplayName = "Validation collects all errors for a single field")]
