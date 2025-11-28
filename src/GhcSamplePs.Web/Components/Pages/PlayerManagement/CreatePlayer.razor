@@ -137,7 +137,7 @@
                 return string.Empty;
             }
 
-            var today = DateTime.Today;
+            var today = DateTime.UtcNow.Date;
             var dob = _dateOfBirth.Value;
             var age = today.Year - dob.Year;
             if (dob.Date > today.AddYears(-age))
