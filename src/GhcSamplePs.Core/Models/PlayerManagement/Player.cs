@@ -12,6 +12,11 @@ public sealed class Player
     public int Id { get; set; }
 
     /// <summary>
+    /// Gets the identifier of the user who owns this player.
+    /// </summary>
+    public required string UserId { get; init; }
+
+    /// <summary>
     /// Gets the player's full name. Maximum 200 characters.
     /// </summary>
     public required string Name { get; init; }
@@ -67,6 +72,7 @@ public sealed class Player
     /// <code>
     /// var player = new Player
     /// {
+    ///     UserId = "user-123",
     ///     Name = "John Doe",
     ///     DateOfBirth = new DateTime(1990, 6, 15),
     ///     CreatedBy = "system"
@@ -94,6 +100,7 @@ public sealed class Player
     /// <returns>True if the entity is valid; otherwise, false.</returns>
     /// <remarks>
     /// Validation rules:
+    /// - UserId is required
     /// - Name is required and cannot exceed 200 characters
     /// - DateOfBirth must be a past date
     /// - Gender, if provided, cannot exceed 50 characters
@@ -104,6 +111,7 @@ public sealed class Player
     /// <code>
     /// var player = new Player
     /// {
+    ///     UserId = "user-123",
     ///     Name = "John Doe",
     ///     DateOfBirth = new DateTime(1990, 6, 15),
     ///     CreatedBy = "system"
@@ -113,6 +121,12 @@ public sealed class Player
     /// </example>
     public bool Validate()
     {
+        // UserId validation
+        if (string.IsNullOrWhiteSpace(UserId))
+        {
+            return false;
+        }
+
         // Name validation
         if (string.IsNullOrWhiteSpace(Name) || Name.Trim().Length > 200)
         {
@@ -166,6 +180,7 @@ public sealed class Player
     /// <code>
     /// var player = new Player
     /// {
+    ///     UserId = "user-123",
     ///     Name = "John Doe",
     ///     DateOfBirth = new DateTime(1990, 6, 15),
     ///     CreatedBy = "system"

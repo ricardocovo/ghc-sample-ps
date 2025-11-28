@@ -9,6 +9,12 @@ namespace GhcSamplePs.Core.Models.PlayerManagement.DTOs;
 public sealed record CreatePlayerDto
 {
     /// <summary>
+    /// Gets the identifier of the user who owns this player. Required.
+    /// </summary>
+    [Required(ErrorMessage = "User ID is required.")]
+    public required string UserId { get; init; }
+
+    /// <summary>
     /// Gets the player's full name. Required, maximum 200 characters.
     /// </summary>
     [Required(ErrorMessage = "Name is required.")]
@@ -46,6 +52,7 @@ public sealed record CreatePlayerDto
     /// <code>
     /// var createDto = new CreatePlayerDto
     /// {
+    ///     UserId = "user-123",
     ///     Name = "John Doe",
     ///     DateOfBirth = new DateTime(1990, 6, 15),
     ///     Gender = "Male"
@@ -64,6 +71,7 @@ public sealed record CreatePlayerDto
 
         return new Player
         {
+            UserId = UserId.Trim(),
             Name = Name.Trim(),
             DateOfBirth = DateOfBirth,
             Gender = Gender?.Trim(),

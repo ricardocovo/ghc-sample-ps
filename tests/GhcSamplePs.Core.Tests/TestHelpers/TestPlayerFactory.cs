@@ -16,6 +16,7 @@ public static class TestPlayerFactory
         return new Player
         {
             Id = 1,
+            UserId = "test-owner-id",
             Name = "John Doe",
             DateOfBirth = new DateTime(1990, 6, 15),
             Gender = "Male",
@@ -35,6 +36,7 @@ public static class TestPlayerFactory
         return new Player
         {
             Id = 1,
+            UserId = "test-owner-id",
             Name = "Test Player",
             DateOfBirth = dateOfBirth,
             CreatedBy = "test-user"
@@ -51,6 +53,7 @@ public static class TestPlayerFactory
         return new Player
         {
             Id = 1,
+            UserId = "test-owner-id",
             Name = "Leap Year Player",
             DateOfBirth = new DateTime(year, 2, 29),
             CreatedBy = "test-user"
@@ -65,6 +68,7 @@ public static class TestPlayerFactory
     {
         return new Player
         {
+            UserId = "test-owner-id",
             Name = "Minimal Player",
             DateOfBirth = new DateTime(1985, 1, 1),
             CreatedBy = "test-user"
@@ -79,16 +83,19 @@ public static class TestPlayerFactory
     /// <param name="gender">Gender (optional).</param>
     /// <param name="photoUrl">Photo URL (optional).</param>
     /// <param name="createdBy">Created by user ID.</param>
+    /// <param name="userId">User ID who owns the player.</param>
     /// <returns>A customized Player instance.</returns>
     public static Player CreateCustomPlayer(
         string name,
         DateTime dateOfBirth,
         string? gender = null,
         string? photoUrl = null,
-        string createdBy = "test-user")
+        string createdBy = "test-user",
+        string userId = "test-owner-id")
     {
         return new Player
         {
+            UserId = userId,
             Name = name,
             DateOfBirth = dateOfBirth,
             Gender = gender,
@@ -105,6 +112,7 @@ public static class TestPlayerFactory
     {
         return new Player
         {
+            UserId = "test-owner-id",
             Name = "Future Player",
             DateOfBirth = DateTime.UtcNow.AddYears(1),
             CreatedBy = "test-user"
@@ -119,6 +127,7 @@ public static class TestPlayerFactory
     {
         return new Player
         {
+            UserId = "test-owner-id",
             Name = new string('A', 201),
             DateOfBirth = new DateTime(1990, 1, 1),
             CreatedBy = "test-user"
@@ -133,6 +142,7 @@ public static class TestPlayerFactory
     {
         return new Player
         {
+            UserId = "test-owner-id",
             Name = "Test Player",
             DateOfBirth = new DateTime(1990, 1, 1),
             PhotoUrl = "not-a-valid-url",

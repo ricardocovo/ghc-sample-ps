@@ -12,12 +12,14 @@ public class PlayerTests
     {
         var player = new Player
         {
+            UserId = "owner-123",
             Name = "John Doe",
             DateOfBirth = new DateTime(1990, 6, 15),
             CreatedBy = "test-user"
         };
 
         Assert.NotNull(player);
+        Assert.Equal("owner-123", player.UserId);
         Assert.Equal("John Doe", player.Name);
         Assert.Equal(new DateTime(1990, 6, 15), player.DateOfBirth);
         Assert.Equal("test-user", player.CreatedBy);
@@ -160,6 +162,32 @@ public class PlayerTests
         var result = player.Validate();
 
         Assert.True(result);
+    }
+
+    [Fact(DisplayName = "Validate returns false when UserId is empty")]
+    public void Validate_WhenUserIdIsEmpty_ReturnsFalse()
+    {
+        var player = TestPlayerFactory.CreateCustomPlayer(
+            name: "Test Player",
+            dateOfBirth: new DateTime(1990, 1, 1),
+            userId: "");
+
+        var result = player.Validate();
+
+        Assert.False(result);
+    }
+
+    [Fact(DisplayName = "Validate returns false when UserId is whitespace")]
+    public void Validate_WhenUserIdIsWhitespace_ReturnsFalse()
+    {
+        var player = TestPlayerFactory.CreateCustomPlayer(
+            name: "Test Player",
+            dateOfBirth: new DateTime(1990, 1, 1),
+            userId: "   ");
+
+        var result = player.Validate();
+
+        Assert.False(result);
     }
 
     [Fact(DisplayName = "Validate returns false when name is empty")]

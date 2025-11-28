@@ -12,6 +12,11 @@ public sealed record PlayerDto
     public required int Id { get; init; }
 
     /// <summary>
+    /// Gets the identifier of the user who owns this player.
+    /// </summary>
+    public required string UserId { get; init; }
+
+    /// <summary>
     /// Gets the player's full name.
     /// </summary>
     public required string Name { get; init; }
@@ -67,6 +72,7 @@ public sealed record PlayerDto
     /// var player = new Player
     /// {
     ///     Id = 1,
+    ///     UserId = "user-123",
     ///     Name = "John Doe",
     ///     DateOfBirth = new DateTime(1990, 6, 15),
     ///     CreatedBy = "system"
@@ -81,6 +87,7 @@ public sealed record PlayerDto
         return new PlayerDto
         {
             Id = player.Id,
+            UserId = player.UserId,
             Name = player.Name.Trim(),
             DateOfBirth = player.DateOfBirth,
             Age = player.Age,

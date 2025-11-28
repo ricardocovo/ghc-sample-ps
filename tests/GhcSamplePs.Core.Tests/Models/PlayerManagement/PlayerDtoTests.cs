@@ -14,6 +14,7 @@ public class PlayerDtoTests
         var dto = new PlayerDto
         {
             Id = 1,
+            UserId = "owner-123",
             Name = "John Doe",
             DateOfBirth = new DateTime(1990, 6, 15),
             Age = 34,
@@ -23,6 +24,7 @@ public class PlayerDtoTests
 
         Assert.NotNull(dto);
         Assert.Equal(1, dto.Id);
+        Assert.Equal("owner-123", dto.UserId);
         Assert.Equal("John Doe", dto.Name);
         Assert.Equal(34, dto.Age);
     }
@@ -35,6 +37,7 @@ public class PlayerDtoTests
         var dto = PlayerDto.FromEntity(player);
 
         Assert.Equal(player.Id, dto.Id);
+        Assert.Equal(player.UserId, dto.UserId);
         Assert.Equal(player.Name.Trim(), dto.Name);
         Assert.Equal(player.DateOfBirth, dto.DateOfBirth);
         Assert.Equal(player.Age, dto.Age);
@@ -50,6 +53,7 @@ public class PlayerDtoTests
         var player = new Player
         {
             Id = 1,
+            UserId = "owner-123",
             Name = "  John Doe  ",
             DateOfBirth = new DateTime(1990, 6, 15),
             Gender = "  Male  ",
@@ -91,6 +95,7 @@ public class PlayerDtoTests
     {
         var dto = new CreatePlayerDto
         {
+            UserId = "owner-123",
             Name = "John Doe",
             DateOfBirth = new DateTime(1990, 6, 15),
             Gender = "Male",
@@ -98,6 +103,7 @@ public class PlayerDtoTests
         };
 
         Assert.NotNull(dto);
+        Assert.Equal("owner-123", dto.UserId);
         Assert.Equal("John Doe", dto.Name);
         Assert.Equal(new DateTime(1990, 6, 15), dto.DateOfBirth);
         Assert.Equal("Male", dto.Gender);
@@ -109,6 +115,7 @@ public class PlayerDtoTests
     {
         var dto = new CreatePlayerDto
         {
+            UserId = "owner-123",
             Name = "John Doe",
             DateOfBirth = new DateTime(1990, 6, 15),
             Gender = "Male",
@@ -117,6 +124,7 @@ public class PlayerDtoTests
 
         var player = dto.ToEntity("test-user");
 
+        Assert.Equal("owner-123", player.UserId);
         Assert.Equal("John Doe", player.Name);
         Assert.Equal(new DateTime(1990, 6, 15), player.DateOfBirth);
         Assert.Equal("Male", player.Gender);
@@ -129,6 +137,7 @@ public class PlayerDtoTests
     {
         var dto = new CreatePlayerDto
         {
+            UserId = "  owner-123  ",
             Name = "  John Doe  ",
             DateOfBirth = new DateTime(1990, 6, 15),
             Gender = "  Male  ",
@@ -137,6 +146,7 @@ public class PlayerDtoTests
 
         var player = dto.ToEntity("test-user");
 
+        Assert.Equal("owner-123", player.UserId);
         Assert.Equal("John Doe", player.Name);
         Assert.Equal("Male", player.Gender);
         Assert.Equal("https://example.com/photo.jpg", player.PhotoUrl);
@@ -147,6 +157,7 @@ public class PlayerDtoTests
     {
         var dto = new CreatePlayerDto
         {
+            UserId = "owner-123",
             Name = "John Doe",
             DateOfBirth = new DateTime(1990, 6, 15)
         };
@@ -164,6 +175,7 @@ public class PlayerDtoTests
     {
         var dto = new CreatePlayerDto
         {
+            UserId = "owner-123",
             Name = "John Doe",
             DateOfBirth = new DateTime(1990, 6, 15)
         };
@@ -176,6 +188,7 @@ public class PlayerDtoTests
     {
         var dto = new CreatePlayerDto
         {
+            UserId = "owner-123",
             Name = "John Doe",
             DateOfBirth = new DateTime(1990, 6, 15)
         };
@@ -188,6 +201,7 @@ public class PlayerDtoTests
     {
         var dto = new CreatePlayerDto
         {
+            UserId = "owner-123",
             Name = "John Doe",
             DateOfBirth = new DateTime(1990, 6, 15)
         };
@@ -233,16 +247,18 @@ public class PlayerDtoTests
         var updatedPlayer = dto.ApplyTo(existingPlayer, "update-user");
 
         Assert.Equal(existingPlayer.Id, updatedPlayer.Id);
+        Assert.Equal(existingPlayer.UserId, updatedPlayer.UserId);
         Assert.Equal("Updated Name", updatedPlayer.Name);
         Assert.Equal(new DateTime(1991, 7, 20), updatedPlayer.DateOfBirth);
         Assert.Equal("Non-binary", updatedPlayer.Gender);
         Assert.Equal("https://example.com/new-photo.jpg", updatedPlayer.PhotoUrl);
     }
 
-    [Fact(DisplayName = "UpdatePlayerDto.ApplyTo preserves original CreatedAt and CreatedBy")]
+    [Fact(DisplayName = "UpdatePlayerDto.ApplyTo preserves original UserId, CreatedAt and CreatedBy")]
     public void ApplyTo_PreservesOriginalAuditFields()
     {
         var existingPlayer = TestPlayerFactory.CreateValidPlayer();
+        var originalUserId = existingPlayer.UserId;
         var originalCreatedAt = existingPlayer.CreatedAt;
         var originalCreatedBy = existingPlayer.CreatedBy;
         var dto = new UpdatePlayerDto
@@ -254,6 +270,7 @@ public class PlayerDtoTests
 
         var updatedPlayer = dto.ApplyTo(existingPlayer, "update-user");
 
+        Assert.Equal(originalUserId, updatedPlayer.UserId);
         Assert.Equal(originalCreatedAt, updatedPlayer.CreatedAt);
         Assert.Equal(originalCreatedBy, updatedPlayer.CreatedBy);
     }

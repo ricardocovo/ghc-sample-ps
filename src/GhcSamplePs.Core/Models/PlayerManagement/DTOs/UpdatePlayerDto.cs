@@ -44,13 +44,14 @@ public sealed record UpdatePlayerDto
     /// <summary>
     /// Applies the updates from this DTO to an existing Player entity.
     /// </summary>
+    /// <param name="existingPlayer">The existing player entity to update.</param>
     /// <param name="updatedBy">The identifier of the user making the update.</param>
     /// <returns>A new Player entity with updated values.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when updatedBy is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when existingPlayer or updatedBy is null.</exception>
     /// <exception cref="ArgumentException">Thrown when updatedBy is empty or whitespace.</exception>
     /// <remarks>
     /// This method creates a new Player entity with the updated values.
-    /// The CreatedAt and CreatedBy fields should be preserved from the original entity.
+    /// The UserId, CreatedAt and CreatedBy fields are preserved from the original entity.
     /// </remarks>
     /// <example>
     /// <code>
@@ -78,6 +79,7 @@ public sealed record UpdatePlayerDto
         var player = new Player
         {
             Id = existingPlayer.Id,
+            UserId = existingPlayer.UserId,
             Name = Name.Trim(),
             DateOfBirth = DateOfBirth,
             Gender = Gender?.Trim(),
