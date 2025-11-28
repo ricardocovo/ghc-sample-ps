@@ -2,6 +2,7 @@
 @using GhcSamplePs.Core.Services.Interfaces
 @using GhcSamplePs.Core.Models.PlayerManagement.DTOs
 @using GhcSamplePs.Core.Validation
+@using GhcSamplePs.Web.Helpers
 @inject IPlayerService PlayerService
 @inject NavigationManager NavigationManager
 @inject ICurrentUserProvider CurrentUserProvider
@@ -64,7 +65,7 @@
                 <MudIcon Icon="@Icons.Material.Filled.Cake" Size="Size.Small" Color="Color.Secondary" />
                 <MudText Typo="Typo.body2">Age</MudText>
             </MudStack>
-            <MudTextField Value="@CalculatedAge"
+            <MudTextField Value="@AgeCalculationHelper.FormatAge(_dateOfBirth)"
                           Placeholder="Auto-calculated from DOB"
                           Variant="Variant.Outlined"
                           ReadOnly="true"
@@ -127,26 +128,6 @@
     private string _name = string.Empty;
     private DateTime? _dateOfBirth;
     private string? _gender;
-
-    private string CalculatedAge
-    {
-        get
-        {
-            if (!_dateOfBirth.HasValue)
-            {
-                return string.Empty;
-            }
-
-            var today = DateTime.UtcNow.Date;
-            var dob = _dateOfBirth.Value;
-            var age = today.Year - dob.Year;
-            if (dob.Date > today.AddYears(-age))
-            {
-                age--;
-            }
-            return $"{age} years";
-        }
-    }
 
     private async Task HandleSubmit()
     {

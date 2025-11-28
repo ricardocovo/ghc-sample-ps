@@ -56,19 +56,20 @@
         else
         {
             @* Search box *@
-            <MudTextField @bind-Value="_searchString" 
+            <MudTextField @bind-Value="SearchString" 
                           Placeholder="Search by name..." 
                           Adornment="Adornment.Start" 
                           AdornmentIcon="@Icons.Material.Filled.Search" 
                           IconSize="Size.Medium" 
                           Class="mb-4"
-                          Immediate="true" />
+                          Immediate="true"
+                          DebounceInterval="300" />
 
             <MudDivider Class="mb-2" />
 
             @* Player list - using simple list layout matching wireframe *@
             <MudList T="PlayerDto" Dense="false">
-                @foreach (var player in FilteredPlayers)
+                @foreach (var player in _filteredPlayers)
                 {
                     <MudListItem OnClick="() => NavigateToEdit(player.Id)">
                         <ChildContent>
@@ -90,14 +91,23 @@
 
 @code {
     private IReadOnlyList<PlayerDto>? _players;
+    private List<PlayerDto> _filteredPlayers = new();
     private bool _isLoading = true;
     private string? _errorMessage;
     private string _searchString = string.Empty;
 
-    private IEnumerable<PlayerDto> FilteredPlayers => 
-        _players?.Where(p => string.IsNullOrWhiteSpace(_searchString) || 
-                             p.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(p => p.Name).ToList() ?? new List<PlayerDto>();
+    private string SearchString
+    {
+        get => _searchString;
+        set
+        {
+            if (_searchString != value)
+            {
+                _searchString = value;
+                UpdateFilteredPlayers();
+            }
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -115,6 +125,7 @@
             if (result.Success)
             {
                 _players = result.Data;
+                UpdateFilteredPlayers();
             }
             else
             {
@@ -129,6 +140,21 @@
         {
             _isLoading = false;
         }
+    }
+
+    private void UpdateFilteredPlayers()
+    {
+        if (_players is null)
+        {
+            _filteredPlayers = new List<PlayerDto>();
+            return;
+        }
+
+        _filteredPlayers = _players
+            .Where(p => string.IsNullOrWhiteSpace(_searchString) || 
+                        p.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(p => p.Name)
+            .ToList();
     }
 
     private void NavigateToCreate()
