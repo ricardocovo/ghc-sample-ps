@@ -2,6 +2,8 @@ using GhcSamplePs.Web.Components;
 using GhcSamplePs.Web.Services;
 using GhcSamplePs.Core.Services.Interfaces;
 using GhcSamplePs.Core.Services.Implementations;
+using GhcSamplePs.Core.Repositories.Interfaces;
+using GhcSamplePs.Core.Repositories.Implementations;
 using MudBlazor.Services;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.IO.Compression;
@@ -43,6 +45,10 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserProvider, HttpContextCurrentUserProvider>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
+
+// Register Player Management services
+builder.Services.AddSingleton<IPlayerRepository, MockPlayerRepository>();
+builder.Services.AddScoped<IPlayerService, PlayerService>();
 
 // Add MudBlazor services
 builder.Services.AddMudServices();

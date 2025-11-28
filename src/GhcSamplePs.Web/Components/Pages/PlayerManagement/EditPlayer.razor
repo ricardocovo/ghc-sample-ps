@@ -1,0 +1,390 @@
+@page "/players/edit/{Id:int}"
+@using GhcSamplePs.Core.Services.Interfaces
+@using GhcSamplePs.Core.Models.PlayerManagement.DTOs
+@using GhcSamplePs.Core.Validation
+@inject IPlayerService PlayerService
+@inject NavigationManager NavigationManager
+@inject ICurrentUserProvider CurrentUserProvider
+@inject IDialogService DialogService
+
+<PageTitle>Edit Player</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    @* Back navigation and player name header *@
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" 
+                       OnClick="NavigateBack" 
+                       Size="Size.Medium" />
+        <MudText Typo="Typo.h5">@(_player?.Name ?? "Edit Player")</MudText>
+    </MudStack>
+
+    @* Loading state *@
+    @if (_isLoading)
+    {
+        <MudPaper Elevation="2" Class="pa-4">
+            <MudStack AlignItems="AlignItems.Center" Class="my-8">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">Loading player...</MudText>
+            </MudStack>
+        </MudPaper>
+    }
+    @* Error state for player not found *@
+    else if (_player is null)
+    {
+        <MudPaper Elevation="2" Class="pa-4">
+            <MudAlert Severity="Severity.Error">
+                @(_errorMessage ?? "Player not found.")
+            </MudAlert>
+            <MudButton Variant="Variant.Text" 
+                       Color="Color.Primary" 
+                       OnClick="NavigateBack" 
+                       Class="mt-4">
+                Back to Players
+            </MudButton>
+        </MudPaper>
+    }
+    @* Edit form with tabs *@
+    else
+    {
+        <MudTabs Elevation="2" 
+                 Rounded="true" 
+                 ApplyEffectsToContainer="true" 
+                 PanelClass="pa-4"
+                 ActivePanelIndex="@_activeTabIndex"
+                 ActivePanelIndexChanged="OnTabChanged">
+            @* Player Info Tab *@
+            <MudTabPanel Text="Player" Icon="@Icons.Material.Filled.Person">
+                <MudPaper Elevation="0">
+                    @* Section header *@
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+                        <MudIcon Icon="@Icons.Material.Filled.Person" />
+                        <MudText Typo="Typo.h6">Player Information</MudText>
+                    </MudStack>
+
+                    @* Error display *@
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <MudAlert Severity="Severity.Error" Class="mb-4" ShowCloseIcon="true" CloseIconClicked="() => _errorMessage = null">
+                            @_errorMessage
+                        </MudAlert>
+                    }
+
+                    @* Success message *@
+                    @if (!string.IsNullOrEmpty(_successMessage))
+                    {
+                        <MudAlert Severity="Severity.Success" Class="mb-4" ShowCloseIcon="true" CloseIconClicked="() => _successMessage = null">
+                            @_successMessage
+                        </MudAlert>
+                    }
+
+                    @* Form *@
+                    <MudForm @ref="_form" @bind-IsValid="_formIsValid">
+                        @* Name field *@
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-1">
+                            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Color="Color.Secondary" />
+                            <MudText Typo="Typo.body2">Name</MudText>
+                        </MudStack>
+                        <MudTextField @bind-Value="_name"
+                                      Placeholder="Enter player name"
+                                      Variant="Variant.Outlined"
+                                      Required="true"
+                                      RequiredError="Name is required"
+                                      MaxLength="200"
+                                      Counter="200"
+                                      Immediate="true"
+                                      Class="mb-4" />
+
+                        @* Date of Birth field *@
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-1">
+                            <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" Color="Color.Secondary" />
+                            <MudText Typo="Typo.body2">Date of Birth</MudText>
+                        </MudStack>
+                        <MudDatePicker @bind-Date="_dateOfBirth"
+                                       Placeholder="mm/dd/yyyy"
+                                       Variant="Variant.Outlined"
+                                       DateFormat="MM/dd/yyyy"
+                                       MaxDate="DateTime.Today.AddDays(-1)"
+                                       MinDate="DateTime.Today.AddYears(-100)"
+                                       Required="true"
+                                       RequiredError="Date of birth is required"
+                                       Class="mb-4" />
+
+                        @* Age display (calculated) *@
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-1">
+                            <MudIcon Icon="@Icons.Material.Filled.Cake" Size="Size.Small" Color="Color.Secondary" />
+                            <MudText Typo="Typo.body2">Age</MudText>
+                        </MudStack>
+                        <MudTextField Value="@CalculatedAge"
+                                      Placeholder="Auto-calculated from DOB"
+                                      Variant="Variant.Outlined"
+                                      ReadOnly="true"
+                                      Disabled="true"
+                                      Class="mb-4" />
+
+                        @* Gender field *@
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-1">
+                            <MudIcon Icon="@Icons.Material.Filled.Wc" Size="Size.Small" Color="Color.Secondary" />
+                            <MudText Typo="Typo.body2">Gender</MudText>
+                        </MudStack>
+                        <MudSelect @bind-Value="_gender"
+                                   Placeholder="Select gender"
+                                   Variant="Variant.Outlined"
+                                   Class="mb-4">
+                            <MudSelectItem T="string?" Value="@((string?)null)">Select gender</MudSelectItem>
+                            @foreach (var option in PlayerValidator.ValidGenderOptions)
+                            {
+                                <MudSelectItem Value="@option">@option</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudForm>
+
+                    @* Action buttons *@
+                    <MudStack Row="true" Spacing="2" Class="mt-4">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Error"
+                                   StartIcon="@Icons.Material.Filled.Delete"
+                                   OnClick="HandleDelete"
+                                   Disabled="@(_isSaving || _isDeleting)">
+                            @if (_isDeleting)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                <span>Deleting...</span>
+                            }
+                            else
+                            {
+                                <span>Delete</span>
+                            }
+                        </MudButton>
+                        <MudSpacer />
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Dark"
+                                   OnClick="HandleUpdate"
+                                   Disabled="@(!_formIsValid || _isSaving || _isDeleting)">
+                            @if (_isSaving)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                <span>Updating...</span>
+                            }
+                            else
+                            {
+                                <span>Update</span>
+                            }
+                        </MudButton>
+                    </MudStack>
+                </MudPaper>
+            </MudTabPanel>
+
+            @* Teams Tab (placeholder) *@
+            <MudTabPanel Text="Teams" Icon="@Icons.Material.Filled.Groups">
+                <MudPaper Elevation="0">
+                    <MudStack AlignItems="AlignItems.Center" Class="my-8">
+                        <MudIcon Icon="@Icons.Material.Filled.Construction" Size="Size.Large" Color="Color.Secondary" />
+                        <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mt-2">FUTURE DEV</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Team assignments will be available in a future release.
+                        </MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudTabPanel>
+
+            @* Stats Tab (placeholder) *@
+            <MudTabPanel Text="Stats" Icon="@Icons.Material.Filled.BarChart">
+                <MudPaper Elevation="0">
+                    <MudStack AlignItems="AlignItems.Center" Class="my-8">
+                        <MudIcon Icon="@Icons.Material.Filled.Construction" Size="Size.Large" Color="Color.Secondary" />
+                        <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mt-2">FUTURE DEV</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Player statistics will be available in a future release.
+                        </MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudTabPanel>
+        </MudTabs>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private PlayerDto? _player;
+    private MudForm? _form;
+    private bool _formIsValid;
+    private bool _isLoading = true;
+    private bool _isSaving;
+    private bool _isDeleting;
+    private string? _errorMessage;
+    private string? _successMessage;
+    private int _activeTabIndex;
+
+    private string _name = string.Empty;
+    private DateTime? _dateOfBirth;
+    private string? _gender;
+
+    private string CalculatedAge
+    {
+        get
+        {
+            if (!_dateOfBirth.HasValue)
+            {
+                return string.Empty;
+            }
+
+            var today = DateTime.Today;
+            var dob = _dateOfBirth.Value;
+            var age = today.Year - dob.Year;
+            if (dob.Date > today.AddYears(-age))
+            {
+                age--;
+            }
+            return $"{age} years";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPlayerAsync();
+    }
+
+    private async Task LoadPlayerAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+
+        try
+        {
+            var result = await PlayerService.GetPlayerByIdAsync(Id);
+
+            if (result.Success && result.Data is not null)
+            {
+                _player = result.Data;
+                _name = _player.Name;
+                _dateOfBirth = _player.DateOfBirth;
+                _gender = _player.Gender;
+            }
+            else
+            {
+                _errorMessage = result.ErrorMessages.FirstOrDefault() ?? "Player not found.";
+            }
+        }
+        catch (Exception)
+        {
+            _errorMessage = "An unexpected error occurred while loading the player.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task HandleUpdate()
+    {
+        if (_form is null || _player is null)
+        {
+            return;
+        }
+
+        await _form.Validate();
+
+        if (!_formIsValid || !_dateOfBirth.HasValue)
+        {
+            return;
+        }
+
+        _isSaving = true;
+        _errorMessage = null;
+        _successMessage = null;
+
+        try
+        {
+            var currentUserId = CurrentUserProvider.GetCurrentUser()?.Identity?.Name ?? "system";
+
+            var updateDto = new UpdatePlayerDto
+            {
+                Id = Id,
+                Name = _name.Trim(),
+                DateOfBirth = _dateOfBirth.Value,
+                Gender = string.IsNullOrWhiteSpace(_gender) ? null : _gender,
+                PhotoUrl = _player.PhotoUrl
+            };
+
+            var result = await PlayerService.UpdatePlayerAsync(Id, updateDto, currentUserId);
+
+            if (result.Success)
+            {
+                NavigationManager.NavigateTo("/players");
+            }
+            else if (result.ValidationErrors.Count > 0)
+            {
+                var errors = result.ValidationErrors.SelectMany(e => e.Value);
+                _errorMessage = string.Join(" ", errors);
+            }
+            else
+            {
+                _errorMessage = result.ErrorMessages.FirstOrDefault() ?? "Unable to update player.";
+            }
+        }
+        catch (Exception)
+        {
+            _errorMessage = "An unexpected error occurred while updating the player.";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task HandleDelete()
+    {
+        if (_player is null)
+        {
+            return;
+        }
+
+        var result = await DialogService.ShowMessageBox(
+            "Delete Player",
+            $"Are you sure you want to delete {_player.Name}? This action cannot be undone.",
+            yesText: "Delete",
+            cancelText: "Cancel");
+
+        if (result != true)
+        {
+            return;
+        }
+
+        _isDeleting = true;
+        _errorMessage = null;
+
+        try
+        {
+            var deleteResult = await PlayerService.DeletePlayerAsync(Id);
+
+            if (deleteResult.Success)
+            {
+                NavigationManager.NavigateTo("/players");
+            }
+            else
+            {
+                _errorMessage = deleteResult.ErrorMessages.FirstOrDefault() ?? "Unable to delete player.";
+            }
+        }
+        catch (Exception)
+        {
+            _errorMessage = "An unexpected error occurred while deleting the player.";
+        }
+        finally
+        {
+            _isDeleting = false;
+        }
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/players");
+    }
+
+    private void OnTabChanged(int index)
+    {
+        _activeTabIndex = index;
+    }
+}

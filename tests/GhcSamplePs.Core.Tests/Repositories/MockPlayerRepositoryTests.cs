@@ -20,7 +20,7 @@ public class MockPlayerRepositoryTests
     {
         var players = await _repository.GetAllAsync();
 
-        Assert.Equal(10, players.Count());
+        Assert.Equal(10, players.Count);
     }
 
     [Fact(DisplayName = "Constructor seeds players with sequential IDs starting from 1")]
@@ -55,7 +55,7 @@ public class MockPlayerRepositoryTests
         var players = await _repository.GetAllAsync();
 
         Assert.NotNull(players);
-        Assert.Equal(10, players.Count());
+        Assert.Equal(10, players.Count);
     }
 
     [Fact(DisplayName = "GetAllAsync respects cancellation token")]
@@ -101,51 +101,32 @@ public class MockPlayerRepositoryTests
 
     #endregion
 
-    #region GetByUserIdAsync Tests
+    #region ExistsAsync Tests
 
-    [Fact(DisplayName = "GetByUserIdAsync returns players for existing user")]
-    public async Task GetByUserIdAsync_WhenUserHasPlayers_ReturnsPlayers()
+    [Fact(DisplayName = "ExistsAsync returns true when player exists")]
+    public async Task ExistsAsync_WhenPlayerExists_ReturnsTrue()
     {
-        var players = await _repository.GetByUserIdAsync("user-001");
+        var exists = await _repository.ExistsAsync(1);
 
-        Assert.NotNull(players);
-        Assert.Equal(2, players.Count());
-        Assert.All(players, p => Assert.Equal("user-001", p.UserId, ignoreCase: true));
+        Assert.True(exists);
     }
 
-    [Fact(DisplayName = "GetByUserIdAsync returns empty list when user has no players")]
-    public async Task GetByUserIdAsync_WhenUserHasNoPlayers_ReturnsEmptyList()
+    [Fact(DisplayName = "ExistsAsync returns false when player does not exist")]
+    public async Task ExistsAsync_WhenPlayerDoesNotExist_ReturnsFalse()
     {
-        var players = await _repository.GetByUserIdAsync("nonexistent-user");
+        var exists = await _repository.ExistsAsync(999);
 
-        Assert.NotNull(players);
-        Assert.Empty(players);
+        Assert.False(exists);
     }
 
-    [Fact(DisplayName = "GetByUserIdAsync is case insensitive")]
-    public async Task GetByUserIdAsync_WhenUserIdDifferentCase_ReturnsPlayers()
-    {
-        var players = await _repository.GetByUserIdAsync("USER-001");
-
-        Assert.NotNull(players);
-        Assert.Equal(2, players.Count());
-    }
-
-    [Fact(DisplayName = "GetByUserIdAsync throws when userId is null")]
-    public async Task GetByUserIdAsync_WhenUserIdIsNull_ThrowsArgumentNullException()
-    {
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            () => _repository.GetByUserIdAsync(null!));
-    }
-
-    [Fact(DisplayName = "GetByUserIdAsync respects cancellation token")]
-    public async Task GetByUserIdAsync_WhenCancellationRequested_ThrowsOperationCanceledException()
+    [Fact(DisplayName = "ExistsAsync respects cancellation token")]
+    public async Task ExistsAsync_WhenCancellationRequested_ThrowsOperationCanceledException()
     {
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         await Assert.ThrowsAsync<OperationCanceledException>(
-            () => _repository.GetByUserIdAsync("user-001", cts.Token));
+            () => _repository.ExistsAsync(1, cts.Token));
     }
 
     #endregion
@@ -271,8 +252,8 @@ public class MockPlayerRepositoryTests
         Assert.Equal(originalCreatedBy, result.CreatedBy);
     }
 
-    [Fact(DisplayName = "UpdateAsync returns null when player does not exist")]
-    public async Task UpdateAsync_WhenPlayerDoesNotExist_ReturnsNull()
+    [Fact(DisplayName = "UpdateAsync throws when player does not exist")]
+    public async Task UpdateAsync_WhenPlayerDoesNotExist_ThrowsInvalidOperationException()
     {
         var player = new Player
         {
@@ -283,9 +264,8 @@ public class MockPlayerRepositoryTests
             CreatedBy = "test-user"
         };
 
-        var result = await _repository.UpdateAsync(player);
-
-        Assert.Null(result);
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _repository.UpdateAsync(player));
     }
 
     [Fact(DisplayName = "UpdateAsync throws when player is null")]
@@ -339,11 +319,11 @@ public class MockPlayerRepositoryTests
     [Fact(DisplayName = "DeleteAsync decreases player count")]
     public async Task DeleteAsync_WhenCalled_DecreasesPlayerCount()
     {
-        var initialCount = (await _repository.GetAllAsync()).Count();
+        var initialCount = (await _repository.GetAllAsync()).Count;
 
         await _repository.DeleteAsync(1);
 
-        var finalCount = (await _repository.GetAllAsync()).Count();
+        var finalCount = (await _repository.GetAllAsync()).Count;
         Assert.Equal(initialCount - 1, finalCount);
     }
 

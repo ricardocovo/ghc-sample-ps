@@ -1,0 +1,143 @@
+@page "/players"
+@using GhcSamplePs.Core.Services.Interfaces
+@using GhcSamplePs.Core.Models.PlayerManagement.DTOs
+@inject IPlayerService PlayerService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Players</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Elevation="2" Class="pa-4">
+        @* Header with title and Add button *@
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+            <MudStack>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Large" />
+                    <MudText Typo="Typo.h5">Players</MudText>
+                </MudStack>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    @(_players?.Count ?? 0) players registered
+                </MudText>
+            </MudStack>
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Dark" 
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="NavigateToCreate">
+                Add
+            </MudButton>
+        </MudStack>
+
+        @* Loading indicator *@
+        @if (_isLoading)
+        {
+            <MudStack AlignItems="AlignItems.Center" Class="my-8">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">Loading players...</MudText>
+            </MudStack>
+        }
+        @* Error display *@
+        else if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4">
+                @_errorMessage
+            </MudAlert>
+        }
+        @* Empty state *@
+        else if (_players is null || _players.Count == 0)
+        {
+            <MudStack AlignItems="AlignItems.Center" Class="my-8">
+                <MudIcon Icon="@Icons.Material.Filled.PersonOff" Size="Size.Large" Color="Color.Secondary" />
+                <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mt-2">
+                    No players found. Click 'Add' to create your first player.
+                </MudText>
+            </MudStack>
+        }
+        @* Player list *@
+        else
+        {
+            @* Search box *@
+            <MudTextField @bind-Value="_searchString" 
+                          Placeholder="Search by name..." 
+                          Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" 
+                          IconSize="Size.Medium" 
+                          Class="mb-4"
+                          Immediate="true" />
+
+            <MudDivider Class="mb-2" />
+
+            @* Player list - using simple list layout matching wireframe *@
+            <MudList T="PlayerDto" Dense="false">
+                @foreach (var player in FilteredPlayers)
+                {
+                    <MudListItem OnClick="() => NavigateToEdit(player.Id)">
+                        <ChildContent>
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%">
+                                <MudStack Spacing="0">
+                                    <MudText Typo="Typo.subtitle1"><strong>@player.Name</strong></MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">@player.Age years old</MudText>
+                                </MudStack>
+                                <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Secondary" />
+                            </MudStack>
+                        </ChildContent>
+                    </MudListItem>
+                    <MudDivider />
+                }
+            </MudList>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private IReadOnlyList<PlayerDto>? _players;
+    private bool _isLoading = true;
+    private string? _errorMessage;
+    private string _searchString = string.Empty;
+
+    private IEnumerable<PlayerDto> FilteredPlayers => 
+        _players?.Where(p => string.IsNullOrWhiteSpace(_searchString) || 
+                             p.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(p => p.Name).ToList() ?? new List<PlayerDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPlayersAsync();
+    }
+
+    private async Task LoadPlayersAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+
+        try
+        {
+            var result = await PlayerService.GetAllPlayersAsync();
+            if (result.Success)
+            {
+                _players = result.Data;
+            }
+            else
+            {
+                _errorMessage = result.ErrorMessages.FirstOrDefault() ?? "Unable to load players.";
+            }
+        }
+        catch (Exception)
+        {
+            _errorMessage = "An unexpected error occurred while loading players.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void NavigateToCreate()
+    {
+        NavigationManager.NavigateTo("/players/create");
+    }
+
+    private void NavigateToEdit(int playerId)
+    {
+        NavigationManager.NavigateTo($"/players/edit/{playerId}");
+    }
+}
