@@ -53,9 +53,17 @@ builder.Services.AddScoped<IPlayerService, PlayerService>();
 
 // Register Entity Framework Core DbContext with SQL Server
 // Note: Currently using MockPlayerRepository for player data.
-// When ready to switch to database persistence, uncomment below and update IPlayerRepository implementation.
+// When ready to switch to database persistence, update IPlayerRepository implementation.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (!string.IsNullOrWhiteSpace(connectionString))
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    if (!builder.Environment.IsDevelopment())
+    {
+        throw new InvalidOperationException("Database connection string 'DefaultConnection' is required in production environments. Configure via environment variables or Azure Key Vault.");
+    }
+    // In development, DbContext registration is optional if no connection string is provided
+}
+else
 {
     builder.Services.AddApplicationDbContext(
         connectionString: connectionString,
