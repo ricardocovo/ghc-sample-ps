@@ -17,9 +17,20 @@ This project should not reference the Web project or any UI-specific libraries.
 ```
 GhcSamplePs.Core/
 ├── Models/
-│   └── Identity/               # User identity domain models
-│       ├── ApplicationUser.cs
-│       └── UserClaim.cs
+│   ├── Identity/               # User identity domain models
+│   │   ├── ApplicationUser.cs
+│   │   └── UserClaim.cs
+│   └── PlayerManagement/       # Player domain models
+│       ├── Player.cs
+│       └── DTOs/
+│           ├── CreatePlayerDto.cs
+│           ├── PlayerDto.cs
+│           └── UpdatePlayerDto.cs
+├── Repositories/
+│   ├── Interfaces/             # Repository contracts
+│   │   └── IPlayerRepository.cs
+│   └── Implementations/        # Repository implementations
+│       └── MockPlayerRepository.cs
 ├── Services/
 │   ├── Interfaces/             # Service contracts
 │   │   ├── IAuthenticationService.cs
@@ -165,9 +176,34 @@ Permissions are derived from roles:
 - **AuthorizationException** - Permission/access denials
 - **TokenValidationException** - JWT token validation failures
 
+
+### Player Repository ✅
+
+#### IPlayerRepository Interface (`Repositories/Interfaces/IPlayerRepository.cs`)
+
+Defines the contract for player data access operations:
+
+- `GetAllAsync(CancellationToken)` - Gets all players
+- `GetByIdAsync(int id, CancellationToken)` - Gets a player by ID
+- `GetByUserIdAsync(string userId, CancellationToken)` - Gets players for a user
+- `AddAsync(Player player, CancellationToken)` - Adds a new player
+- `UpdateAsync(Player player, CancellationToken)` - Updates an existing player
+- `DeleteAsync(int id, CancellationToken)` - Deletes a player
+
+#### MockPlayerRepository (`Repositories/Implementations/MockPlayerRepository.cs`)
+
+In-memory mock implementation for development and testing:
+
+- Uses `ConcurrentDictionary<int, Player>` for thread-safe storage
+- Auto-incrementing ID generation with thread-safe lock
+- Pre-seeded with 10 sample players (famous athletes)
+- All operations are async and support cancellation
+- Case-insensitive user ID comparison for `GetByUserIdAsync`
+- Preserves original audit fields (CreatedAt, CreatedBy) on updates
+
 ### Test Coverage
 
-**Total Tests**: 121 tests, all passing ✅
+**Total Tests**: 262 tests, all passing ✅
 
 - **AuthenticationServiceTests**: 20 tests
 - **AuthorizationServiceTests**: 17 tests
@@ -176,6 +212,7 @@ Permissions are derived from roles:
 - **UserClaimTests**: 18 tests
 - **AuthorizationResultTests**: 8 tests
 - **Exception Tests**: 21 tests
+- **MockPlayerRepositoryTests**: 30 tests
 
 #### Authorization Scenario Tests
 

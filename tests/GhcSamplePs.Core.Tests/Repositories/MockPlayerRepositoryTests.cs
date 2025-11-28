@@ -1,0 +1,405 @@
+using GhcSamplePs.Core.Models.PlayerManagement;
+using GhcSamplePs.Core.Repositories.Implementations;
+using GhcSamplePs.Core.Repositories.Interfaces;
+
+namespace GhcSamplePs.Core.Tests.Repositories;
+
+public class MockPlayerRepositoryTests
+{
+    private readonly IPlayerRepository _repository;
+
+    public MockPlayerRepositoryTests()
+    {
+        _repository = new MockPlayerRepository();
+    }
+
+    #region Constructor and Seed Data Tests
+
+    [Fact(DisplayName = "Constructor seeds repository with 10 players")]
+    public async Task Constructor_WhenCalled_SeedsRepositoryWith10Players()
+    {
+        var players = await _repository.GetAllAsync();
+
+        Assert.Equal(10, players.Count());
+    }
+
+    [Fact(DisplayName = "Constructor seeds players with sequential IDs starting from 1")]
+    public async Task Constructor_WhenCalled_SeedsPlayersWithSequentialIds()
+    {
+        var players = (await _repository.GetAllAsync()).OrderBy(p => p.Id).ToList();
+
+        for (var i = 0; i < 10; i++)
+        {
+            Assert.Equal(i + 1, players[i].Id);
+        }
+    }
+
+    [Fact(DisplayName = "Constructor seeds players with valid data")]
+    public async Task Constructor_WhenCalled_SeedsPlayersWithValidData()
+    {
+        var players = await _repository.GetAllAsync();
+
+        foreach (var player in players)
+        {
+            Assert.True(player.Validate());
+        }
+    }
+
+    #endregion
+
+    #region GetAllAsync Tests
+
+    [Fact(DisplayName = "GetAllAsync returns all seeded players")]
+    public async Task GetAllAsync_WhenCalled_ReturnsAllSeededPlayers()
+    {
+        var players = await _repository.GetAllAsync();
+
+        Assert.NotNull(players);
+        Assert.Equal(10, players.Count());
+    }
+
+    [Fact(DisplayName = "GetAllAsync respects cancellation token")]
+    public async Task GetAllAsync_WhenCancellationRequested_ThrowsOperationCanceledException()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => _repository.GetAllAsync(cts.Token));
+    }
+
+    #endregion
+
+    #region GetByIdAsync Tests
+
+    [Fact(DisplayName = "GetByIdAsync returns player when ID exists")]
+    public async Task GetByIdAsync_WhenIdExists_ReturnsPlayer()
+    {
+        var player = await _repository.GetByIdAsync(1);
+
+        Assert.NotNull(player);
+        Assert.Equal(1, player.Id);
+    }
+
+    [Fact(DisplayName = "GetByIdAsync returns null when ID does not exist")]
+    public async Task GetByIdAsync_WhenIdDoesNotExist_ReturnsNull()
+    {
+        var player = await _repository.GetByIdAsync(999);
+
+        Assert.Null(player);
+    }
+
+    [Fact(DisplayName = "GetByIdAsync respects cancellation token")]
+    public async Task GetByIdAsync_WhenCancellationRequested_ThrowsOperationCanceledException()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => _repository.GetByIdAsync(1, cts.Token));
+    }
+
+    #endregion
+
+    #region GetByUserIdAsync Tests
+
+    [Fact(DisplayName = "GetByUserIdAsync returns players for existing user")]
+    public async Task GetByUserIdAsync_WhenUserHasPlayers_ReturnsPlayers()
+    {
+        var players = await _repository.GetByUserIdAsync("user-001");
+
+        Assert.NotNull(players);
+        Assert.Equal(2, players.Count());
+        Assert.All(players, p => Assert.Equal("user-001", p.UserId, ignoreCase: true));
+    }
+
+    [Fact(DisplayName = "GetByUserIdAsync returns empty list when user has no players")]
+    public async Task GetByUserIdAsync_WhenUserHasNoPlayers_ReturnsEmptyList()
+    {
+        var players = await _repository.GetByUserIdAsync("nonexistent-user");
+
+        Assert.NotNull(players);
+        Assert.Empty(players);
+    }
+
+    [Fact(DisplayName = "GetByUserIdAsync is case insensitive")]
+    public async Task GetByUserIdAsync_WhenUserIdDifferentCase_ReturnsPlayers()
+    {
+        var players = await _repository.GetByUserIdAsync("USER-001");
+
+        Assert.NotNull(players);
+        Assert.Equal(2, players.Count());
+    }
+
+    [Fact(DisplayName = "GetByUserIdAsync throws when userId is null")]
+    public async Task GetByUserIdAsync_WhenUserIdIsNull_ThrowsArgumentNullException()
+    {
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            () => _repository.GetByUserIdAsync(null!));
+    }
+
+    [Fact(DisplayName = "GetByUserIdAsync respects cancellation token")]
+    public async Task GetByUserIdAsync_WhenCancellationRequested_ThrowsOperationCanceledException()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => _repository.GetByUserIdAsync("user-001", cts.Token));
+    }
+
+    #endregion
+
+    #region AddAsync Tests
+
+    [Fact(DisplayName = "AddAsync adds player with auto-generated ID")]
+    public async Task AddAsync_WhenCalled_AddsPlayerWithAutoGeneratedId()
+    {
+        var newPlayer = CreateTestPlayer();
+
+        var addedPlayer = await _repository.AddAsync(newPlayer);
+
+        Assert.NotNull(addedPlayer);
+        Assert.Equal(11, addedPlayer.Id);
+    }
+
+    [Fact(DisplayName = "AddAsync preserves player properties")]
+    public async Task AddAsync_WhenCalled_PreservesPlayerProperties()
+    {
+        var newPlayer = CreateTestPlayer();
+
+        var addedPlayer = await _repository.AddAsync(newPlayer);
+
+        Assert.Equal(newPlayer.UserId, addedPlayer.UserId);
+        Assert.Equal(newPlayer.Name, addedPlayer.Name);
+        Assert.Equal(newPlayer.DateOfBirth, addedPlayer.DateOfBirth);
+        Assert.Equal(newPlayer.Gender, addedPlayer.Gender);
+        Assert.Equal(newPlayer.PhotoUrl, addedPlayer.PhotoUrl);
+        Assert.Equal(newPlayer.CreatedBy, addedPlayer.CreatedBy);
+    }
+
+    [Fact(DisplayName = "AddAsync makes player retrievable")]
+    public async Task AddAsync_WhenCalled_MakesPlayerRetrievable()
+    {
+        var newPlayer = CreateTestPlayer();
+
+        var addedPlayer = await _repository.AddAsync(newPlayer);
+        var retrievedPlayer = await _repository.GetByIdAsync(addedPlayer.Id);
+
+        Assert.NotNull(retrievedPlayer);
+        Assert.Equal(addedPlayer.Id, retrievedPlayer.Id);
+        Assert.Equal(addedPlayer.Name, retrievedPlayer.Name);
+    }
+
+    [Fact(DisplayName = "AddAsync increments ID for each new player")]
+    public async Task AddAsync_WhenCalledMultipleTimes_IncrementsId()
+    {
+        var player1 = await _repository.AddAsync(CreateTestPlayer("Player 1"));
+        var player2 = await _repository.AddAsync(CreateTestPlayer("Player 2"));
+
+        Assert.Equal(11, player1.Id);
+        Assert.Equal(12, player2.Id);
+    }
+
+    [Fact(DisplayName = "AddAsync throws when player is null")]
+    public async Task AddAsync_WhenPlayerIsNull_ThrowsArgumentNullException()
+    {
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            () => _repository.AddAsync(null!));
+    }
+
+    [Fact(DisplayName = "AddAsync respects cancellation token")]
+    public async Task AddAsync_WhenCancellationRequested_ThrowsOperationCanceledException()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => _repository.AddAsync(CreateTestPlayer(), cts.Token));
+    }
+
+    #endregion
+
+    #region UpdateAsync Tests
+
+    [Fact(DisplayName = "UpdateAsync updates existing player")]
+    public async Task UpdateAsync_WhenPlayerExists_UpdatesPlayer()
+    {
+        var existingPlayer = await _repository.GetByIdAsync(1);
+        Assert.NotNull(existingPlayer);
+
+        var updatedPlayer = new Player
+        {
+            Id = 1,
+            UserId = existingPlayer.UserId,
+            Name = "Updated Name",
+            DateOfBirth = existingPlayer.DateOfBirth,
+            Gender = "Non-binary",
+            PhotoUrl = "https://example.com/updated.jpg",
+            CreatedBy = existingPlayer.CreatedBy
+        };
+
+        var result = await _repository.UpdateAsync(updatedPlayer);
+
+        Assert.NotNull(result);
+        Assert.Equal("Updated Name", result.Name);
+        Assert.Equal("Non-binary", result.Gender);
+    }
+
+    [Fact(DisplayName = "UpdateAsync preserves original CreatedAt and CreatedBy")]
+    public async Task UpdateAsync_WhenPlayerExists_PreservesOriginalAuditFields()
+    {
+        var existingPlayer = await _repository.GetByIdAsync(1);
+        Assert.NotNull(existingPlayer);
+
+        var originalCreatedAt = existingPlayer.CreatedAt;
+        var originalCreatedBy = existingPlayer.CreatedBy;
+
+        var updatedPlayer = new Player
+        {
+            Id = 1,
+            UserId = existingPlayer.UserId,
+            Name = "Updated Name",
+            DateOfBirth = existingPlayer.DateOfBirth,
+            CreatedBy = "different-user"
+        };
+
+        var result = await _repository.UpdateAsync(updatedPlayer);
+
+        Assert.NotNull(result);
+        Assert.Equal(originalCreatedAt, result.CreatedAt);
+        Assert.Equal(originalCreatedBy, result.CreatedBy);
+    }
+
+    [Fact(DisplayName = "UpdateAsync returns null when player does not exist")]
+    public async Task UpdateAsync_WhenPlayerDoesNotExist_ReturnsNull()
+    {
+        var player = new Player
+        {
+            Id = 999,
+            UserId = "user-001",
+            Name = "Nonexistent Player",
+            DateOfBirth = new DateTime(1990, 1, 1),
+            CreatedBy = "test-user"
+        };
+
+        var result = await _repository.UpdateAsync(player);
+
+        Assert.Null(result);
+    }
+
+    [Fact(DisplayName = "UpdateAsync throws when player is null")]
+    public async Task UpdateAsync_WhenPlayerIsNull_ThrowsArgumentNullException()
+    {
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            () => _repository.UpdateAsync(null!));
+    }
+
+    [Fact(DisplayName = "UpdateAsync respects cancellation token")]
+    public async Task UpdateAsync_WhenCancellationRequested_ThrowsOperationCanceledException()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var player = new Player
+        {
+            Id = 1,
+            UserId = "user-001",
+            Name = "Test",
+            DateOfBirth = new DateTime(1990, 1, 1),
+            CreatedBy = "test-user"
+        };
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => _repository.UpdateAsync(player, cts.Token));
+    }
+
+    #endregion
+
+    #region DeleteAsync Tests
+
+    [Fact(DisplayName = "DeleteAsync removes existing player")]
+    public async Task DeleteAsync_WhenPlayerExists_RemovesPlayer()
+    {
+        var result = await _repository.DeleteAsync(1);
+
+        Assert.True(result);
+        var deletedPlayer = await _repository.GetByIdAsync(1);
+        Assert.Null(deletedPlayer);
+    }
+
+    [Fact(DisplayName = "DeleteAsync returns false when player does not exist")]
+    public async Task DeleteAsync_WhenPlayerDoesNotExist_ReturnsFalse()
+    {
+        var result = await _repository.DeleteAsync(999);
+
+        Assert.False(result);
+    }
+
+    [Fact(DisplayName = "DeleteAsync decreases player count")]
+    public async Task DeleteAsync_WhenCalled_DecreasesPlayerCount()
+    {
+        var initialCount = (await _repository.GetAllAsync()).Count();
+
+        await _repository.DeleteAsync(1);
+
+        var finalCount = (await _repository.GetAllAsync()).Count();
+        Assert.Equal(initialCount - 1, finalCount);
+    }
+
+    [Fact(DisplayName = "DeleteAsync respects cancellation token")]
+    public async Task DeleteAsync_WhenCancellationRequested_ThrowsOperationCanceledException()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => _repository.DeleteAsync(1, cts.Token));
+    }
+
+    #endregion
+
+    #region Thread Safety Tests
+
+    [Fact(DisplayName = "Repository handles concurrent add operations")]
+    public async Task ConcurrentOperations_WhenAddingMultiplePlayers_AllSucceed()
+    {
+        var tasks = Enumerable.Range(0, 100)
+            .Select(i => _repository.AddAsync(CreateTestPlayer($"Concurrent Player {i}")));
+
+        var results = await Task.WhenAll(tasks);
+
+        Assert.Equal(100, results.Length);
+        Assert.Equal(100, results.Select(r => r.Id).Distinct().Count());
+    }
+
+    [Fact(DisplayName = "Repository handles concurrent read operations")]
+    public async Task ConcurrentOperations_WhenReadingMultiplePlayers_AllSucceed()
+    {
+        var tasks = Enumerable.Range(1, 10)
+            .SelectMany(id => Enumerable.Range(0, 10).Select(_ => _repository.GetByIdAsync(id)));
+
+        var results = await Task.WhenAll(tasks);
+
+        Assert.All(results, r => Assert.NotNull(r));
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private static Player CreateTestPlayer(string name = "Test Player")
+    {
+        return new Player
+        {
+            UserId = "test-user",
+            Name = name,
+            DateOfBirth = new DateTime(1990, 5, 15),
+            Gender = "Male",
+            PhotoUrl = "https://example.com/test.jpg",
+            CreatedBy = "test-creator"
+        };
+    }
+
+    #endregion
+}
