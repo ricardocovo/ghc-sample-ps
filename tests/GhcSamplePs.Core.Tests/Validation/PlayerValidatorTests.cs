@@ -560,8 +560,8 @@ public class PlayerValidatorTests
         var result = PlayerValidator.ValidateCreatePlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.ContainsKey("PhotoUrl"));
-        Assert.Contains("Photo URL must not exceed 500 characters", result.Errors["PhotoUrl"]);
+        Assert.True(result.Errors.TryGetValue("PhotoUrl", out var errors));
+        Assert.Contains("Photo URL must not exceed 500 characters", errors);
     }
 
     [Fact(DisplayName = "PhotoUrl validation succeeds when PhotoUrl is exactly 500 characters")]
