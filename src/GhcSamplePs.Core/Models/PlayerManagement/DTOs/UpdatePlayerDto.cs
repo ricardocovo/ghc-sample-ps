@@ -47,8 +47,8 @@ public sealed record UpdatePlayerDto
     /// <param name="existingPlayer">The existing player entity to update.</param>
     /// <param name="updatedBy">The identifier of the user making the update.</param>
     /// <returns>A new Player entity with updated values.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when existingPlayer or updatedBy is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when updatedBy is empty or whitespace.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when existingPlayer is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when updatedBy is null, empty, or whitespace.</exception>
     /// <remarks>
     /// This method creates a new Player entity with the updated values.
     /// The UserId, CreatedAt and CreatedBy fields are preserved from the original entity.
@@ -69,11 +69,10 @@ public sealed record UpdatePlayerDto
     public Player ApplyTo(Player existingPlayer, string updatedBy)
     {
         ArgumentNullException.ThrowIfNull(existingPlayer);
-        ArgumentNullException.ThrowIfNull(updatedBy);
 
         if (string.IsNullOrWhiteSpace(updatedBy))
         {
-            throw new ArgumentException("UpdatedBy cannot be empty or whitespace.", nameof(updatedBy));
+            throw new ArgumentException("UpdatedBy cannot be null, empty, or whitespace.", nameof(updatedBy));
         }
 
         var player = new Player

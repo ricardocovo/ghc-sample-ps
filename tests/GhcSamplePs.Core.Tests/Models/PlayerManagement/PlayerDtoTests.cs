@@ -9,7 +9,7 @@ public class PlayerDtoTests
     #region PlayerDto Tests
 
     [Fact(DisplayName = "PlayerDto can be created with required properties")]
-    public void PlayerDto_WithRequiredProperties_CreatesSuccessfully()
+    public void Constructor_WithRequiredProperties_CreatesSuccessfully()
     {
         var dto = new PlayerDto
         {
@@ -48,7 +48,7 @@ public class PlayerDtoTests
     }
 
     [Fact(DisplayName = "PlayerDto.FromEntity trims string values")]
-    public void FromEntity_TrimsStringValues()
+    public void FromEntity_WithUntrimmedStrings_TrimsStringValues()
     {
         var player = new Player
         {
@@ -75,7 +75,7 @@ public class PlayerDtoTests
     }
 
     [Fact(DisplayName = "PlayerDto.FromEntity includes UpdatedAt and UpdatedBy")]
-    public void FromEntity_IncludesUpdateFields()
+    public void FromEntity_WhenPlayerHasUpdateFields_IncludesUpdateFields()
     {
         var player = TestPlayerFactory.CreateValidPlayer();
         player.UpdateLastModified("update-user");
@@ -91,7 +91,7 @@ public class PlayerDtoTests
     #region CreatePlayerDto Tests
 
     [Fact(DisplayName = "CreatePlayerDto can be created with required properties")]
-    public void CreatePlayerDto_WithRequiredProperties_CreatesSuccessfully()
+    public void Constructor_WithRequiredProperties_CreatesCreatePlayerDtoSuccessfully()
     {
         var dto = new CreatePlayerDto
         {
@@ -133,7 +133,7 @@ public class PlayerDtoTests
     }
 
     [Fact(DisplayName = "CreatePlayerDto.ToEntity trims string values")]
-    public void ToEntity_TrimsStringValues()
+    public void ToEntity_WithUntrimmedStrings_TrimsStringValues()
     {
         var dto = new CreatePlayerDto
         {
@@ -153,7 +153,7 @@ public class PlayerDtoTests
     }
 
     [Fact(DisplayName = "CreatePlayerDto.ToEntity sets CreatedAt to current UTC time")]
-    public void ToEntity_SetsCreatedAtToCurrentUtcTime()
+    public void ToEntity_WhenCalled_SetsCreatedAtToCurrentUtcTime()
     {
         var dto = new CreatePlayerDto
         {
@@ -171,7 +171,7 @@ public class PlayerDtoTests
     }
 
     [Fact(DisplayName = "CreatePlayerDto.ToEntity throws when createdBy is null")]
-    public void ToEntity_WhenCreatedByIsNull_ThrowsArgumentNullException()
+    public void ToEntity_WhenCreatedByIsNull_ThrowsArgumentException()
     {
         var dto = new CreatePlayerDto
         {
@@ -180,7 +180,7 @@ public class PlayerDtoTests
             DateOfBirth = new DateTime(1990, 6, 15)
         };
 
-        Assert.Throws<ArgumentNullException>(() => dto.ToEntity(null!));
+        Assert.Throws<ArgumentException>(() => dto.ToEntity(null!));
     }
 
     [Fact(DisplayName = "CreatePlayerDto.ToEntity throws when createdBy is empty")]
@@ -214,7 +214,7 @@ public class PlayerDtoTests
     #region UpdatePlayerDto Tests
 
     [Fact(DisplayName = "UpdatePlayerDto can be created with required properties")]
-    public void UpdatePlayerDto_WithRequiredProperties_CreatesSuccessfully()
+    public void Constructor_WithRequiredProperties_CreatesUpdatePlayerDtoSuccessfully()
     {
         var dto = new UpdatePlayerDto
         {
@@ -255,7 +255,7 @@ public class PlayerDtoTests
     }
 
     [Fact(DisplayName = "UpdatePlayerDto.ApplyTo preserves original UserId, CreatedAt and CreatedBy")]
-    public void ApplyTo_PreservesOriginalAuditFields()
+    public void ApplyTo_WhenApplied_PreservesOriginalAuditFields()
     {
         var existingPlayer = TestPlayerFactory.CreateValidPlayer();
         var originalUserId = existingPlayer.UserId;
@@ -276,7 +276,7 @@ public class PlayerDtoTests
     }
 
     [Fact(DisplayName = "UpdatePlayerDto.ApplyTo sets UpdatedAt and UpdatedBy")]
-    public void ApplyTo_SetsUpdateAuditFields()
+    public void ApplyTo_WhenApplied_SetsUpdateAuditFields()
     {
         var existingPlayer = TestPlayerFactory.CreateValidPlayer();
         var dto = new UpdatePlayerDto
@@ -297,7 +297,7 @@ public class PlayerDtoTests
     }
 
     [Fact(DisplayName = "UpdatePlayerDto.ApplyTo trims string values")]
-    public void ApplyTo_TrimsStringValues()
+    public void ApplyTo_WithUntrimmedStrings_TrimsStringValues()
     {
         var existingPlayer = TestPlayerFactory.CreateValidPlayer();
         var dto = new UpdatePlayerDto
@@ -330,7 +330,7 @@ public class PlayerDtoTests
     }
 
     [Fact(DisplayName = "UpdatePlayerDto.ApplyTo throws when updatedBy is null")]
-    public void ApplyTo_WhenUpdatedByIsNull_ThrowsArgumentNullException()
+    public void ApplyTo_WhenUpdatedByIsNull_ThrowsArgumentException()
     {
         var existingPlayer = TestPlayerFactory.CreateValidPlayer();
         var dto = new UpdatePlayerDto
@@ -340,7 +340,7 @@ public class PlayerDtoTests
             DateOfBirth = new DateTime(1991, 7, 20)
         };
 
-        Assert.Throws<ArgumentNullException>(() => dto.ApplyTo(existingPlayer, null!));
+        Assert.Throws<ArgumentException>(() => dto.ApplyTo(existingPlayer, null!));
     }
 
     [Fact(DisplayName = "UpdatePlayerDto.ApplyTo throws when updatedBy is empty")]

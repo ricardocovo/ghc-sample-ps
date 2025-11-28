@@ -8,7 +8,7 @@ public class PlayerTests
     #region Constructor and Property Tests
 
     [Fact(DisplayName = "Player can be created with required properties")]
-    public void Player_WithRequiredProperties_CreatesSuccessfully()
+    public void Constructor_WithRequiredProperties_CreatesSuccessfully()
     {
         var player = new Player
         {
@@ -26,7 +26,7 @@ public class PlayerTests
     }
 
     [Fact(DisplayName = "Player has default Id of zero")]
-    public void Player_DefaultId_IsZero()
+    public void DefaultId_WhenNotSet_IsZero()
     {
         var player = TestPlayerFactory.CreateMinimalPlayer();
 
@@ -34,7 +34,7 @@ public class PlayerTests
     }
 
     [Fact(DisplayName = "Player CreatedAt defaults to current UTC time")]
-    public void Player_CreatedAt_DefaultsToCurrentUtcTime()
+    public void DefaultCreatedAt_WhenNotSet_IsCurrentUtcTime()
     {
         var beforeCreation = DateTime.UtcNow;
         var player = TestPlayerFactory.CreateMinimalPlayer();
@@ -45,7 +45,7 @@ public class PlayerTests
     }
 
     [Fact(DisplayName = "Player optional properties can be null")]
-    public void Player_WithoutOptionalProperties_HasNullValues()
+    public void Constructor_WithoutOptionalProperties_HasNullValues()
     {
         var player = TestPlayerFactory.CreateMinimalPlayer();
 
@@ -101,7 +101,8 @@ public class PlayerTests
         var player = TestPlayerFactory.CreateLeapYearPlayer(2000);
         var expectedAge = DateTime.UtcNow.Year - 2000;
         
-        if (DateTime.UtcNow.Date < new DateTime(DateTime.UtcNow.Year, 3, 1))
+        var birthdayThisYear = new DateTime(DateTime.UtcNow.Year, 3, 1);
+        if (DateTime.UtcNow.Date < birthdayThisYear)
         {
             expectedAge--;
         }
@@ -130,7 +131,7 @@ public class PlayerTests
     }
 
     [Fact(DisplayName = "Age property returns calculated age")]
-    public void Age_Property_ReturnsCalculatedAge()
+    public void Age_WhenAccessed_ReturnsCalculatedAge()
     {
         var today = DateTime.UtcNow.Date;
         var dateOfBirth = today.AddYears(-35).AddDays(-1);
@@ -376,7 +377,7 @@ public class PlayerTests
     #region UpdateLastModified Tests
 
     [Fact(DisplayName = "UpdateLastModified sets UpdatedAt to current UTC time")]
-    public void UpdateLastModified_SetsUpdatedAtToCurrentUtcTime()
+    public void UpdateLastModified_WhenCalled_SetsUpdatedAtToCurrentUtcTime()
     {
         var player = TestPlayerFactory.CreateValidPlayer();
         var beforeUpdate = DateTime.UtcNow;
@@ -390,7 +391,7 @@ public class PlayerTests
     }
 
     [Fact(DisplayName = "UpdateLastModified sets UpdatedBy to provided userId")]
-    public void UpdateLastModified_SetsUpdatedByToProvidedUserId()
+    public void UpdateLastModified_WhenCalled_SetsUpdatedByToProvidedUserId()
     {
         var player = TestPlayerFactory.CreateValidPlayer();
 
@@ -400,11 +401,11 @@ public class PlayerTests
     }
 
     [Fact(DisplayName = "UpdateLastModified throws when userId is null")]
-    public void UpdateLastModified_WhenUserIdIsNull_ThrowsArgumentNullException()
+    public void UpdateLastModified_WhenUserIdIsNull_ThrowsArgumentException()
     {
         var player = TestPlayerFactory.CreateValidPlayer();
 
-        Assert.Throws<ArgumentNullException>(() => player.UpdateLastModified(null!));
+        Assert.Throws<ArgumentException>(() => player.UpdateLastModified(null!));
     }
 
     [Fact(DisplayName = "UpdateLastModified throws when userId is empty")]

@@ -46,8 +46,7 @@ public sealed record CreatePlayerDto
     /// </summary>
     /// <param name="createdBy">The identifier of the user creating the player.</param>
     /// <returns>A new Player entity.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when createdBy is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when createdBy is empty or whitespace.</exception>
+    /// <exception cref="ArgumentException">Thrown when createdBy is null, empty, or whitespace.</exception>
     /// <example>
     /// <code>
     /// var createDto = new CreatePlayerDto
@@ -62,11 +61,9 @@ public sealed record CreatePlayerDto
     /// </example>
     public Player ToEntity(string createdBy)
     {
-        ArgumentNullException.ThrowIfNull(createdBy);
-
         if (string.IsNullOrWhiteSpace(createdBy))
         {
-            throw new ArgumentException("CreatedBy cannot be empty or whitespace.", nameof(createdBy));
+            throw new ArgumentException("CreatedBy cannot be null, empty, or whitespace.", nameof(createdBy));
         }
 
         return new Player

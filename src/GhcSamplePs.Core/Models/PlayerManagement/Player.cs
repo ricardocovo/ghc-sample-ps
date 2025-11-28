@@ -174,8 +174,7 @@ public sealed class Player
     /// Updates the last modified audit fields with the specified user identifier.
     /// </summary>
     /// <param name="userId">The identifier of the user making the update.</param>
-    /// <exception cref="ArgumentNullException">Thrown when userId is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when userId is empty or whitespace.</exception>
+    /// <exception cref="ArgumentException">Thrown when userId is null, empty, or whitespace.</exception>
     /// <example>
     /// <code>
     /// var player = new Player
@@ -191,11 +190,9 @@ public sealed class Player
     /// </example>
     public void UpdateLastModified(string userId)
     {
-        ArgumentNullException.ThrowIfNull(userId);
-
         if (string.IsNullOrWhiteSpace(userId))
         {
-            throw new ArgumentException("User ID cannot be empty or whitespace.", nameof(userId));
+            throw new ArgumentException("User ID cannot be null, empty, or whitespace.", nameof(userId));
         }
 
         UpdatedAt = DateTime.UtcNow;
