@@ -29,7 +29,7 @@
             </MudStack>
         </MudPaper>
     }
-    @* Error state for player not found *@
+    @* Error state for player not found or unauthorized *@
     else if (_player is null)
     {
         <MudPaper Elevation="2" Class="pa-4">
@@ -213,6 +213,8 @@
     private DateTime? _dateOfBirth;
     private string? _gender;
 
+    private string CurrentUserId => CurrentUserProvider.GetCurrentUser()?.Identity?.Name ?? "system";
+
     protected override async Task OnInitializedAsync()
     {
         await LoadPlayerAsync();
@@ -229,6 +231,14 @@
 
             if (result.Success && result.Data is not null)
             {
+                // Verify ownership - user can only view/edit their own players
+                if (!IsCurrentUserOwner(result.Data))
+                {
+                    _errorMessage = "You do not have permission to view this player.";
+                    _player = null;
+                    return;
+                }
+
                 _player = result.Data;
                 _name = _player.Name;
                 _dateOfBirth = _player.DateOfBirth;
@@ -249,10 +259,22 @@
         }
     }
 
+    private bool IsCurrentUserOwner(PlayerDto player)
+    {
+        return string.Equals(player.UserId, CurrentUserId, StringComparison.OrdinalIgnoreCase);
+    }
+
     private async Task HandleUpdate()
     {
         if (_form is null || _player is null)
         {
+            return;
+        }
+
+        // Verify ownership before update
+        if (!IsCurrentUserOwner(_player))
+        {
+            _errorMessage = "You do not have permission to update this player.";
             return;
         }
 
@@ -268,8 +290,6 @@
 
         try
         {
-            var currentUserId = CurrentUserProvider.GetCurrentUser()?.Identity?.Name ?? "system";
-
             var updateDto = new UpdatePlayerDto
             {
                 Id = Id,
@@ -279,7 +299,7 @@
                 PhotoUrl = _player.PhotoUrl
             };
 
-            var result = await PlayerService.UpdatePlayerAsync(Id, updateDto, currentUserId);
+            var result = await PlayerService.UpdatePlayerAsync(Id, updateDto, CurrentUserId);
 
             if (result.Success)
             {
@@ -309,6 +329,13 @@
     {
         if (_player is null)
         {
+            return;
+        }
+
+        // Verify ownership before delete
+        if (!IsCurrentUserOwner(_player))
+        {
+            _errorMessage = "You do not have permission to delete this player.";
             return;
         }
 
