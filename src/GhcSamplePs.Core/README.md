@@ -290,9 +290,26 @@ Use the extension method in `Program.cs`:
 builder.Services.AddApplicationDbContext(
     connectionString: builder.Configuration.GetConnectionString("DefaultConnection")!,
     enableSensitiveDataLogging: builder.Environment.IsDevelopment(),
+    enableDetailedErrors: builder.Environment.IsDevelopment(),
     maxRetryCount: 5,
-    maxRetryDelaySeconds: 30);
+    maxRetryDelaySeconds: 30,
+    commandTimeoutSeconds: 30);
 ```
+
+#### ServiceCollectionExtensions Configuration Options
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `connectionString` | Required | SQL Server connection string |
+| `enableSensitiveDataLogging` | false | Log query parameter values (dev only) |
+| `enableDetailedErrors` | false | Include detailed error information (dev only) |
+| `maxRetryCount` | 5 | Maximum retry attempts for transient failures |
+| `maxRetryDelaySeconds` | 30 | Maximum delay between retries (seconds) |
+| `commandTimeoutSeconds` | 30 | Database command timeout (seconds) |
+
+Additional configuration applied automatically:
+- **EnableRetryOnFailure** - Exponential backoff retry policy for transient failures
+- **UseQuerySplittingBehavior** - SplitQuery for better performance with related data
 
 #### Connection String Configuration
 

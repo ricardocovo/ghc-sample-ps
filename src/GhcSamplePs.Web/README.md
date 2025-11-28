@@ -102,6 +102,26 @@ The application uses **MudBlazor** for Material Design components:
 - **Static File Caching** - 1-year cache headers for production
 - **Release Build Optimization** - Debug symbols stripped in release builds
 
+### Database Configuration
+
+The application uses Entity Framework Core with SQL Server. DbContext is configured with:
+
+- **Retry Policy** - 5 retries with exponential backoff up to 30 seconds
+- **Command Timeout** - 30 seconds for database operations
+- **Query Splitting** - Automatic query splitting for complex queries with related data
+- **Sensitive Data Logging** - Enabled only in Development environment
+- **Detailed Errors** - Enabled only in Development environment
+
+### Health Check Endpoint
+
+A health check endpoint is available at `/health` for load balancers and monitoring:
+
+- **Endpoint**: `GET /health`
+- **Authorization**: Anonymous (accessible without authentication)
+- **Checks**: Database connectivity via DbContext
+
+The health check is only registered when a valid database connection string is configured.
+
 ## Configuration
 
 ### Azure AD / Entra ID Configuration

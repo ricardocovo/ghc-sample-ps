@@ -14,8 +14,8 @@ namespace GhcSamplePs.Core.Extensions;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Adds the ApplicationDbContext to the service collection with SQL Server configuration
-    /// and connection retry policies for transient failures.
+    /// Adds the ApplicationDbContext to the service collection with SQL Server configuration,
+    /// connection retry policies for transient failures, and development-specific options.
     /// </summary>
     /// <param name="services">The service collection to add the DbContext to.</param>
     /// <param name="connectionString">The SQL Server connection string.</param>
@@ -23,11 +23,18 @@ public static class ServiceCollectionExtensions
     /// Whether to enable sensitive data logging. Should only be true in development environments.
     /// Defaults to false.
     /// </param>
+    /// <param name="enableDetailedErrors">
+    /// Whether to enable detailed error messages. Should only be true in development environments.
+    /// Defaults to false.
+    /// </param>
     /// <param name="maxRetryCount">
     /// The maximum number of retry attempts for transient failures. Defaults to 5.
     /// </param>
     /// <param name="maxRetryDelaySeconds">
     /// The maximum delay between retry attempts in seconds. Defaults to 30.
+    /// </param>
+    /// <param name="commandTimeoutSeconds">
+    /// The command timeout in seconds. Defaults to 30.
     /// </param>
     /// <returns>The service collection for chaining.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="services"/> is null.</exception>
@@ -39,12 +46,14 @@ public static class ServiceCollectionExtensions
     /// // In Program.cs for development
     /// builder.Services.AddApplicationDbContext(
     ///     connectionString: builder.Configuration.GetConnectionString("DefaultConnection")!,
-    ///     enableSensitiveDataLogging: builder.Environment.IsDevelopment());
+    ///     enableSensitiveDataLogging: builder.Environment.IsDevelopment(),
+    ///     enableDetailedErrors: builder.Environment.IsDevelopment());
     /// 
     /// // In Program.cs for production with custom retry settings
     /// builder.Services.AddApplicationDbContext(
     ///     connectionString: builder.Configuration.GetConnectionString("DefaultConnection")!,
     ///     enableSensitiveDataLogging: false,
+    ///     enableDetailedErrors: false,
     ///     maxRetryCount: 10,
     ///     maxRetryDelaySeconds: 60);
     /// </code>
@@ -53,8 +62,10 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         string connectionString,
         bool enableSensitiveDataLogging = false,
+        bool enableDetailedErrors = false,
         int maxRetryCount = 5,
-        int maxRetryDelaySeconds = 30)
+        int maxRetryDelaySeconds = 30,
+        int commandTimeoutSeconds = 30)
     {
         ArgumentNullException.ThrowIfNull(services);
 
@@ -72,11 +83,22 @@ public static class ServiceCollectionExtensions
                     maxRetryCount: maxRetryCount,
                     maxRetryDelay: TimeSpan.FromSeconds(maxRetryDelaySeconds),
                     errorNumbersToAdd: null);
+
+                // Set command timeout
+                sqlServerOptions.CommandTimeout(commandTimeoutSeconds);
+
+                // Configure query splitting for related data (improves performance for complex queries)
+                sqlServerOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
             });
 
             if (enableSensitiveDataLogging)
             {
                 options.EnableSensitiveDataLogging();
+            }
+
+            if (enableDetailedErrors)
+            {
+                options.EnableDetailedErrors();
             }
         });
 
