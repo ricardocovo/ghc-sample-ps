@@ -4,6 +4,7 @@ using GhcSamplePs.Core.Services.Interfaces;
 using GhcSamplePs.Core.Services.Implementations;
 using GhcSamplePs.Core.Repositories.Interfaces;
 using GhcSamplePs.Core.Repositories.Implementations;
+using GhcSamplePs.Core.Extensions;
 using MudBlazor.Services;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.IO.Compression;
@@ -49,6 +50,27 @@ builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 // Register Player Management services
 builder.Services.AddSingleton<IPlayerRepository, MockPlayerRepository>();
 builder.Services.AddScoped<IPlayerService, PlayerService>();
+
+// Register Entity Framework Core DbContext with SQL Server
+// Note: Currently using MockPlayerRepository for player data.
+// When ready to switch to database persistence, update IPlayerRepository implementation.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    if (!builder.Environment.IsDevelopment())
+    {
+        throw new InvalidOperationException("Database connection string 'DefaultConnection' is required in production environments. Configure via environment variables or Azure Key Vault.");
+    }
+    // In development, DbContext registration is optional if no connection string is provided
+}
+else
+{
+    builder.Services.AddApplicationDbContext(
+        connectionString: connectionString,
+        enableSensitiveDataLogging: builder.Environment.IsDevelopment(),
+        maxRetryCount: 5,
+        maxRetryDelaySeconds: 30);
+}
 
 // Add MudBlazor services
 builder.Services.AddMudServices();
