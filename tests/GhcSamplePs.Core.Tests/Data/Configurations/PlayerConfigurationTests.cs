@@ -288,6 +288,20 @@ public class PlayerConfigurationTests : IDisposable
         Assert.NotNull(dateOfBirthIndex);
     }
 
+    [Fact(DisplayName = "Player has composite index on UserId and Name")]
+    public void PlayerUserIdAndName_HaveCompositeIndex()
+    {
+        var entityType = _context.Model.FindEntityType(typeof(Player));
+
+        Assert.NotNull(entityType);
+        var indexes = entityType.GetIndexes().ToList();
+        var compositeIndex = indexes.FirstOrDefault(i =>
+            i.Properties.Count == 2 &&
+            i.Properties.Any(p => p.Name == nameof(Player.UserId)) &&
+            i.Properties.Any(p => p.Name == nameof(Player.Name)));
+        Assert.NotNull(compositeIndex);
+    }
+
     #endregion
 
     #region Integration Tests
