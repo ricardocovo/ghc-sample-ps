@@ -9,6 +9,7 @@ This project contains the business logic, domain models, and services for the Gh
 ## Dependencies
 
 - `Microsoft.Extensions.Logging.Abstractions` - For logging in services
+- `Microsoft.EntityFrameworkCore.SqlServer` - For database access with SQL Server
 
 This project should not reference the Web project or any UI-specific libraries.
 
@@ -19,6 +20,12 @@ GhcSamplePs.Core/
 ├── Common/                      # Common utilities and result types
 │   ├── ServiceResult.cs
 │   └── ValidationResult.cs
+├── Data/                        # Database context and configurations
+│   ├── ApplicationDbContext.cs
+│   └── Configurations/
+│       └── PlayerConfiguration.cs
+├── Extensions/                  # Extension methods
+│   └── ServiceCollectionExtensions.cs
 ├── Models/
 │   ├── Identity/                # User identity domain models
 │   │   ├── ApplicationUser.cs
@@ -38,13 +45,17 @@ GhcSamplePs.Core/
 │   └── Implementations/         # Service implementations
 │       ├── AuthenticationService.cs
 │       └── AuthorizationService.cs
+├── Repositories/                # Repository interfaces and implementations
+│   ├── Interfaces/
+│   │   └── IPlayerRepository.cs
+│   └── Implementations/
+│       └── MockPlayerRepository.cs
 ├── Validation/                  # Business validation rules
 │   └── PlayerValidator.cs
-├── Exceptions/                  # Custom domain exceptions
-│   ├── AuthenticationException.cs
-│   ├── AuthorizationException.cs
-│   └── TokenValidationException.cs
-└── Extensions/                  # Extension methods (future)
+└── Exceptions/                  # Custom domain exceptions
+    ├── AuthenticationException.cs
+    ├── AuthorizationException.cs
+    └── TokenValidationException.cs
 ```
 
 ## Responsibilities
@@ -228,9 +239,73 @@ if (!result.IsValid)
 }
 ```
 
+### Entity Framework Core Database Context ✅
+
+**ApplicationDbContext** (`Data/ApplicationDbContext.cs`):
+- Entity Framework Core 10 DbContext for managing database connections and entity tracking
+- Automatic audit field population (CreatedAt, CreatedBy, UpdatedAt, UpdatedBy)
+- Entity configurations using Fluent API
+
+#### Features
+
+- **Automatic Audit Fields**: SaveChanges/SaveChangesAsync automatically sets:
+  - `CreatedAt` and `CreatedBy` for new entities
+  - `UpdatedAt` and `UpdatedBy` for modified entities
+  
+- **Entity Configurations** (Fluent API):
+  - `PlayerConfiguration` - Configures Player entity with proper constraints and indexes
+
+#### Player Entity Configuration
+
+| Property | Type | Constraints |
+|----------|------|-------------|
+| Id | int | Primary key, auto-generated |
+| UserId | string | Required, max 450 chars, indexed |
+| Name | string | Required, max 200 chars, indexed |
+| DateOfBirth | DateTime | Required, indexed |
+| Gender | string | Optional, max 50 chars |
+| PhotoUrl | string | Optional, max 500 chars |
+| CreatedAt | DateTime | Required |
+| CreatedBy | string | Required, max 450 chars |
+| UpdatedAt | DateTime? | Optional |
+| UpdatedBy | string? | Optional, max 450 chars |
+| Age | int | Ignored (computed property) |
+
+#### Indexes
+
+- `IX_Players_UserId` - For filtering by user
+- `IX_Players_Name` - For search operations
+- `IX_Players_DateOfBirth` - For age-based queries
+
+#### Registration
+
+Use the extension method in `Program.cs`:
+
+```csharp
+// SQL Server configuration with retry policies
+builder.Services.AddApplicationDbContext(
+    connectionString: builder.Configuration.GetConnectionString("DefaultConnection")!,
+    enableSensitiveDataLogging: builder.Environment.IsDevelopment(),
+    maxRetryCount: 5,
+    maxRetryDelaySeconds: 30);
+```
+
+#### Connection String Configuration
+
+**Development** (`appsettings.Development.json`):
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=GhcSamplePs;Trusted_Connection=True;MultipleActiveResultSets=true"
+  }
+}
+```
+
+**Production**: Configure via environment variables or Azure Key Vault.
+
 ### Test Coverage
 
-**Total Tests**: 292 tests, all passing ✅
+**Total Tests**: 417 tests, all passing ✅
 
 - **AuthenticationServiceTests**: 20 tests
 - **AuthorizationServiceTests**: 17 tests
@@ -240,6 +315,8 @@ if (!result.IsValid)
 - **AuthorizationResultTests**: 8 tests
 - **Exception Tests**: 21 tests
 - **PlayerValidatorTests**: 43 tests
+- **ApplicationDbContextTests**: 16 tests (audit field population)
+- **PlayerConfigurationTests**: 25 tests (entity configuration)
 
 #### Authorization Scenario Tests
 
