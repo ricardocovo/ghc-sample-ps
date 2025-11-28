@@ -23,10 +23,10 @@ public sealed class MockPlayerRepository : IPlayerRepository
     }
 
     /// <inheritdoc />
-    public Task<IEnumerable<Player>> GetAllAsync(CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<Player>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult<IEnumerable<Player>>(_players.Values.ToList());
+        return Task.FromResult<IReadOnlyList<Player>>(_players.Values.ToList());
     }
 
     /// <inheritdoc />
@@ -35,19 +35,6 @@ public sealed class MockPlayerRepository : IPlayerRepository
         cancellationToken.ThrowIfCancellationRequested();
         _players.TryGetValue(id, out var player);
         return Task.FromResult(player);
-    }
-
-    /// <inheritdoc />
-    public Task<IEnumerable<Player>> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(userId);
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var players = _players.Values
-            .Where(p => string.Equals(p.UserId, userId, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        return Task.FromResult<IEnumerable<Player>>(players);
     }
 
     /// <inheritdoc />
@@ -73,14 +60,14 @@ public sealed class MockPlayerRepository : IPlayerRepository
     }
 
     /// <inheritdoc />
-    public Task<Player?> UpdateAsync(Player player, CancellationToken cancellationToken = default)
+    public Task<Player> UpdateAsync(Player player, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(player);
         cancellationToken.ThrowIfCancellationRequested();
 
         if (!_players.TryGetValue(player.Id, out var existingPlayer))
         {
-            return Task.FromResult<Player?>(null);
+            throw new InvalidOperationException($"Player with ID {player.Id} not found.");
         }
 
         var updatedPlayer = new Player
@@ -95,12 +82,12 @@ public sealed class MockPlayerRepository : IPlayerRepository
             CreatedBy = existingPlayer.CreatedBy
         };
 
-        if (_players.TryUpdate(player.Id, updatedPlayer, existingPlayer))
+        if (!_players.TryUpdate(player.Id, updatedPlayer, existingPlayer))
         {
-            return Task.FromResult<Player?>(updatedPlayer);
+            throw new InvalidOperationException($"Failed to update player with ID {player.Id}.");
         }
 
-        return Task.FromResult<Player?>(null);
+        return Task.FromResult(updatedPlayer);
     }
 
     /// <inheritdoc />
@@ -108,6 +95,13 @@ public sealed class MockPlayerRepository : IPlayerRepository
     {
         cancellationToken.ThrowIfCancellationRequested();
         return Task.FromResult(_players.TryRemove(id, out _));
+    }
+
+    /// <inheritdoc />
+    public Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(_players.ContainsKey(id));
     }
 
     /// <summary>

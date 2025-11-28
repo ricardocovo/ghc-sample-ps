@@ -101,55 +101,6 @@ public class MockPlayerRepositoryTests
 
     #endregion
 
-    #region GetByUserIdAsync Tests
-
-    [Fact(DisplayName = "GetByUserIdAsync returns players for existing user")]
-    public async Task GetByUserIdAsync_WhenUserHasPlayers_ReturnsPlayers()
-    {
-        var players = await _repository.GetByUserIdAsync("user-001");
-
-        Assert.NotNull(players);
-        Assert.Equal(2, players.Count());
-        Assert.All(players, p => Assert.Equal("user-001", p.UserId, ignoreCase: true));
-    }
-
-    [Fact(DisplayName = "GetByUserIdAsync returns empty list when user has no players")]
-    public async Task GetByUserIdAsync_WhenUserHasNoPlayers_ReturnsEmptyList()
-    {
-        var players = await _repository.GetByUserIdAsync("nonexistent-user");
-
-        Assert.NotNull(players);
-        Assert.Empty(players);
-    }
-
-    [Fact(DisplayName = "GetByUserIdAsync is case insensitive")]
-    public async Task GetByUserIdAsync_WhenUserIdDifferentCase_ReturnsPlayers()
-    {
-        var players = await _repository.GetByUserIdAsync("USER-001");
-
-        Assert.NotNull(players);
-        Assert.Equal(2, players.Count());
-    }
-
-    [Fact(DisplayName = "GetByUserIdAsync throws when userId is null")]
-    public async Task GetByUserIdAsync_WhenUserIdIsNull_ThrowsArgumentNullException()
-    {
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            () => _repository.GetByUserIdAsync(null!));
-    }
-
-    [Fact(DisplayName = "GetByUserIdAsync respects cancellation token")]
-    public async Task GetByUserIdAsync_WhenCancellationRequested_ThrowsOperationCanceledException()
-    {
-        using var cts = new CancellationTokenSource();
-        cts.Cancel();
-
-        await Assert.ThrowsAsync<OperationCanceledException>(
-            () => _repository.GetByUserIdAsync("user-001", cts.Token));
-    }
-
-    #endregion
-
     #region AddAsync Tests
 
     [Fact(DisplayName = "AddAsync adds player with auto-generated ID")]
@@ -271,8 +222,8 @@ public class MockPlayerRepositoryTests
         Assert.Equal(originalCreatedBy, result.CreatedBy);
     }
 
-    [Fact(DisplayName = "UpdateAsync returns null when player does not exist")]
-    public async Task UpdateAsync_WhenPlayerDoesNotExist_ReturnsNull()
+    [Fact(DisplayName = "UpdateAsync throws when player does not exist")]
+    public async Task UpdateAsync_WhenPlayerDoesNotExist_ThrowsInvalidOperationException()
     {
         var player = new Player
         {
@@ -283,9 +234,11 @@ public class MockPlayerRepositoryTests
             CreatedBy = "test-user"
         };
 
-        var result = await _repository.UpdateAsync(player);
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _repository.UpdateAsync(player));
 
-        Assert.Null(result);
+        Assert.Contains("999", exception.Message);
+        Assert.Contains("not found", exception.Message);
     }
 
     [Fact(DisplayName = "UpdateAsync throws when player is null")]
