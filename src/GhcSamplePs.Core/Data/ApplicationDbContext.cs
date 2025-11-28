@@ -138,7 +138,7 @@ public class ApplicationDbContext : DbContext
                     break;
 
                 case EntityState.Modified:
-                    // Use reflection to set private setter for UpdatedAt
+                    // Set UpdatedAt and UpdatedBy for modified entities
                     entry.Property(nameof(Player.UpdatedAt)).CurrentValue = utcNow;
                     entry.Property(nameof(Player.UpdatedBy)).CurrentValue = _currentUserId;
                     break;
