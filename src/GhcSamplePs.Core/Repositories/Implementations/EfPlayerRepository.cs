@@ -204,8 +204,7 @@ public sealed class EfPlayerRepository : IPlayerRepository
                 player.Name,
                 player.DateOfBirth,
                 player.Gender,
-                player.PhotoUrl,
-                player.UserId
+                player.PhotoUrl
             });
 
             await _context.SaveChangesAsync(cancellationToken);
