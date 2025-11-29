@@ -53,12 +53,16 @@ GhcSamplePs.Core/
 │   ├── Interfaces/
 │   │   └── IPlayerRepository.cs
 │   └── Implementations/
-│       └── MockPlayerRepository.cs
+│       ├── MockPlayerRepository.cs
+│       └── EfPlayerRepository.cs
 ├── Validation/                  # Business validation rules
 │   └── PlayerValidator.cs
 └── Exceptions/                  # Custom domain exceptions
     ├── AuthenticationException.cs
     ├── AuthorizationException.cs
+    ├── PlayerNotFoundException.cs
+    ├── PlayerValidationException.cs
+    ├── RepositoryException.cs
     └── TokenValidationException.cs
 ```
 
@@ -356,9 +360,103 @@ Pre-generated idempotent migration scripts are available in `docs/migrations/`:
 
 These scripts are safe to run multiple times and can be used for production deployments.
 
+### Player Repository ✅
+
+Two repository implementations are available for player data access:
+
+#### EfPlayerRepository (Production)
+
+**EfPlayerRepository** (`Repositories/Implementations/EfPlayerRepository.cs`):
+- Entity Framework Core implementation of IPlayerRepository
+- Full database persistence with SQL Server
+- Optimized read operations using AsNoTracking
+- Comprehensive error handling and logging
+
+**Features:**
+- **CRUD Operations**: GetAllAsync, GetByIdAsync, AddAsync, UpdateAsync, DeleteAsync, ExistsAsync
+- **Performance**: AsNoTracking for read-only queries
+- **Error Handling**: Catches and translates DbUpdateException, DbUpdateConcurrencyException
+- **Logging**: Detailed operation logging at appropriate levels
+- **Cancellation Support**: All methods support CancellationToken
+
+**Exception Types:**
+- `PlayerNotFoundException` - Player with specified ID not found
+- `RepositoryException` - Database operation failures with context information
+
+**Usage Example:**
+```csharp
+// Register in DI (production configuration)
+builder.Services.AddScoped<IPlayerRepository, EfPlayerRepository>();
+
+// Use in a service
+public class PlayerService
+{
+    private readonly IPlayerRepository _repository;
+    private readonly ILogger<PlayerService> _logger;
+
+    public PlayerService(IPlayerRepository repository, ILogger<PlayerService> logger)
+    {
+        _repository = repository;
+        _logger = logger;
+    }
+
+    public async Task<Player?> GetPlayerAsync(int id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _repository.GetByIdAsync(id, cancellationToken);
+        }
+        catch (RepositoryException ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve player {PlayerId}", id);
+            throw;
+        }
+    }
+}
+```
+
+#### MockPlayerRepository (Development/Testing)
+
+**MockPlayerRepository** (`Repositories/Implementations/MockPlayerRepository.cs`):
+- In-memory implementation for development and testing
+- Pre-seeded with 10 sample players
+- Thread-safe using ConcurrentDictionary
+
+**Use Cases:**
+- Local development without database
+- Unit testing services without EF Core dependency
+- Demos and prototyping
+
+### Custom Exceptions
+
+#### RepositoryException
+
+**RepositoryException** (`Exceptions/RepositoryException.cs`):
+- Exception for database operation failures
+- Provides detailed context about the failed operation
+
+**Properties:**
+- `Operation` - Name of the failed operation (e.g., "GetByIdAsync")
+- `EntityType` - Type of entity involved (e.g., "Player")
+- `EntityId` - ID of the entity, if applicable
+
+**Usage Example:**
+```csharp
+try
+{
+    await repository.UpdateAsync(player);
+}
+catch (RepositoryException ex) when (ex.Operation == "UpdateAsync")
+{
+    logger.LogError(ex, "Update failed for {EntityType} with ID {EntityId}",
+        ex.EntityType, ex.EntityId);
+    // Handle specific update failure
+}
+```
+
 ### Test Coverage
 
-**Total Tests**: 417 tests, all passing ✅
+**Total Tests**: 458 tests, all passing ✅
 
 - **AuthenticationServiceTests**: 20 tests
 - **AuthorizationServiceTests**: 17 tests
@@ -366,10 +464,12 @@ These scripts are safe to run multiple times and can be used for production depl
 - **ApplicationUserTests**: 24 tests
 - **UserClaimTests**: 18 tests
 - **AuthorizationResultTests**: 8 tests
-- **Exception Tests**: 21 tests
+- **Exception Tests**: 29 tests (includes RepositoryException)
 - **PlayerValidatorTests**: 43 tests
 - **ApplicationDbContextTests**: 16 tests (audit field population)
 - **PlayerConfigurationTests**: 25 tests (entity configuration)
+- **EfPlayerRepositoryTests**: 32 tests (CRUD operations, error handling)
+- **MockPlayerRepositoryTests**: Various tests
 
 #### Authorization Scenario Tests
 
