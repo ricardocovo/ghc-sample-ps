@@ -98,14 +98,17 @@ public static class TeamPlayerValidator
     /// <param name="dto">The UpdateTeamPlayerDto to validate.</param>
     /// <returns>A ValidationResult containing all validation errors found, or a valid result if no errors.</returns>
     /// <exception cref="ArgumentNullException">Thrown when dto is null.</exception>
+    /// <remarks>
+    /// Since UpdateTeamPlayerDto only allows updating LeftDate (core identity fields are immutable),
+    /// this method only validates that LeftDate, if provided, is not in the future.
+    /// The cross-field validation (LeftDate must be after JoinedDate) is enforced by the domain entity's
+    /// MarkAsLeft method when applying the update.
+    /// </remarks>
     /// <example>
     /// <code>
     /// var updateDto = new UpdateTeamPlayerDto
     /// {
     ///     TeamPlayerId = 1,
-    ///     TeamName = "Team Beta",
-    ///     ChampionshipName = "Championship 2024",
-    ///     JoinedDate = new DateTime(2024, 1, 15),
     ///     LeftDate = new DateTime(2024, 6, 30)
     /// };
     /// var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(updateDto);
@@ -118,10 +121,7 @@ public static class TeamPlayerValidator
 
         var errors = new Dictionary<string, List<string>>();
 
-        ValidateTeamName(dto.TeamName, errors);
-        ValidateChampionshipName(dto.ChampionshipName, errors);
-        ValidateJoinedDate(dto.JoinedDate, errors);
-        ValidateLeftDate(dto.LeftDate, dto.JoinedDate, errors);
+        ValidateLeftDateOnly(dto.LeftDate, errors);
 
         return BuildResult(errors);
     }
@@ -255,6 +255,21 @@ public static class TeamPlayerValidator
         if (leftDate.Value.Date <= joinedDate.Date)
         {
             AddError(errors, nameof(TeamPlayer.LeftDate), "Left date must be after joined date");
+        }
+    }
+
+    private static void ValidateLeftDateOnly(DateTime? leftDate, Dictionary<string, List<string>> errors)
+    {
+        if (!leftDate.HasValue)
+        {
+            return;
+        }
+
+        var today = DateTime.UtcNow.Date;
+
+        if (leftDate.Value.Date > today)
+        {
+            AddError(errors, nameof(TeamPlayer.LeftDate), "Left date cannot be in the future");
         }
     }
 

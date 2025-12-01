@@ -41,9 +41,6 @@ public class TeamPlayerValidatorTests
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
-            TeamName = "Team Beta",
-            ChampionshipName = "Championship 2024",
-            JoinedDate = DateTime.UtcNow.Date.AddDays(-60),
             LeftDate = DateTime.UtcNow.Date.AddDays(-10)
         };
 
@@ -59,9 +56,6 @@ public class TeamPlayerValidatorTests
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
-            TeamName = "Team Beta",
-            ChampionshipName = "Championship 2024",
-            JoinedDate = DateTime.UtcNow.Date.AddDays(-30),
             LeftDate = null
         };
 
@@ -545,9 +539,6 @@ public class TeamPlayerValidatorTests
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
-            TeamName = "Team Alpha",
-            ChampionshipName = "Championship 2024",
-            JoinedDate = DateTime.UtcNow.Date.AddDays(-30),
             LeftDate = null
         };
 
@@ -562,9 +553,6 @@ public class TeamPlayerValidatorTests
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
-            TeamName = "Team Alpha",
-            ChampionshipName = "Championship 2024",
-            JoinedDate = DateTime.UtcNow.Date.AddDays(-30),
             LeftDate = DateTime.UtcNow.Date.AddDays(1)
         };
 
@@ -575,54 +563,12 @@ public class TeamPlayerValidatorTests
         Assert.Contains("Left date cannot be in the future", leftDateErrors);
     }
 
-    [Fact(DisplayName = "LeftDate validation returns error when LeftDate is before JoinedDate")]
-    public void ValidateUpdateTeamPlayer_WhenLeftDateIsBeforeJoinedDate_ReturnsLeftDateBeforeJoinedError()
+    [Fact(DisplayName = "LeftDate validation succeeds when LeftDate is in the past")]
+    public void ValidateUpdateTeamPlayer_WhenLeftDateIsInPast_ReturnsValid()
     {
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
-            TeamName = "Team Alpha",
-            ChampionshipName = "Championship 2024",
-            JoinedDate = DateTime.UtcNow.Date.AddDays(-30),
-            LeftDate = DateTime.UtcNow.Date.AddDays(-60)
-        };
-
-        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto);
-
-        Assert.False(result.IsValid);
-        Assert.True(result.Errors.TryGetValue("LeftDate", out var leftDateErrors));
-        Assert.Contains("Left date must be after joined date", leftDateErrors);
-    }
-
-    [Fact(DisplayName = "LeftDate validation returns error when LeftDate is same as JoinedDate")]
-    public void ValidateUpdateTeamPlayer_WhenLeftDateIsSameAsJoinedDate_ReturnsLeftDateBeforeJoinedError()
-    {
-        var joinedDate = DateTime.UtcNow.Date.AddDays(-30);
-        var dto = new UpdateTeamPlayerDto
-        {
-            TeamPlayerId = 1,
-            TeamName = "Team Alpha",
-            ChampionshipName = "Championship 2024",
-            JoinedDate = joinedDate,
-            LeftDate = joinedDate
-        };
-
-        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto);
-
-        Assert.False(result.IsValid);
-        Assert.True(result.Errors.TryGetValue("LeftDate", out var leftDateErrors));
-        Assert.Contains("Left date must be after joined date", leftDateErrors);
-    }
-
-    [Fact(DisplayName = "LeftDate validation succeeds when LeftDate is after JoinedDate and in the past")]
-    public void ValidateUpdateTeamPlayer_WhenLeftDateIsAfterJoinedDateAndInPast_ReturnsValid()
-    {
-        var dto = new UpdateTeamPlayerDto
-        {
-            TeamPlayerId = 1,
-            TeamName = "Team Alpha",
-            ChampionshipName = "Championship 2024",
-            JoinedDate = DateTime.UtcNow.Date.AddDays(-60),
             LeftDate = DateTime.UtcNow.Date.AddDays(-30)
         };
 
@@ -637,9 +583,6 @@ public class TeamPlayerValidatorTests
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
-            TeamName = "Team Alpha",
-            ChampionshipName = "Championship 2024",
-            JoinedDate = DateTime.UtcNow.Date.AddDays(-30),
             LeftDate = DateTime.UtcNow.Date
         };
 
@@ -648,25 +591,23 @@ public class TeamPlayerValidatorTests
         Assert.True(result.IsValid);
     }
 
-    [Fact(DisplayName = "LeftDate validation can return multiple errors")]
-    public void ValidateUpdateTeamPlayer_WhenLeftDateIsInFutureAndBeforeJoinedDate_ReturnsBothErrors()
+    [Fact(DisplayName = "LeftDate vs JoinedDate validation is enforced by domain entity")]
+    public void ValidateUpdateTeamPlayer_LeftDateVsJoinedDate_EnforcedByDomainEntity()
     {
+        // Note: The UpdateTeamPlayerDto no longer contains JoinedDate since core identity
+        // fields are immutable. Cross-field validation (LeftDate must be after JoinedDate)
+        // is enforced by the domain entity's MarkAsLeft method when applying the update.
+        // This test verifies that the validator only checks the future date constraint.
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
-            TeamName = "Team Alpha",
-            ChampionshipName = "Championship 2024",
-            JoinedDate = DateTime.UtcNow.Date.AddDays(10),
-            LeftDate = DateTime.UtcNow.Date.AddDays(5)
+            LeftDate = DateTime.UtcNow.Date.AddDays(-30) // A past date - valid at DTO level
         };
 
         var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto);
 
-        Assert.False(result.IsValid);
-        Assert.True(result.Errors.TryGetValue("LeftDate", out var leftDateErrors));
-        Assert.Equal(2, leftDateErrors.Length);
-        Assert.Contains("Left date cannot be in the future", leftDateErrors);
-        Assert.Contains("Left date must be after joined date", leftDateErrors);
+        // Valid at DTO level - domain will check against actual JoinedDate
+        Assert.True(result.IsValid);
     }
 
     #endregion
@@ -694,24 +635,19 @@ public class TeamPlayerValidatorTests
         Assert.True(result.Errors.ContainsKey("JoinedDate"));
     }
 
-    [Fact(DisplayName = "Validation collects all errors for UpdateTeamPlayer")]
-    public void ValidateUpdateTeamPlayer_WithMultipleInvalidFields_ReturnsAllErrors()
+    [Fact(DisplayName = "Validation for UpdateTeamPlayer with invalid LeftDate returns error")]
+    public void ValidateUpdateTeamPlayer_WithFutureLeftDate_ReturnsLeftDateError()
     {
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
-            TeamName = "",
-            ChampionshipName = "",
-            JoinedDate = DateTime.UtcNow.Date.AddDays(-30),
             LeftDate = DateTime.UtcNow.Date.AddDays(1)
         };
 
         var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto);
 
         Assert.False(result.IsValid);
-        Assert.Equal(3, result.Errors.Count);
-        Assert.True(result.Errors.ContainsKey("TeamName"));
-        Assert.True(result.Errors.ContainsKey("ChampionshipName"));
+        Assert.Single(result.Errors);
         Assert.True(result.Errors.ContainsKey("LeftDate"));
     }
 
@@ -763,9 +699,6 @@ public class TeamPlayerValidatorTests
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
-            TeamName = "Team Alpha",
-            ChampionshipName = "Championship 2024",
-            JoinedDate = DateTime.UtcNow.Date.AddDays(-30),
             LeftDate = null
         };
 
