@@ -61,6 +61,11 @@ public class ApplicationDbContext : DbContext
     public DbSet<Player> Players { get; set; } = null!;
 
     /// <summary>
+    /// Gets or sets the DbSet for TeamPlayer entities.
+    /// </summary>
+    public DbSet<TeamPlayer> TeamPlayers { get; set; } = null!;
+
+    /// <summary>
     /// Saves all changes made in this context to the database asynchronously.
     /// Automatically updates audit fields (CreatedAt, CreatedBy, UpdatedAt, UpdatedBy)
     /// on entities being added or modified.
@@ -141,6 +146,26 @@ public class ApplicationDbContext : DbContext
                     // Set UpdatedAt and UpdatedBy for modified entities
                     entry.Property(nameof(Player.UpdatedAt)).CurrentValue = utcNow;
                     entry.Property(nameof(Player.UpdatedBy)).CurrentValue = _currentUserId;
+                    break;
+            }
+        }
+
+        foreach (var entry in ChangeTracker.Entries<TeamPlayer>())
+        {
+            switch (entry.State)
+            {
+                case EntityState.Added:
+                    entry.Property(nameof(TeamPlayer.CreatedAt)).CurrentValue = utcNow;
+                    if (string.IsNullOrWhiteSpace((string?)entry.Property(nameof(TeamPlayer.CreatedBy)).CurrentValue))
+                    {
+                        entry.Property(nameof(TeamPlayer.CreatedBy)).CurrentValue = _currentUserId;
+                    }
+                    break;
+
+                case EntityState.Modified:
+                    // Set UpdatedAt and UpdatedBy for modified entities
+                    entry.Property(nameof(TeamPlayer.UpdatedAt)).CurrentValue = utcNow;
+                    entry.Property(nameof(TeamPlayer.UpdatedBy)).CurrentValue = _currentUserId;
                     break;
             }
         }
