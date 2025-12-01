@@ -4,9 +4,11 @@
 @using GhcSamplePs.Core.Validation
 @using GhcSamplePs.Web.Helpers
 @inject IPlayerService PlayerService
+@inject ITeamPlayerService TeamPlayerService
 @inject NavigationManager NavigationManager
 @inject ICurrentUserProvider CurrentUserProvider
 @inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <PageTitle>Edit Player</PageTitle>
 
@@ -173,16 +175,106 @@
                 </MudPaper>
             </MudTabPanel>
 
-            @* Teams Tab (placeholder) *@
+            @* Teams Tab *@
             <MudTabPanel Text="Teams" Icon="@Icons.Material.Filled.Groups">
                 <MudPaper Elevation="0">
-                    <MudStack AlignItems="AlignItems.Center" Class="my-8">
-                        <MudIcon Icon="@Icons.Material.Filled.Construction" Size="Size.Large" Color="Color.Secondary" />
-                        <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mt-2">FUTURE DEV</MudText>
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">
-                            Team assignments will be available in a future release.
-                        </MudText>
+                    @* Section header *@
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+                        <MudIcon Icon="@Icons.Material.Filled.Groups" />
+                        <MudText Typo="Typo.h6">Team Assignments</MudText>
+                        <MudSpacer />
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="OpenAddTeamDialog"
+                                   Disabled="@_isLoadingTeams">
+                            Add Team
+                        </MudButton>
                     </MudStack>
+
+                    @* Error display *@
+                    @if (!string.IsNullOrEmpty(_teamErrorMessage))
+                    {
+                        <MudAlert Severity="Severity.Error" Class="mb-4" ShowCloseIcon="true" CloseIconClicked="() => _teamErrorMessage = null">
+                            @_teamErrorMessage
+                        </MudAlert>
+                    }
+
+                    @* Loading state *@
+                    @if (_isLoadingTeams)
+                    {
+                        <MudStack AlignItems="AlignItems.Center" Class="my-8">
+                            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">Loading team assignments...</MudText>
+                        </MudStack>
+                    }
+                    @* Empty state *@
+                    else if (_teams.Count == 0)
+                    {
+                        <MudStack AlignItems="AlignItems.Center" Class="my-8">
+                            <MudIcon Icon="@Icons.Material.Filled.Groups" Size="Size.Large" Color="Color.Secondary" />
+                            <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mt-2">No team assignments yet</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Add this player to a team to get started.
+                            </MudText>
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.Add"
+                                       OnClick="OpenAddTeamDialog"
+                                       Class="mt-4">
+                                Add Team
+                            </MudButton>
+                        </MudStack>
+                    }
+                    @* Team list *@
+                    else
+                    {
+                        <MudTable Items="@_teams" Hover="true" Elevation="0" Dense="true">
+                            <HeaderContent>
+                                <MudTh>Team Name</MudTh>
+                                <MudTh>Championship</MudTh>
+                                <MudTh>Joined</MudTh>
+                                <MudTh>Left</MudTh>
+                                <MudTh>Status</MudTh>
+                                <MudTh Style="width: 120px;">Actions</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Team Name">@context.TeamName</MudTd>
+                                <MudTd DataLabel="Championship">@context.ChampionshipName</MudTd>
+                                <MudTd DataLabel="Joined">@context.JoinedDate.ToString("MM/dd/yyyy")</MudTd>
+                                <MudTd DataLabel="Left">@(context.LeftDate?.ToString("MM/dd/yyyy") ?? "-")</MudTd>
+                                <MudTd DataLabel="Status">
+                                    @if (context.IsActive)
+                                    {
+                                        <MudChip T="string" Color="Color.Success" Size="Size.Small">Active</MudChip>
+                                    }
+                                    else
+                                    {
+                                        <MudChip T="string" Color="Color.Default" Size="Size.Small">Inactive</MudChip>
+                                    }
+                                </MudTd>
+                                <MudTd DataLabel="Actions">
+                                    <MudStack Row="true" Spacing="1">
+                                        <MudTooltip Text="Edit">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                           Size="Size.Small"
+                                                           Color="Color.Primary"
+                                                           OnClick="() => OpenEditTeamDialog(context)" />
+                                        </MudTooltip>
+                                        @if (context.IsActive)
+                                        {
+                                            <MudTooltip Text="Remove from team">
+                                                <MudIconButton Icon="@Icons.Material.Filled.PersonRemove"
+                                                               Size="Size.Small"
+                                                               Color="Color.Error"
+                                                               OnClick="() => OpenRemoveTeamDialog(context)" />
+                                            </MudTooltip>
+                                        }
+                                    </MudStack>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
                 </MudPaper>
             </MudTabPanel>
 
@@ -200,6 +292,165 @@
             </MudTabPanel>
         </MudTabs>
     }
+
+    @* Add Team Dialog *@
+    <MudDialog @bind-Visible="_showAddTeamDialog">
+        <TitleContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Add" />
+                <MudText Typo="Typo.h6">Add Team Assignment</MudText>
+            </MudStack>
+        </TitleContent>
+        <DialogContent>
+            <MudForm @ref="_addTeamForm" @bind-IsValid="_addTeamFormIsValid">
+                <MudTextField @bind-Value="_addTeamName"
+                              Label="Team Name"
+                              Variant="Variant.Outlined"
+                              Required="true"
+                              RequiredError="Team name is required"
+                              MaxLength="200"
+                              Counter="200"
+                              Immediate="true"
+                              Class="mb-4" />
+                <MudTextField @bind-Value="_addChampionshipName"
+                              Label="Championship Name"
+                              Variant="Variant.Outlined"
+                              Required="true"
+                              RequiredError="Championship name is required"
+                              MaxLength="200"
+                              Counter="200"
+                              Immediate="true"
+                              Class="mb-4" />
+                <MudDatePicker @bind-Date="_addJoinedDate"
+                               Label="Joined Date"
+                               Variant="Variant.Outlined"
+                               DateFormat="MM/dd/yyyy"
+                               MaxDate="DateTime.Today"
+                               Required="true"
+                               RequiredError="Joined date is required" />
+            </MudForm>
+            @if (!string.IsNullOrEmpty(_addTeamErrorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-4">@_addTeamErrorMessage</MudAlert>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="CloseAddTeamDialog" Disabled="@_isSavingTeam">Cancel</MudButton>
+            <MudButton Color="Color.Primary"
+                       Variant="Variant.Filled"
+                       OnClick="HandleAddTeam"
+                       Disabled="@(!_addTeamFormIsValid || _isSavingTeam)">
+                @if (_isSavingTeam)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Adding...</span>
+                }
+                else
+                {
+                    <span>Add</span>
+                }
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+
+    @* Edit Team Dialog *@
+    <MudDialog @bind-Visible="_showEditTeamDialog">
+        <TitleContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Edit" />
+                <MudText Typo="Typo.h6">Edit Team Assignment</MudText>
+            </MudStack>
+        </TitleContent>
+        <DialogContent>
+            <MudForm @ref="_editTeamForm" @bind-IsValid="_editTeamFormIsValid">
+                <MudTextField Value="@_editingTeam?.TeamName"
+                              Label="Team Name"
+                              Variant="Variant.Outlined"
+                              ReadOnly="true"
+                              Disabled="true"
+                              Class="mb-4" />
+                <MudTextField Value="@_editingTeam?.ChampionshipName"
+                              Label="Championship Name"
+                              Variant="Variant.Outlined"
+                              ReadOnly="true"
+                              Disabled="true"
+                              Class="mb-4" />
+                <MudTextField Value="@(_editingTeam?.JoinedDate.ToString("MM/dd/yyyy"))"
+                              Label="Joined Date"
+                              Variant="Variant.Outlined"
+                              ReadOnly="true"
+                              Disabled="true"
+                              Class="mb-4" />
+                <MudDatePicker @bind-Date="_editLeftDate"
+                               Label="Left Date (leave empty if still active)"
+                               Variant="Variant.Outlined"
+                               DateFormat="MM/dd/yyyy"
+                               MaxDate="DateTime.Today"
+                               MinDate="@(_editingTeam?.JoinedDate.AddDays(1))"
+                               Clearable="true" />
+            </MudForm>
+            @if (!string.IsNullOrEmpty(_editTeamErrorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-4">@_editTeamErrorMessage</MudAlert>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="CloseEditTeamDialog" Disabled="@_isSavingTeam">Cancel</MudButton>
+            <MudButton Color="Color.Primary"
+                       Variant="Variant.Filled"
+                       OnClick="HandleEditTeam"
+                       Disabled="@_isSavingTeam">
+                @if (_isSavingTeam)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Saving...</span>
+                }
+                else
+                {
+                    <span>Save</span>
+                }
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+
+    @* Remove Team Confirmation Dialog *@
+    <MudDialog @bind-Visible="_showRemoveTeamDialog">
+        <TitleContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.PersonRemove" Color="Color.Error" />
+                <MudText Typo="Typo.h6">Remove from Team</MudText>
+            </MudStack>
+        </TitleContent>
+        <DialogContent>
+            <MudText Typo="Typo.body1" Class="mb-2">
+                Are you sure you want to remove this player from <strong>@_removingTeam?.TeamName</strong> in <strong>@_removingTeam?.ChampionshipName</strong>?
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                This will mark the player as having left the team today. The team assignment record will be preserved for historical purposes.
+            </MudText>
+            @if (!string.IsNullOrEmpty(_removeTeamErrorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-4">@_removeTeamErrorMessage</MudAlert>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="CloseRemoveTeamDialog" Disabled="@_isSavingTeam">Cancel</MudButton>
+            <MudButton Color="Color.Error"
+                       Variant="Variant.Filled"
+                       OnClick="HandleRemoveTeam"
+                       Disabled="@_isSavingTeam">
+                @if (_isSavingTeam)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Removing...</span>
+                }
+                else
+                {
+                    <span>Remove</span>
+                }
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
 </MudContainer>
 
 @code {
@@ -218,6 +469,35 @@
     private string _name = string.Empty;
     private DateTime? _dateOfBirth;
     private string? _gender;
+
+    // Teams tab state
+    private List<TeamPlayerDto> _teams = [];
+    private bool _isLoadingTeams;
+    private bool _teamsLoaded;
+    private string? _teamErrorMessage;
+
+    // Add Team dialog state
+    private bool _showAddTeamDialog;
+    private MudForm? _addTeamForm;
+    private bool _addTeamFormIsValid;
+    private string _addTeamName = string.Empty;
+    private string _addChampionshipName = string.Empty;
+    private DateTime? _addJoinedDate = DateTime.Today;
+    private string? _addTeamErrorMessage;
+    private bool _isSavingTeam;
+
+    // Edit Team dialog state
+    private bool _showEditTeamDialog;
+    private MudForm? _editTeamForm;
+    private bool _editTeamFormIsValid;
+    private TeamPlayerDto? _editingTeam;
+    private DateTime? _editLeftDate;
+    private string? _editTeamErrorMessage;
+
+    // Remove Team dialog state
+    private bool _showRemoveTeamDialog;
+    private TeamPlayerDto? _removingTeam;
+    private string? _removeTeamErrorMessage;
 
     private string CurrentUserId => CurrentUserProvider.GetCurrentUser()?.Identity?.Name ?? "system";
 
@@ -387,8 +667,239 @@
         NavigationManager.NavigateTo("/players");
     }
 
-    private void OnTabChanged(int index)
+    private async Task OnTabChanged(int index)
     {
         _activeTabIndex = index;
+
+        // Lazy load teams when Teams tab is first accessed (index 1)
+        if (index == 1 && !_teamsLoaded && _player is not null)
+        {
+            await LoadTeamsAsync();
+        }
+    }
+
+    private async Task LoadTeamsAsync()
+    {
+        _isLoadingTeams = true;
+        _teamErrorMessage = null;
+
+        try
+        {
+            var result = await TeamPlayerService.GetTeamsByPlayerIdAsync(Id, includeInactive: true);
+
+            if (result.Success && result.Data is not null)
+            {
+                // Sort by active status (active first), then by JoinedDate DESC
+                _teams = result.Data
+                    .OrderByDescending(t => t.IsActive)
+                    .ThenByDescending(t => t.JoinedDate)
+                    .ToList();
+                _teamsLoaded = true;
+            }
+            else
+            {
+                _teamErrorMessage = result.ErrorMessages.FirstOrDefault() ?? "Unable to load team assignments.";
+            }
+        }
+        catch (Exception)
+        {
+            _teamErrorMessage = "An unexpected error occurred while loading team assignments.";
+        }
+        finally
+        {
+            _isLoadingTeams = false;
+        }
+    }
+
+    // Add Team Dialog methods
+    private void OpenAddTeamDialog()
+    {
+        _addTeamName = string.Empty;
+        _addChampionshipName = string.Empty;
+        _addJoinedDate = DateTime.Today;
+        _addTeamErrorMessage = null;
+        _showAddTeamDialog = true;
+    }
+
+    private void CloseAddTeamDialog()
+    {
+        _showAddTeamDialog = false;
+        _addTeamErrorMessage = null;
+    }
+
+    private async Task HandleAddTeam()
+    {
+        if (_addTeamForm is null)
+        {
+            return;
+        }
+
+        await _addTeamForm.Validate();
+
+        if (!_addTeamFormIsValid || !_addJoinedDate.HasValue)
+        {
+            return;
+        }
+
+        _isSavingTeam = true;
+        _addTeamErrorMessage = null;
+
+        try
+        {
+            var createDto = new CreateTeamPlayerDto
+            {
+                PlayerId = Id,
+                TeamName = _addTeamName.Trim(),
+                ChampionshipName = _addChampionshipName.Trim(),
+                JoinedDate = _addJoinedDate.Value
+            };
+
+            var result = await TeamPlayerService.AddPlayerToTeamAsync(createDto, CurrentUserId);
+
+            if (result.Success)
+            {
+                CloseAddTeamDialog();
+                await LoadTeamsAsync();
+                Snackbar.Add("Team assignment added successfully.", Severity.Success);
+            }
+            else if (result.ValidationErrors.Count > 0)
+            {
+                var errors = result.ValidationErrors.SelectMany(e => e.Value);
+                _addTeamErrorMessage = string.Join(" ", errors);
+            }
+            else
+            {
+                _addTeamErrorMessage = result.ErrorMessages.FirstOrDefault() ?? "Unable to add team assignment.";
+            }
+        }
+        catch (Exception)
+        {
+            _addTeamErrorMessage = "An unexpected error occurred while adding the team assignment.";
+        }
+        finally
+        {
+            _isSavingTeam = false;
+        }
+    }
+
+    // Edit Team Dialog methods
+    private void OpenEditTeamDialog(TeamPlayerDto team)
+    {
+        _editingTeam = team;
+        _editLeftDate = team.LeftDate;
+        _editTeamErrorMessage = null;
+        _showEditTeamDialog = true;
+    }
+
+    private void CloseEditTeamDialog()
+    {
+        _showEditTeamDialog = false;
+        _editingTeam = null;
+        _editLeftDate = null;
+        _editTeamErrorMessage = null;
+    }
+
+    private async Task HandleEditTeam()
+    {
+        if (_editingTeam is null)
+        {
+            return;
+        }
+
+        _isSavingTeam = true;
+        _editTeamErrorMessage = null;
+
+        try
+        {
+            var updateDto = new UpdateTeamPlayerDto
+            {
+                TeamPlayerId = _editingTeam.TeamPlayerId,
+                LeftDate = _editLeftDate
+            };
+
+            var result = await TeamPlayerService.UpdateTeamAssignmentAsync(_editingTeam.TeamPlayerId, updateDto, CurrentUserId);
+
+            if (result.Success)
+            {
+                CloseEditTeamDialog();
+                await LoadTeamsAsync();
+                Snackbar.Add("Team assignment updated successfully.", Severity.Success);
+            }
+            else if (result.ValidationErrors.Count > 0)
+            {
+                var errors = result.ValidationErrors.SelectMany(e => e.Value);
+                _editTeamErrorMessage = string.Join(" ", errors);
+            }
+            else
+            {
+                _editTeamErrorMessage = result.ErrorMessages.FirstOrDefault() ?? "Unable to update team assignment.";
+            }
+        }
+        catch (Exception)
+        {
+            _editTeamErrorMessage = "An unexpected error occurred while updating the team assignment.";
+        }
+        finally
+        {
+            _isSavingTeam = false;
+        }
+    }
+
+    // Remove Team Dialog methods
+    private void OpenRemoveTeamDialog(TeamPlayerDto team)
+    {
+        _removingTeam = team;
+        _removeTeamErrorMessage = null;
+        _showRemoveTeamDialog = true;
+    }
+
+    private void CloseRemoveTeamDialog()
+    {
+        _showRemoveTeamDialog = false;
+        _removingTeam = null;
+        _removeTeamErrorMessage = null;
+    }
+
+    private async Task HandleRemoveTeam()
+    {
+        if (_removingTeam is null)
+        {
+            return;
+        }
+
+        _isSavingTeam = true;
+        _removeTeamErrorMessage = null;
+
+        try
+        {
+            var result = await TeamPlayerService.RemovePlayerFromTeamAsync(
+                _removingTeam.TeamPlayerId,
+                DateTime.Today,
+                CurrentUserId);
+
+            if (result.Success)
+            {
+                CloseRemoveTeamDialog();
+                await LoadTeamsAsync();
+                Snackbar.Add("Player removed from team successfully.", Severity.Success);
+            }
+            else if (result.ValidationErrors.Count > 0)
+            {
+                var errors = result.ValidationErrors.SelectMany(e => e.Value);
+                _removeTeamErrorMessage = string.Join(" ", errors);
+            }
+            else
+            {
+                _removeTeamErrorMessage = result.ErrorMessages.FirstOrDefault() ?? "Unable to remove player from team.";
+            }
+        }
+        catch (Exception)
+        {
+            _removeTeamErrorMessage = "An unexpected error occurred while removing the player from the team.";
+        }
+        finally
+        {
+            _isSavingTeam = false;
+        }
     }
 }
