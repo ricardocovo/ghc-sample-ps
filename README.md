@@ -134,7 +134,19 @@ After Azure infrastructure is ready:
 
 📖 **Complete Guide**: [Development Environment Setup](docs/Development_Environment_Setup.md)
 
-### 4. Build and Run
+### 4. Configure Database Connection
+
+Set up the database connection string using User Secrets:
+
+```bash
+cd src/GhcSamplePs.Web
+dotnet user-secrets init
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\mssqllocaldb;Database=GhcSamplePs;Trusted_Connection=True;MultipleActiveResultSets=true"
+```
+
+📖 **Complete Guide**: [Database Connection Setup Guide](docs/Database_Connection_Setup.md)
+
+### 5. Build and Run
 
 ```bash
 # Build the solution
@@ -322,6 +334,7 @@ AZUREAD__CLIENTSECRET=@Microsoft.KeyVault(SecretUri=https://...)
 
 ### Setup and Configuration
 - [Azure Entra ID Setup Guide](docs/Azure_EntraID_Setup_Guide.md) - Complete infrastructure setup
+- [Database Connection Setup Guide](docs/Database_Connection_Setup.md) - Database connection string configuration
 - [Development Environment Setup](docs/Development_Environment_Setup.md) - Local development configuration
 - [Infrastructure Verification Checklist](docs/Infrastructure_Verification_Checklist.md) - Verify setup completion
 - [Configuration Reference](docs/Azure_EntraID_Configuration_Reference.md) - Quick reference guide
@@ -428,7 +441,7 @@ For questions or issues:
 ---
 
 **Version**: 1.0  
-**Last Updated**: 2025-11-24  
+**Last Updated**: 2025-12-01  
 **Maintained By**: Development Team
 
 ## Quick Start Checklist
@@ -437,9 +450,10 @@ For questions or issues:
 - [ ] Install .NET 10 SDK
 - [ ] Complete Azure Entra ID setup
 - [ ] Configure development environment
-- [ ] Set user secrets
+- [ ] Set user secrets (including database connection string)
 - [ ] Build solution
 - [ ] Run application
 - [ ] Access https://localhost:5001
 
 📖 **Start Here**: [Azure Entra ID Setup Guide](docs/Azure_EntraID_Setup_Guide.md)
+📖 **Database Setup**: [Database Connection Setup Guide](docs/Database_Connection_Setup.md)

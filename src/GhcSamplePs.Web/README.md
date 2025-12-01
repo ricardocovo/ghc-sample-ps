@@ -112,6 +112,8 @@ The application uses Entity Framework Core with SQL Server. DbContext is configu
 - **Sensitive Data Logging** - Enabled only in Development environment
 - **Detailed Errors** - Enabled only in Development environment
 
+> 📖 **Setup Guide**: For step-by-step connection string configuration, see [Database Connection Setup Guide](../../docs/Database_Connection_Setup.md)
+
 ### Health Check Endpoint
 
 A health check endpoint is available at `/health` for load balancers and monitoring:
@@ -260,6 +262,7 @@ AZUREAD__CLIENTSECRET=@Microsoft.KeyVault(SecretUri=https://...)
 
 - [Root README](../../README.md) - Solution overview
 - [GhcSamplePs.Core README](../GhcSamplePs.Core/README.md) - Business logic layer
+- [Database Connection Setup Guide](../../docs/Database_Connection_Setup.md) - Database connection string configuration
 - [Azure Entra ID Setup Guide](../../docs/Azure_EntraID_Setup_Guide.md) - Authentication setup
 - [Development Environment Setup](../../docs/Development_Environment_Setup.md) - Local development
 - [Blazor Architecture Guidelines](../../.github/instructions/blazor-architecture.instructions.md) - Architecture patterns

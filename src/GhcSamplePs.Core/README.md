@@ -317,13 +317,12 @@ Additional configuration applied automatically:
 
 #### Connection String Configuration
 
-**Development** (`appsettings.Development.json`):
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=GhcSamplePs;Trusted_Connection=True;MultipleActiveResultSets=true"
-  }
-}
+> 📖 **Complete Guide**: For step-by-step setup instructions, see [Database Connection Setup Guide](../../docs/Database_Connection_Setup.md)
+
+**Development** - Use User Secrets (recommended):
+```bash
+cd src/GhcSamplePs.Web
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\mssqllocaldb;Database=GhcSamplePs;Trusted_Connection=True;MultipleActiveResultSets=true"
 ```
 
 **Production**: Configure via environment variables or Azure Key Vault.
@@ -493,6 +492,7 @@ The `AuthorizationScenariosTests` class provides comprehensive coverage for auth
 
 ## See Also
 
+- [Database Connection Setup Guide](../../docs/Database_Connection_Setup.md) - Connection string configuration for development and production
 - [Architecture Guidelines](../../.github/instructions/blazor-architecture.instructions.md)
 - [C# Guidelines](../../.github/instructions/csharp.instructions.md)
 - [DDD Best Practices](../../.github/instructions/dotnet-architecture-good-practices.instructions.md)
