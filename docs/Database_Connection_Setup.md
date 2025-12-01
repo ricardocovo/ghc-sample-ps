@@ -414,6 +414,97 @@ dotnet ef migrations script \
   --output migration.sql
 ```
 
+## Database Schema
+
+### Players Table
+
+The `Players` table stores player information:
+
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| Id | int | No | Primary key, auto-increment |
+| UserId | nvarchar(450) | No | Owner's user identifier |
+| Name | nvarchar(200) | No | Player's name |
+| DateOfBirth | datetime2 | No | Player's date of birth |
+| Gender | nvarchar(50) | Yes | Optional gender |
+| PhotoUrl | nvarchar(500) | Yes | Optional photo URL |
+| CreatedAt | datetime2 | No | Record creation timestamp |
+| CreatedBy | nvarchar(450) | No | User who created record |
+| UpdatedAt | datetime2 | Yes | Last update timestamp |
+| UpdatedBy | nvarchar(450) | Yes | User who last updated |
+
+**Indexes:**
+- `IX_Players_UserId` - Filter by owner
+- `IX_Players_Name` - Search by name
+- `IX_Players_DateOfBirth` - Age-based queries
+- `IX_Players_UserId_Name` - Composite index for user's player lookups
+
+### TeamPlayers Table
+
+The `TeamPlayers` table stores player team assignments:
+
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| TeamPlayerId | int | No | Primary key, auto-increment |
+| PlayerId | int | No | FK to Players(Id) |
+| TeamName | nvarchar(200) | No | Name of the team |
+| ChampionshipName | nvarchar(200) | No | Name of the championship |
+| JoinedDate | datetime2 | No | Date player joined team |
+| LeftDate | datetime2 | Yes | Date player left team (null = active) |
+| CreatedAt | datetime2 | No | Record creation timestamp |
+| CreatedBy | nvarchar(450) | No | User who created record |
+| UpdatedAt | datetime2 | Yes | Last update timestamp |
+| UpdatedBy | nvarchar(450) | Yes | User who last updated |
+
+**Indexes:**
+- `IX_TeamPlayers_PlayerId` - Get player's teams
+- `IX_TeamPlayers_TeamName` - Query by team name
+- `IX_TeamPlayers_IsActive` - Filter active/inactive (on LeftDate)
+- `IX_TeamPlayers_PlayerId_IsActive` - Composite for active player teams
+- `IX_TeamPlayers_PlayerId_TeamName_ChampionshipName` - Duplicate detection
+
+**Foreign Key:**
+- `FK_TeamPlayers_Players_PlayerId` → `Players(Id)` with **CASCADE DELETE**
+
+### Cascade Delete Behavior
+
+When a Player is deleted:
+- All associated TeamPlayer records are automatically deleted
+- This maintains referential integrity
+- No orphaned team assignments remain
+
+## Migration History
+
+### InitialCreate (20251128205245)
+- Creates `Players` table with all columns
+- Creates indexes for UserId, Name, DateOfBirth
+
+### AddCompositeIndexUserIdName (20251201163057)
+- Adds composite index `IX_Players_UserId_Name`
+
+### AddTeamPlayersTable (20251201203656)
+- Creates `TeamPlayers` table with all columns
+- Creates FK to Players with cascade delete
+- Creates all indexes listed above
+
+### Rollback Procedure
+
+To rollback the TeamPlayers migration:
+
+```bash
+# Rollback to before AddTeamPlayersTable
+dotnet ef database update AddCompositeIndexUserIdName \
+  --project src/GhcSamplePs.Core \
+  --startup-project src/GhcSamplePs.Web
+
+# Remove migration if needed
+dotnet ef migrations remove \
+  --project src/GhcSamplePs.Core \
+  --startup-project src/GhcSamplePs.Web
+```
+
+**Warning:** Rolling back will delete all data in the TeamPlayers table.
+
 ## Quick Reference
 
 ### LocalDB Connection String (Copy-Paste Ready)

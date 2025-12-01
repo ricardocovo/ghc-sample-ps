@@ -296,6 +296,38 @@ if (!result.IsValid)
 - `IX_Players_Name` - For search operations
 - `IX_Players_DateOfBirth` - For age-based queries
 
+#### TeamPlayer Entity Configuration
+
+| Property | Type | Constraints |
+|----------|------|-------------|
+| TeamPlayerId | int | Primary key, auto-generated |
+| PlayerId | int | Required, FK → Players(Id), indexed, cascade delete |
+| TeamName | string | Required, max 200 chars, indexed |
+| ChampionshipName | string | Required, max 200 chars |
+| JoinedDate | DateTime | Required |
+| LeftDate | DateTime? | Optional (null = active) |
+| CreatedAt | DateTime | Required |
+| CreatedBy | string | Required, max 450 chars |
+| UpdatedAt | DateTime? | Optional |
+| UpdatedBy | string? | Optional, max 450 chars |
+| IsActive | bool | Computed property (LeftDate is null) |
+
+#### TeamPlayer Indexes
+
+- `IX_TeamPlayers_PlayerId` - For retrieving player's teams
+- `IX_TeamPlayers_TeamName` - For team-based queries
+- `IX_TeamPlayers_IsActive` - For filtering active/inactive assignments (on LeftDate column)
+- `IX_TeamPlayers_PlayerId_IsActive` - Composite index for active player teams
+- `IX_TeamPlayers_PlayerId_TeamName_ChampionshipName` - For duplicate detection
+
+#### TeamPlayer Entity Methods
+
+| Method | Description |
+|--------|-------------|
+| `Validate()` | Validates entity against all business rules |
+| `MarkAsLeft(leftDate, userId)` | Sets LeftDate and updates audit fields |
+| `UpdateLastModified(userId)` | Updates audit fields without changing LeftDate |
+
 #### Registration
 
 Use the extension method in `Program.cs`:

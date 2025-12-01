@@ -243,3 +243,73 @@ dotnet test --filter "AuthorizationMultipleRolesTests"
 - Authorization result validation
 
 See [Authorization Testing Guide](../../docs/Authorization_Testing_Guide.md) for complete testing documentation.
+
+## Team Management Testing
+
+This project includes comprehensive unit tests for the team management feature:
+
+### Test Classes
+
+| Class | Description |
+|-------|-------------|
+| `TeamPlayerServiceTests` | Service layer tests for team player operations |
+| `EfTeamPlayerRepositoryTests` | Repository tests with in-memory database |
+| `TeamPlayerValidatorTests` | Validation rule tests |
+| `TeamPlayerTests` | Entity tests for TeamPlayer domain model |
+| `TeamPlayerDtoTests` | DTO mapping and validation tests |
+
+### Test Helpers
+
+**TestTeamPlayerFactory** (`TestHelpers/TestTeamPlayerFactory.cs`):
+Factory class providing test data builders for TeamPlayer entities.
+
+| Method | Description |
+|--------|-------------|
+| `CreateValidTeamPlayer()` | Creates a valid TeamPlayer with default values |
+| `CreateTeamPlayerWithJoinedDate(DateTime)` | Creates TeamPlayer with specific joined date |
+| `CreateInactiveTeamPlayer(DateTime, DateTime)` | Creates TeamPlayer that has left the team |
+| `CreateMinimalTeamPlayer()` | Creates TeamPlayer with only required properties |
+| `CreateCustomTeamPlayer(...)` | Creates TeamPlayer with custom values |
+| `CreateTeamPlayerWithLongTeamName()` | Creates invalid TeamPlayer for length validation |
+| `CreateTeamPlayerWithEmptyTeamName()` | Creates invalid TeamPlayer for required validation |
+| `CreateValidPlayerForTeamPlayer(int)` | Creates associated Player entity |
+
+**Usage Example:**
+```csharp
+[Fact]
+public void WhenValidTeamPlayer_ThenValidationPasses()
+{
+    // Arrange
+    var teamPlayer = TestTeamPlayerFactory.CreateValidTeamPlayer();
+    
+    // Act
+    var result = TeamPlayerValidator.ValidateTeamPlayer(teamPlayer);
+    
+    // Assert
+    Assert.True(result.IsValid);
+}
+```
+
+### Running Team Management Tests
+
+```bash
+# Run all team player tests
+dotnet test --filter "FullyQualifiedName~TeamPlayer"
+
+# Run specific test class
+dotnet test --filter "TeamPlayerServiceTests"
+
+# Run repository tests
+dotnet test --filter "EfTeamPlayerRepositoryTests"
+
+# Run validation tests
+dotnet test --filter "TeamPlayerValidatorTests"
+```
+
+### Test Coverage Areas
+
+- **Service Layer**: AddPlayerToTeamAsync, UpdateTeamAssignmentAsync, RemovePlayerFromTeamAsync, GetTeamsByPlayerIdAsync
+- **Repository Layer**: CRUD operations, duplicate detection, query filtering
+- **Validation**: TeamName length, ChampionshipName length, JoinedDate rules, LeftDate rules
+- **Entity**: MarkAsLeft method, Validate method, IsActive computed property
+- **DTOs**: FromEntity mapping, ToEntity mapping, validation attributes
