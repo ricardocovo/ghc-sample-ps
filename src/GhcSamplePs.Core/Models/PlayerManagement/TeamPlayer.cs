@@ -192,25 +192,6 @@ public sealed class TeamPlayer
     }
 
     /// <summary>
-    /// Returns whether the player is currently active on the team.
-    /// </summary>
-    /// <returns>True if the player is currently active (LeftDate is null); otherwise, false.</returns>
-    /// <example>
-    /// <code>
-    /// var teamPlayer = new TeamPlayer
-    /// {
-    ///     PlayerId = 1,
-    ///     TeamName = "Team Alpha",
-    ///     ChampionshipName = "Championship 2024",
-    ///     JoinedDate = new DateTime(2024, 1, 15),
-    ///     CreatedBy = "system"
-    /// };
-    /// bool isActive = teamPlayer.IsCurrentlyActive(); // Returns true
-    /// </code>
-    /// </example>
-    public bool IsCurrentlyActive() => LeftDate is null;
-
-    /// <summary>
     /// Updates the last modified audit fields with the specified user identifier.
     /// </summary>
     /// <param name="userId">The identifier of the user making the update.</param>
