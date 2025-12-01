@@ -50,12 +50,10 @@ builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
 // Register Player Management services
-builder.Services.AddSingleton<IPlayerRepository, MockPlayerRepository>();
+builder.Services.AddScoped<IPlayerRepository, EfPlayerRepository>();
 builder.Services.AddScoped<IPlayerService, PlayerService>();
 
 // Register Entity Framework Core DbContext with SQL Server
-// Note: Currently using MockPlayerRepository for player data.
-// When ready to switch to database persistence, update IPlayerRepository implementation.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))
 {
