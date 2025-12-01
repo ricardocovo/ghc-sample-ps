@@ -53,6 +53,10 @@ builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 builder.Services.AddScoped<IPlayerRepository, EfPlayerRepository>();
 builder.Services.AddScoped<IPlayerService, PlayerService>();
 
+// Register Team Player Management services
+builder.Services.AddScoped<ITeamPlayerRepository, EfTeamPlayerRepository>();
+builder.Services.AddScoped<ITeamPlayerService, TeamPlayerService>();
+
 // Register Entity Framework Core DbContext with SQL Server
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))
