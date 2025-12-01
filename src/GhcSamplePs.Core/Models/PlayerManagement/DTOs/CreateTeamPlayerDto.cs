@@ -9,10 +9,9 @@ namespace GhcSamplePs.Core.Models.PlayerManagement.DTOs;
 public sealed record CreateTeamPlayerDto
 {
     /// <summary>
-    /// Gets the identifier of the player to assign. Required, must be positive.
+    /// Gets the foreign key to the associated Player entity. Required.
     /// </summary>
     [Required(ErrorMessage = "Player ID is required.")]
-    [Range(1, int.MaxValue, ErrorMessage = "Player ID must be a positive integer.")]
     public required int PlayerId { get; init; }
 
     /// <summary>
@@ -45,7 +44,7 @@ public sealed record CreateTeamPlayerDto
     /// <code>
     /// var createDto = new CreateTeamPlayerDto
     /// {
-    ///     PlayerId = 123,
+    ///     PlayerId = 1,
     ///     TeamName = "Team Alpha",
     ///     ChampionshipName = "Championship 2024",
     ///     JoinedDate = new DateTime(2024, 1, 15)

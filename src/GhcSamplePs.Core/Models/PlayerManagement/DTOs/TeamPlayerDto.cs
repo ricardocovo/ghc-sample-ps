@@ -2,7 +2,7 @@ namespace GhcSamplePs.Core.Models.PlayerManagement.DTOs;
 
 /// <summary>
 /// Data transfer object for displaying team player information.
-/// Contains all team player properties including computed fields for read operations.
+/// Contains all team player properties for read operations.
 /// </summary>
 public sealed record TeamPlayerDto
 {
@@ -12,7 +12,7 @@ public sealed record TeamPlayerDto
     public required int TeamPlayerId { get; init; }
 
     /// <summary>
-    /// Gets the identifier of the player.
+    /// Gets the foreign key to the associated Player entity.
     /// </summary>
     public required int PlayerId { get; init; }
 
@@ -39,15 +39,8 @@ public sealed record TeamPlayerDto
 
     /// <summary>
     /// Gets a value indicating whether the player is currently active on the team.
-    /// Returns true when LeftDate is null.
     /// </summary>
     public required bool IsActive { get; init; }
-
-    /// <summary>
-    /// Gets the duration in days the player has been or was on the team.
-    /// Calculated from JoinedDate to LeftDate (if provided) or current date.
-    /// </summary>
-    public required int DurationDays { get; init; }
 
     /// <summary>
     /// Gets the UTC timestamp when the team player record was created.
@@ -55,9 +48,19 @@ public sealed record TeamPlayerDto
     public required DateTime CreatedAt { get; init; }
 
     /// <summary>
+    /// Gets the identifier of the user who created this team player record.
+    /// </summary>
+    public required string CreatedBy { get; init; }
+
+    /// <summary>
     /// Gets the UTC timestamp when the team player record was last updated.
     /// </summary>
     public DateTime? UpdatedAt { get; init; }
+
+    /// <summary>
+    /// Gets the identifier of the user who last updated this team player record.
+    /// </summary>
+    public string? UpdatedBy { get; init; }
 
     /// <summary>
     /// Creates a TeamPlayerDto from a TeamPlayer entity.
@@ -70,7 +73,7 @@ public sealed record TeamPlayerDto
     /// var teamPlayer = new TeamPlayer
     /// {
     ///     TeamPlayerId = 1,
-    ///     PlayerId = 123,
+    ///     PlayerId = 1,
     ///     TeamName = "Team Alpha",
     ///     ChampionshipName = "Championship 2024",
     ///     JoinedDate = new DateTime(2024, 1, 15),
@@ -83,9 +86,6 @@ public sealed record TeamPlayerDto
     {
         ArgumentNullException.ThrowIfNull(teamPlayer);
 
-        var endDate = teamPlayer.LeftDate ?? DateTime.UtcNow;
-        var durationDays = (int)(endDate.Date - teamPlayer.JoinedDate.Date).TotalDays;
-
         return new TeamPlayerDto
         {
             TeamPlayerId = teamPlayer.TeamPlayerId,
@@ -95,9 +95,10 @@ public sealed record TeamPlayerDto
             JoinedDate = teamPlayer.JoinedDate,
             LeftDate = teamPlayer.LeftDate,
             IsActive = teamPlayer.IsActive,
-            DurationDays = durationDays,
             CreatedAt = teamPlayer.CreatedAt,
-            UpdatedAt = teamPlayer.UpdatedAt
+            CreatedBy = teamPlayer.CreatedBy,
+            UpdatedAt = teamPlayer.UpdatedAt,
+            UpdatedBy = teamPlayer.UpdatedBy
         };
     }
 }
