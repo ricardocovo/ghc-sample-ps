@@ -39,7 +39,8 @@ GhcSamplePs.Core/
 │       │   ├── CreatePlayerDto.cs
 │       │   ├── PlayerDto.cs
 │       │   └── UpdatePlayerDto.cs
-│       └── Player.cs
+│       ├── Player.cs
+│       └── TeamPlayer.cs
 ├── Services/
 │   ├── Interfaces/              # Service contracts
 │   │   ├── IAuthenticationService.cs
@@ -51,10 +52,12 @@ GhcSamplePs.Core/
 │       └── AuthorizationService.cs
 ├── Repositories/                # Repository interfaces and implementations
 │   ├── Interfaces/
-│   │   └── IPlayerRepository.cs
+│   │   ├── IPlayerRepository.cs
+│   │   └── ITeamPlayerRepository.cs
 │   └── Implementations/
 │       ├── MockPlayerRepository.cs
-│       └── EfPlayerRepository.cs
+│       ├── EfPlayerRepository.cs
+│       └── EfTeamPlayerRepository.cs
 ├── Validation/                  # Business validation rules
 │   └── PlayerValidator.cs
 └── Exceptions/                  # Custom domain exceptions
@@ -426,6 +429,82 @@ public class PlayerService
 - Unit testing services without EF Core dependency
 - Demos and prototyping
 
+### TeamPlayer Repository ✅
+
+**EfTeamPlayerRepository** (`Repositories/Implementations/EfTeamPlayerRepository.cs`):
+- Entity Framework Core implementation of ITeamPlayerRepository
+- Manages player team assignments for championships
+- Full CRUD operations with player-specific queries
+- Active duplicate detection to prevent conflicting team memberships
+
+**Features:**
+- **CRUD Operations**: GetByIdAsync, AddAsync, UpdateAsync, DeleteAsync, ExistsAsync
+- **Player-Specific Queries**: GetAllByPlayerIdAsync, GetActiveByPlayerIdAsync (ordered by JoinedDate DESC)
+- **Duplicate Detection**: HasActiveDuplicateAsync checks for existing active team assignments
+- **Performance**: AsNoTracking for all read-only queries
+- **Error Handling**: RepositoryException with operation context
+- **Logging**: Detailed operation logging at appropriate levels
+- **Cancellation Support**: All methods support CancellationToken
+
+**Key Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `GetAllByPlayerIdAsync(playerId)` | Get all team assignments for a player (active and inactive) |
+| `GetActiveByPlayerIdAsync(playerId)` | Get only active team assignments (where LeftDate is null) |
+| `HasActiveDuplicateAsync(playerId, teamName, championshipName, excludeId)` | Check if player already has an active assignment to the same team/championship |
+
+**Usage Example:**
+```csharp
+// Register in DI
+builder.Services.AddScoped<ITeamPlayerRepository, EfTeamPlayerRepository>();
+
+// Use in a service
+public class TeamPlayerService
+{
+    private readonly ITeamPlayerRepository _repository;
+
+    public async Task<ServiceResult> AssignPlayerToTeamAsync(
+        int playerId, 
+        string teamName, 
+        string championshipName,
+        CancellationToken cancellationToken)
+    {
+        // Check for existing active assignment
+        if (await _repository.HasActiveDuplicateAsync(
+            playerId, teamName, championshipName, cancellationToken: cancellationToken))
+        {
+            return ServiceResult.Failure("Player is already active on this team in this championship");
+        }
+
+        var teamPlayer = new TeamPlayer
+        {
+            PlayerId = playerId,
+            TeamName = teamName,
+            ChampionshipName = championshipName,
+            JoinedDate = DateTime.UtcNow,
+            CreatedBy = "system"
+        };
+
+        await _repository.AddAsync(teamPlayer, cancellationToken);
+        return ServiceResult.Success();
+    }
+
+    public async Task<IReadOnlyList<TeamPlayer>> GetActiveTeamsAsync(
+        int playerId, 
+        CancellationToken cancellationToken)
+    {
+        return await _repository.GetActiveByPlayerIdAsync(playerId, cancellationToken);
+    }
+}
+```
+
+**Duplicate Detection Logic:**
+- Checks PlayerId + TeamName + ChampionshipName combination
+- Only considers active assignments (LeftDate is null)
+- Supports excludeId parameter for update scenarios
+- Case-sensitive matching (SQL Server default collation may differ)
+
 ### Custom Exceptions
 
 #### RepositoryException
@@ -455,7 +534,7 @@ catch (RepositoryException ex) when (ex.Operation == "UpdateAsync")
 
 ### Test Coverage
 
-**Total Tests**: 458 tests, all passing ✅
+**Total Tests**: 548 tests, all passing ✅
 
 - **AuthenticationServiceTests**: 20 tests
 - **AuthorizationServiceTests**: 17 tests
@@ -468,6 +547,7 @@ catch (RepositoryException ex) when (ex.Operation == "UpdateAsync")
 - **ApplicationDbContextTests**: 16 tests (audit field population)
 - **PlayerConfigurationTests**: 25 tests (entity configuration)
 - **EfPlayerRepositoryTests**: 32 tests (CRUD operations, error handling)
+- **EfTeamPlayerRepositoryTests**: 50 tests (CRUD operations, duplicate detection, logging)
 - **MockPlayerRepositoryTests**: Various tests
 
 #### Authorization Scenario Tests

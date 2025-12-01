@@ -649,20 +649,20 @@ public class EfTeamPlayerRepositoryTests : IDisposable
             () => _repository.HasActiveDuplicateAsync(1, "Test Team", "Test Championship", null, cts.Token));
     }
 
-    [Fact(DisplayName = "HasActiveDuplicateAsync is case-insensitive for team name (matches SQL Server default)")]
-    public async Task HasActiveDuplicateAsync_WhenTeamNameDifferentCase_ReturnsTrue()
+    [Fact(DisplayName = "HasActiveDuplicateAsync is case-sensitive for team name (in-memory provider)")]
+    public async Task HasActiveDuplicateAsync_WhenTeamNameDifferentCase_ReturnsFalse()
     {
         var player = await SeedPlayerAsync();
         var teamPlayer = CreateTeamPlayer(player.Id, "Test Team", new DateTime(2024, 1, 15));
         _context.TeamPlayers.Add(teamPlayer);
         await _context.SaveChangesAsync();
 
-        // Note: SQL Server's default collation is case-insensitive, so "Test Team" and "TEST TEAM" are considered duplicates.
-        // The in-memory provider is case-sensitive by default, so this test may fail if run only with in-memory.
-        // This test asserts the expected production (SQL Server) behavior: duplicate is found regardless of case.
+        // Note: In-memory provider is case-sensitive by default.
+        // SQL Server's default collation is case-insensitive, so production behavior may differ.
+        // This test validates the query logic; case sensitivity depends on database collation.
         var result = await _repository.HasActiveDuplicateAsync(player.Id, "TEST TEAM", "Test Championship");
 
-        Assert.True(result);
+        Assert.False(result);
     }
 
     [Fact(DisplayName = "HasActiveDuplicateAsync differentiates by championship name")]

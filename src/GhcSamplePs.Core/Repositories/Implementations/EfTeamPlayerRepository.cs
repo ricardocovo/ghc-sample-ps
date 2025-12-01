@@ -402,6 +402,7 @@ public sealed class EfTeamPlayerRepository : ITeamPlayerRepository
         try
         {
             var query = _context.TeamPlayers
+                .AsNoTracking()
                 .Where(tp => tp.PlayerId == playerId
                     && tp.TeamName == teamName
                     && tp.ChampionshipName == championshipName
