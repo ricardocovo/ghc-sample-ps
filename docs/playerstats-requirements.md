@@ -6,52 +6,6 @@ This document outlines the requirements and domain model for the soccer player s
 
 ## Entity Descriptions
 
-### Championship
-
-A championship represents a league or organization that hosts soccer competitions.
-
-**Properties:**
-- **Name** (required): The name of the championship (e.g., "AYSO Region 56", "City Youth League")
-- **Description** (optional): Additional details about the championship
-- **CreatedAt**: Timestamp when the championship was created
-- **CreatedBy**: User identifier who created the championship
-- **UpdatedAt**: Timestamp when the championship was last modified
-- **UpdatedBy**: User identifier who last modified the championship
-
-### Season
-
-A season represents a time frame within a championship during which games are played. The season is identified by its start and end dates rather than having an explicit name (e.g., dates might imply "School Championship 2025").
-
-**Properties:**
-- **StartDate** (required): The beginning date of the season
-- **EndDate** (required): The ending date of the season
-- **ChampionshipId** (required): Reference to the parent championship
-- **CreatedAt**: Timestamp when the season was created
-- **CreatedBy**: User identifier who created the season
-- **UpdatedAt**: Timestamp when the season was last modified
-- **UpdatedBy**: User identifier who last modified the season
-
-**Business Rules:**
-- A season must belong to exactly one championship
-- A season can have multiple teams participating
-
-### Team
-
-A team represents a group of players that compete together.
-
-**Properties:**
-- **Name** (required): The team name
-- **Description** (optional): Additional details about the team
-- **CreatedAt**: Timestamp when the team was created
-- **CreatedBy**: User identifier who created the team
-- **UpdatedAt**: Timestamp when the team was last modified
-- **UpdatedBy**: User identifier who last modified the team
-
-**Business Rules:**
-- A team can participate in multiple seasons (even across different championships)
-- A team can have multiple players on its roster
-- The relationship between teams and seasons is tracked through the TeamSeason join table
-
 ### Player
 
 A player represents an individual soccer player.
@@ -71,28 +25,15 @@ A player represents an individual soccer player.
 - A player can move between teams within or across seasons
 - The relationship between players and teams is tracked through the TeamPlayer join table
 
-### TeamSeason (Join Table)
-
-This join table manages the many-to-many relationship between teams and seasons.
-
-**Properties:**
-- **TeamId** (required): Reference to the team
-- **SeasonId** (required): Reference to the season
-- **JoinedDate**: When the team joined the season
-- **CreatedAt**: Timestamp when the record was created
-- **CreatedBy**: User identifier who created the record
-
-**Purpose:**
-- Allows a team to participate in multiple seasons
-- Tracks which teams are playing in which seasons
-
 ### TeamPlayer (Join Table)
 
-This join table manages the many-to-many relationship between teams and players, with temporal tracking.
+A table that manages all the teams a player is part of
 
 **Properties:**
-- **TeamId** (required): Reference to the team
+- **TeamPlayerId** (required) references the relationship between the team and a player
 - **PlayerId** (required): Reference to the player
+- **TeamName** (required): Team name.
+- **ChampionshipName** (required): Name of the championship the team is participating in.
 - **JoinedDate** (required): When the player joined the team
 - **LeftDate** (optional): When the player left the team
 - **IsActive**: Whether the player is currently active on the team
@@ -110,8 +51,7 @@ This join table manages the many-to-many relationship between teams and players,
 Player statistics capture game-level performance data for a player on a specific team.
 
 **Properties:**
-- **PlayerId** (required): Reference to the player
-- **TeamSeasonId** (required): Reference to the team-season (important for tracking stats in the correct season/team context)
+- **TeamPlayerId** (required): Reference to the Team player
 - **GameDate** (required): The date the game was played
 - **MinutesPlayed** (required): Number of minutes the player was on the field
 - **IsStarter**: Whether the player started the game
@@ -124,7 +64,7 @@ Player statistics capture game-level performance data for a player on a specific
 - **UpdatedBy**: User identifier who last modified the statistic
 
 **Business Rules:**
-- Statistics are tied to both a player AND a team-season combination
+- Statistics are for a TeamPlayer
 - This ensures stats are recorded in the correct seasonal context
 - Allows accurate historical tracking when players move between teams or when teams play in different seasons
 - Each statistic record represents performance in a single game
@@ -133,44 +73,8 @@ Player statistics capture game-level performance data for a player on a specific
 
 ```mermaid
 erDiagram
-    Championship ||--o{ Season : "has"
-    Season ||--o{ TeamSeason : "includes"
-    Team ||--o{ TeamSeason : "participates in"
-    Team ||--o{ TeamPlayer : "has roster"
     Player ||--o{ TeamPlayer : "plays for"
-    Player ||--o{ PlayerStatistic : "has stats"
-    TeamSeason ||--o{ PlayerStatistic : "records stats for"
-
-    Championship {
-        int Id PK
-        string Name
-        string Description
-        datetime CreatedAt
-        string CreatedBy
-        datetime UpdatedAt
-        string UpdatedBy
-    }
-
-    Season {
-        int Id PK
-        datetime StartDate
-        datetime EndDate
-        int ChampionshipId FK
-        datetime CreatedAt
-        string CreatedBy
-        datetime UpdatedAt
-        string UpdatedBy
-    }
-
-    Team {
-        int Id PK
-        string Name
-        string Description
-        datetime CreatedAt
-        string CreatedBy
-        datetime UpdatedAt
-        string UpdatedBy
-    }
+    TeamPlayer ||--o{ PlayerStatistic : "has stats"
 
     Player {
         int Id PK
@@ -184,19 +88,11 @@ erDiagram
         string UpdatedBy
     }
 
-    TeamSeason {
-        int Id PK
-        int TeamId FK
-        int SeasonId FK
-        datetime JoinedDate
-        datetime CreatedAt
-        string CreatedBy
-    }
-
     TeamPlayer {
-        int Id PK
-        int TeamId FK
+        int TeamPlayerId PK
         int PlayerId FK
+        string TeamName
+        string ChampionshipName
         datetime JoinedDate
         datetime LeftDate
         bool IsActive
@@ -208,8 +104,7 @@ erDiagram
 
     PlayerStatistic {
         int Id PK
-        int PlayerId FK
-        int TeamSeasonId FK
+        int TeamPlayerId FK
         datetime GameDate
         int MinutesPlayed
         bool IsStarter
