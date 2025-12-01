@@ -37,8 +37,11 @@ GhcSamplePs.Core/
 │   └── PlayerManagement/        # Player management domain models
 │       ├── DTOs/
 │       │   ├── CreatePlayerDto.cs
+│       │   ├── CreateTeamPlayerDto.cs
 │       │   ├── PlayerDto.cs
-│       │   └── UpdatePlayerDto.cs
+│       │   ├── TeamPlayerDto.cs
+│       │   ├── UpdatePlayerDto.cs
+│       │   └── UpdateTeamPlayerDto.cs
 │       ├── Player.cs
 │       └── TeamPlayer.cs
 ├── Services/
@@ -46,10 +49,14 @@ GhcSamplePs.Core/
 │   │   ├── IAuthenticationService.cs
 │   │   ├── IAuthorizationService.cs
 │   │   ├── ICurrentUserProvider.cs
+│   │   ├── IPlayerService.cs
+│   │   ├── ITeamPlayerService.cs
 │   │   └── AuthorizationResult.cs
 │   └── Implementations/         # Service implementations
 │       ├── AuthenticationService.cs
-│       └── AuthorizationService.cs
+│       ├── AuthorizationService.cs
+│       ├── PlayerService.cs
+│       └── TeamPlayerService.cs
 ├── Repositories/                # Repository interfaces and implementations
 │   ├── Interfaces/
 │   │   ├── IPlayerRepository.cs
@@ -59,7 +66,8 @@ GhcSamplePs.Core/
 │       ├── EfPlayerRepository.cs
 │       └── EfTeamPlayerRepository.cs
 ├── Validation/                  # Business validation rules
-│   └── PlayerValidator.cs
+│   ├── PlayerValidator.cs
+│   └── TeamPlayerValidator.cs
 └── Exceptions/                  # Custom domain exceptions
     ├── AuthenticationException.cs
     ├── AuthorizationException.cs
@@ -505,6 +513,125 @@ public class TeamPlayerService
 - Supports excludeId parameter for update scenarios
 - Case-sensitive matching (SQL Server default collation may differ)
 
+### TeamPlayer Service ✅
+
+**TeamPlayerService** (`Services/Implementations/TeamPlayerService.cs`):
+- Service layer for team player management operations
+- Coordinates between presentation and data layers
+- Applies business rules and validation
+- Manages audit fields (CreatedBy, UpdatedBy, timestamps UTC)
+
+**Features:**
+- **Team Assignments**: Manage player team memberships for championships
+- **Business Rules**: Validates data and prevents duplicate active assignments
+- **Audit Trail**: Automatic population of audit fields
+- **ServiceResult Pattern**: Consistent success/failure handling
+
+**Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `GetTeamsByPlayerIdAsync(playerId, includeInactive)` | Get all team assignments for a player |
+| `GetActiveTeamsByPlayerIdAsync(playerId)` | Get only active team assignments |
+| `GetTeamAssignmentByIdAsync(teamPlayerId)` | Get a single team assignment by ID |
+| `AddPlayerToTeamAsync(createDto, currentUserId)` | Add a player to a team |
+| `UpdateTeamAssignmentAsync(teamPlayerId, updateDto, currentUserId)` | Update a team assignment |
+| `RemovePlayerFromTeamAsync(teamPlayerId, leftDate, currentUserId)` | Remove a player from a team |
+| `ValidateTeamAssignmentAsync(createDto)` | Validate team assignment data |
+
+**Business Rules:**
+- TeamName: Required, trimmed, max 200 characters
+- ChampionshipName: Required, trimmed, max 200 characters
+- JoinedDate: Required, not more than 1 year in the future
+- LeftDate: Optional, must be after JoinedDate, not in the future
+- No duplicate active assignments (same player + team + championship)
+- All dates stored in UTC
+
+**Usage Example:**
+```csharp
+// Register in DI
+builder.Services.AddScoped<ITeamPlayerService, TeamPlayerService>();
+
+// Use in a component or controller
+public class TeamManagementComponent
+{
+    private readonly ITeamPlayerService _teamPlayerService;
+
+    public TeamManagementComponent(ITeamPlayerService teamPlayerService)
+    {
+        _teamPlayerService = teamPlayerService;
+    }
+
+    public async Task AssignPlayerToTeamAsync()
+    {
+        var createDto = new CreateTeamPlayerDto
+        {
+            PlayerId = 1,
+            TeamName = "Team Alpha",
+            ChampionshipName = "Championship 2024",
+            JoinedDate = DateTime.UtcNow
+        };
+
+        var result = await _teamPlayerService.AddPlayerToTeamAsync(createDto, "admin-user");
+        
+        if (result.Success)
+        {
+            Console.WriteLine($"Created assignment with ID: {result.Data!.TeamPlayerId}");
+        }
+        else if (result.ValidationErrors.Any())
+        {
+            foreach (var (field, errors) in result.ValidationErrors)
+            {
+                Console.WriteLine($"{field}: {string.Join(", ", errors)}");
+            }
+        }
+    }
+}
+```
+
+### TeamPlayer Validation ✅
+
+**TeamPlayerValidator** (`Validation/TeamPlayerValidator.cs`):
+- Provides business rule validation for team player data
+- Validates CreateTeamPlayerDto, UpdateTeamPlayerDto, and TeamPlayer entities
+- Returns ValidationResult with field-specific error messages
+
+#### Validation Rules
+
+| Field | Requirement | Error Message |
+|-------|-------------|---------------|
+| TeamName | Required, 1-200 characters, not whitespace | "Team name is required" or "Team name must not exceed 200 characters" |
+| ChampionshipName | Required, 1-200 characters, not whitespace | "Championship name is required" or "Championship name must not exceed 200 characters" |
+| JoinedDate | Required, not more than 1 year in future | "Joined date is required" or "Joined date cannot be more than 1 year in the future" |
+| LeftDate | Optional, must be after JoinedDate, not in future | "Left date must be after the joined date" or "Left date cannot be in the future" |
+
+#### Methods
+
+- `ValidateCreateTeamPlayer(CreateTeamPlayerDto)` - Validates team player creation data
+- `ValidateUpdateTeamPlayer(UpdateTeamPlayerDto, joinedDate)` - Validates team player update data
+- `ValidateTeamPlayer(TeamPlayer)` - Validates a TeamPlayer entity
+
+#### Usage Example
+
+```csharp
+var dto = new CreateTeamPlayerDto
+{
+    PlayerId = 1,
+    TeamName = "Team Alpha",
+    ChampionshipName = "Championship 2024",
+    JoinedDate = DateTime.UtcNow.AddMonths(-1)
+};
+
+var result = TeamPlayerValidator.ValidateCreateTeamPlayer(dto);
+if (!result.IsValid)
+{
+    foreach (var (field, messages) in result.Errors)
+    {
+        Console.WriteLine($"{field}: {string.Join(", ", messages)}");
+    }
+}
+```
+
 ### Custom Exceptions
 
 #### RepositoryException
@@ -534,7 +661,7 @@ catch (RepositoryException ex) when (ex.Operation == "UpdateAsync")
 
 ### Test Coverage
 
-**Total Tests**: 548 tests, all passing ✅
+**Total Tests**: 576 tests, all passing ✅
 
 - **AuthenticationServiceTests**: 20 tests
 - **AuthorizationServiceTests**: 17 tests
@@ -549,6 +676,8 @@ catch (RepositoryException ex) when (ex.Operation == "UpdateAsync")
 - **EfPlayerRepositoryTests**: 32 tests (CRUD operations, error handling)
 - **EfTeamPlayerRepositoryTests**: 50 tests (CRUD operations, duplicate detection, logging)
 - **MockPlayerRepositoryTests**: Various tests
+- **PlayerServiceTests**: 26 tests (service operations, validation, error handling)
+- **TeamPlayerServiceTests**: 28 tests (service operations, business rules, validation)
 
 #### Authorization Scenario Tests
 
