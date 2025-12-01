@@ -10,12 +10,17 @@ namespace GhcSamplePs.Core.Validation;
 /// <remarks>
 /// <para>Validation Rules:</para>
 /// <list type="bullet">
-///   <item><description><b>TeamName:</b> Required, 1-200 characters, not whitespace only</description></item>
-///   <item><description><b>ChampionshipName:</b> Required, 1-200 characters, not whitespace only</description></item>
+///   <item><description><b>TeamName:</b> Required, 1-200 characters (untrimmed length), not whitespace only</description></item>
+///   <item><description><b>ChampionshipName:</b> Required, 1-200 characters (untrimmed length), not whitespace only</description></item>
 ///   <item><description><b>JoinedDate:</b> Required, valid date, not more than 1 year in future, not more than 100 years in past</description></item>
 ///   <item><description><b>LeftDate:</b> Optional, if provided must be after JoinedDate and cannot be in the future</description></item>
 ///   <item><description><b>PlayerId:</b> Must be a positive integer</description></item>
 /// </list>
+/// <para>
+/// Note: Length validation checks the untrimmed string length to match entity validation behavior.
+/// DTOs trim values when creating entities, so input with leading/trailing whitespace should be
+/// validated before trimming if the total length including whitespace exceeds 200 characters.
+/// </para>
 /// </remarks>
 /// <example>
 /// <code>
@@ -188,8 +193,8 @@ public static class TeamPlayerValidator
             return;
         }
 
-        var trimmedName = teamName.Trim();
-        if (trimmedName.Length > MaxNameLength)
+        // Check untrimmed length to match entity validation behavior
+        if (teamName.Length > MaxNameLength)
         {
             AddError(errors, nameof(TeamPlayer.TeamName), "Team name must not exceed 200 characters");
         }
@@ -203,8 +208,8 @@ public static class TeamPlayerValidator
             return;
         }
 
-        var trimmedName = championshipName.Trim();
-        if (trimmedName.Length > MaxNameLength)
+        // Check untrimmed length to match entity validation behavior
+        if (championshipName.Length > MaxNameLength)
         {
             AddError(errors, nameof(TeamPlayer.ChampionshipName), "Championship name must not exceed 200 characters");
         }

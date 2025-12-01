@@ -269,8 +269,8 @@ public class TeamPlayerValidatorTests
         Assert.True(result.IsValid);
     }
 
-    [Fact(DisplayName = "TeamName validation trims whitespace before checking length")]
-    public void ValidateCreateTeamPlayer_TeamNameWithPaddingWhitespace_TrimsBeforeValidation()
+    [Fact(DisplayName = "TeamName validation checks untrimmed length")]
+    public void ValidateCreateTeamPlayer_TeamNameWithPaddingWhitespace_ChecksUntrimmedLength()
     {
         var dto = new CreateTeamPlayerDto
         {
@@ -282,7 +282,9 @@ public class TeamPlayerValidatorTests
 
         var result = TeamPlayerValidator.ValidateCreateTeamPlayer(dto);
 
-        Assert.True(result.IsValid);
+        Assert.False(result.IsValid);
+        Assert.True(result.Errors.TryGetValue("TeamName", out var teamNameErrors));
+        Assert.Contains("Team name must not exceed 200 characters", teamNameErrors);
     }
 
     #endregion
@@ -393,8 +395,8 @@ public class TeamPlayerValidatorTests
         Assert.True(result.IsValid);
     }
 
-    [Fact(DisplayName = "ChampionshipName validation trims whitespace before checking length")]
-    public void ValidateCreateTeamPlayer_ChampionshipNameWithPaddingWhitespace_TrimsBeforeValidation()
+    [Fact(DisplayName = "ChampionshipName validation checks untrimmed length")]
+    public void ValidateCreateTeamPlayer_ChampionshipNameWithPaddingWhitespace_ChecksUntrimmedLength()
     {
         var dto = new CreateTeamPlayerDto
         {
@@ -406,7 +408,9 @@ public class TeamPlayerValidatorTests
 
         var result = TeamPlayerValidator.ValidateCreateTeamPlayer(dto);
 
-        Assert.True(result.IsValid);
+        Assert.False(result.IsValid);
+        Assert.True(result.Errors.TryGetValue("ChampionshipName", out var championshipNameErrors));
+        Assert.Contains("Championship name must not exceed 200 characters", championshipNameErrors);
     }
 
     #endregion
