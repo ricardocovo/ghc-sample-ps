@@ -120,6 +120,7 @@ if (app.Environment.IsDevelopment())
     {
         try
         {
+            app.Logger.LogInformation("Applying pending database migrations...");
             await context.Database.MigrateAsync();
             app.Logger.LogInformation("Database migrations applied successfully");
         }
