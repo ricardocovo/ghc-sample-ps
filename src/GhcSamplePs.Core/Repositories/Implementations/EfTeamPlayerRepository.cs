@@ -236,11 +236,8 @@ public sealed class EfTeamPlayerRepository : ITeamPlayerRepository
                     teamPlayer.TeamPlayerId);
             }
 
-            // Update LeftDate (other properties are immutable via init setters)
-            _context.Entry(existingTeamPlayer).CurrentValues.SetValues(new
-            {
-                teamPlayer.LeftDate
-            });
+            // Update all properties from the domain entity, including audit fields
+            _context.Entry(existingTeamPlayer).CurrentValues.SetValues(teamPlayer);
 
             await _context.SaveChangesAsync(cancellationToken);
 
