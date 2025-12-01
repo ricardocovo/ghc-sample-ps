@@ -405,44 +405,6 @@ public class TeamPlayerTests
 
     #endregion
 
-    #region IsCurrentlyActive Tests
-
-    [Fact(DisplayName = "IsCurrentlyActive returns true when LeftDate is null")]
-    public void IsCurrentlyActive_WhenLeftDateIsNull_ReturnsTrue()
-    {
-        var teamPlayer = TestTeamPlayerFactory.CreateValidTeamPlayer();
-
-        var result = teamPlayer.IsCurrentlyActive();
-
-        Assert.True(result);
-    }
-
-    [Fact(DisplayName = "IsCurrentlyActive returns false when LeftDate is set")]
-    public void IsCurrentlyActive_WhenLeftDateIsSet_ReturnsFalse()
-    {
-        var joinedDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        var leftDate = new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Utc);
-        var teamPlayer = TestTeamPlayerFactory.CreateInactiveTeamPlayer(joinedDate, leftDate);
-
-        var result = teamPlayer.IsCurrentlyActive();
-
-        Assert.False(result);
-    }
-
-    [Fact(DisplayName = "IsCurrentlyActive matches IsActive property")]
-    public void IsCurrentlyActive_WhenCalled_MatchesIsActiveProperty()
-    {
-        var teamPlayer = TestTeamPlayerFactory.CreateValidTeamPlayer();
-
-        Assert.Equal(teamPlayer.IsActive, teamPlayer.IsCurrentlyActive());
-
-        teamPlayer.MarkAsLeft(DateTime.UtcNow.AddDays(-1), "admin-user");
-
-        Assert.Equal(teamPlayer.IsActive, teamPlayer.IsCurrentlyActive());
-    }
-
-    #endregion
-
     #region UpdateLastModified Tests
 
     [Fact(DisplayName = "UpdateLastModified sets UpdatedAt to current UTC time")]

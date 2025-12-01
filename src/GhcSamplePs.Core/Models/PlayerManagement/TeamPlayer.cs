@@ -96,14 +96,14 @@ public sealed class TeamPlayer
     /// </example>
     public bool Validate()
     {
-        // TeamName validation
-        if (string.IsNullOrWhiteSpace(TeamName) || TeamName.Trim().Length > 200)
+        // TeamName validation - check actual stored length, not trimmed
+        if (string.IsNullOrWhiteSpace(TeamName) || TeamName.Length > 200)
         {
             return false;
         }
 
-        // ChampionshipName validation
-        if (string.IsNullOrWhiteSpace(ChampionshipName) || ChampionshipName.Trim().Length > 200)
+        // ChampionshipName validation - check actual stored length, not trimmed
+        if (string.IsNullOrWhiteSpace(ChampionshipName) || ChampionshipName.Length > 200)
         {
             return false;
         }
