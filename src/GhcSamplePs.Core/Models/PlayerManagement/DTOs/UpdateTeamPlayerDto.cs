@@ -17,7 +17,8 @@ public sealed record UpdateTeamPlayerDto
 
     /// <summary>
     /// Gets the date when the player left the team. Optional.
-    /// If provided, must be after JoinedDate and cannot be in the future.
+    /// If provided, cannot be in the future. The constraint that LeftDate must be after JoinedDate
+    /// is enforced by the domain entity's MarkAsLeft method.
     /// </summary>
     public DateTime? LeftDate { get; init; }
 
