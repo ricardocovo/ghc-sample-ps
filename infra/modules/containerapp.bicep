@@ -124,7 +124,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
     template: {
       containers: [
         {
-          name: appName
+          name: '${appName}-container'
           image: containerImage
           resources: {
             cpu: json('0.25')
