@@ -3,6 +3,9 @@ bin/
 obj/
 out/
 
+# Bicep build artifacts
+infra/**/*.json
+
 # User-specific files
 *.rsuser
 *.suo
