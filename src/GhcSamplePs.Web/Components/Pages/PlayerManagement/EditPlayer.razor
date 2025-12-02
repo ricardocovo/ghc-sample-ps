@@ -5,6 +5,7 @@
 @using GhcSamplePs.Web.Helpers
 @inject IPlayerService PlayerService
 @inject ITeamPlayerService TeamPlayerService
+@inject IPlayerStatisticService PlayerStatisticService
 @inject NavigationManager NavigationManager
 @inject ICurrentUserProvider CurrentUserProvider
 @inject IDialogService DialogService
@@ -278,16 +279,151 @@
                 </MudPaper>
             </MudTabPanel>
 
-            @* Stats Tab (placeholder) *@
+            @* Stats Tab *@
             <MudTabPanel Text="Stats" Icon="@Icons.Material.Filled.BarChart">
                 <MudPaper Elevation="0">
-                    <MudStack AlignItems="AlignItems.Center" Class="my-8">
-                        <MudIcon Icon="@Icons.Material.Filled.Construction" Size="Size.Large" Color="Color.Secondary" />
-                        <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mt-2">FUTURE DEV</MudText>
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">
-                            Player statistics will be available in a future release.
-                        </MudText>
+                    @* Section header *@
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+                        <MudIcon Icon="@Icons.Material.Filled.BarChart" />
+                        <MudText Typo="Typo.h6">Game Statistics</MudText>
+                        <MudSpacer />
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="OpenAddStatisticDialog"
+                                   Disabled="@(_isLoadingStatistics || _teams.Count == 0)">
+                            Add Statistics
+                        </MudButton>
                     </MudStack>
+
+                    @* Error display *@
+                    @if (!string.IsNullOrEmpty(_statisticsErrorMessage))
+                    {
+                        <MudAlert Severity="Severity.Error" Class="mb-4" ShowCloseIcon="true" CloseIconClicked="() => _statisticsErrorMessage = null">
+                            @_statisticsErrorMessage
+                        </MudAlert>
+                    }
+
+                    @* Loading state *@
+                    @if (_isLoadingStatistics)
+                    {
+                        <MudStack AlignItems="AlignItems.Center" Class="my-8">
+                            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">Loading statistics...</MudText>
+                        </MudStack>
+                    }
+                    @* Empty state *@
+                    else if (_statistics.Count == 0)
+                    {
+                        <MudStack AlignItems="AlignItems.Center" Class="my-8">
+                            <MudIcon Icon="@Icons.Material.Filled.SportsSoccer" Size="Size.Large" Color="Color.Secondary" />
+                            <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mt-2">No statistics recorded yet</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Record game statistics to track performance over time.
+                            </MudText>
+                            @if (_teams.Count > 0)
+                            {
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           StartIcon="@Icons.Material.Filled.Add"
+                                           OnClick="OpenAddStatisticDialog"
+                                           Class="mt-4">
+                                    Add Statistics
+                                </MudButton>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.body2" Color="Color.Warning" Class="mt-2">
+                                    Add the player to a team first to record statistics.
+                                </MudText>
+                            }
+                        </MudStack>
+                    }
+                    @* Statistics content *@
+                    else
+                    {
+                        @* Summary Cards *@
+                        <MudGrid Spacing="3" Class="mb-4">
+                            <MudItem xs="6" sm="3">
+                                <MudPaper Elevation="1" Class="pa-4 text-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.SportsSoccer" Color="Color.Primary" Size="Size.Medium" />
+                                    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mt-2">@_aggregates.GameCount</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Games Played</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudPaper Elevation="1" Class="pa-4 text-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Color="Color.Success" Size="Size.Medium" />
+                                    <MudText Typo="Typo.h4" Color="Color.Success" Class="mt-2">@_aggregates.TotalGoals</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Total Goals</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudPaper Elevation="1" Class="pa-4 text-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.Handshake" Color="Color.Info" Size="Size.Medium" />
+                                    <MudText Typo="Typo.h4" Color="Color.Info" Class="mt-2">@_aggregates.TotalAssists</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Total Assists</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudPaper Elevation="1" Class="pa-4 text-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Warning" Size="Size.Medium" />
+                                    <MudText Typo="Typo.h4" Color="Color.Warning" Class="mt-2">@_aggregates.AverageGoals.ToString("F2")</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Avg Goals/Game</MudText>
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+
+                        @* Statistics Table *@
+                        <MudTable Items="@_statistics" Hover="true" Elevation="0" Dense="true">
+                            <HeaderContent>
+                                <MudTh>Game Date</MudTh>
+                                <MudTh>Team</MudTh>
+                                <MudTh>Championship</MudTh>
+                                <MudTh>Minutes</MudTh>
+                                <MudTh>Goals</MudTh>
+                                <MudTh>Assists</MudTh>
+                                <MudTh>Starter</MudTh>
+                                <MudTh>Jersey</MudTh>
+                                <MudTh Style="width: 120px;">Actions</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Game Date">@context.GameDate.ToString("MM/dd/yyyy")</MudTd>
+                                <MudTd DataLabel="Team">@context.TeamName</MudTd>
+                                <MudTd DataLabel="Championship">@context.ChampionshipName</MudTd>
+                                <MudTd DataLabel="Minutes">@context.MinutesPlayed</MudTd>
+                                <MudTd DataLabel="Goals">@context.Goals</MudTd>
+                                <MudTd DataLabel="Assists">@context.Assists</MudTd>
+                                <MudTd DataLabel="Starter">
+                                    @if (context.IsStarter)
+                                    {
+                                        <MudChip T="string" Color="Color.Success" Size="Size.Small">Starter</MudChip>
+                                    }
+                                    else
+                                    {
+                                        <MudChip T="string" Color="Color.Default" Size="Size.Small">Sub</MudChip>
+                                    }
+                                </MudTd>
+                                <MudTd DataLabel="Jersey">#@context.JerseyNumber</MudTd>
+                                <MudTd DataLabel="Actions">
+                                    <MudStack Row="true" Spacing="1">
+                                        <MudTooltip Text="Edit">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                           Size="Size.Small"
+                                                           Color="Color.Primary"
+                                                           OnClick="() => OpenEditStatisticDialog(context)" />
+                                        </MudTooltip>
+                                        <MudTooltip Text="Delete">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                           Size="Size.Small"
+                                                           Color="Color.Error"
+                                                           OnClick="() => OpenDeleteStatisticDialog(context)" />
+                                        </MudTooltip>
+                                    </MudStack>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
                 </MudPaper>
             </MudTabPanel>
         </MudTabs>
@@ -451,6 +587,219 @@
             </MudButton>
         </DialogActions>
     </MudDialog>
+
+    @* Add Statistic Dialog *@
+    <MudDialog @bind-Visible="_showAddStatisticDialog">
+        <TitleContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Add" />
+                <MudText Typo="Typo.h6">Add Statistics</MudText>
+            </MudStack>
+        </TitleContent>
+        <DialogContent>
+            <MudForm @ref="_addStatisticForm" @bind-IsValid="_addStatisticFormIsValid">
+                <MudSelect @bind-Value="_addStatisticTeamPlayerId"
+                           Label="Team"
+                           Variant="Variant.Outlined"
+                           Required="true"
+                           RequiredError="Team is required"
+                           Class="mb-4">
+                    @foreach (var team in _teams.Where(t => t.IsActive))
+                    {
+                        <MudSelectItem Value="@team.TeamPlayerId">@team.TeamName (@team.ChampionshipName)</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudDatePicker @bind-Date="_addStatisticGameDate"
+                               Label="Game Date"
+                               Variant="Variant.Outlined"
+                               DateFormat="MM/dd/yyyy"
+                               MaxDate="DateTime.Today"
+                               Required="true"
+                               RequiredError="Game date is required"
+                               Class="mb-4" />
+                <MudNumericField @bind-Value="_addStatisticMinutesPlayed"
+                                 Label="Minutes Played"
+                                 Variant="Variant.Outlined"
+                                 Min="0"
+                                 Max="120"
+                                 Required="true"
+                                 RequiredError="Minutes played is required"
+                                 Class="mb-4" />
+                <MudCheckBox @bind-Value="_addStatisticIsStarter"
+                             Label="Is Starter"
+                             Color="Color.Primary"
+                             Class="mb-4" />
+                <MudNumericField @bind-Value="_addStatisticJerseyNumber"
+                                 Label="Jersey Number"
+                                 Variant="Variant.Outlined"
+                                 Min="1"
+                                 Max="99"
+                                 Required="true"
+                                 RequiredError="Jersey number is required"
+                                 Class="mb-4" />
+                <MudNumericField @bind-Value="_addStatisticGoals"
+                                 Label="Goals"
+                                 Variant="Variant.Outlined"
+                                 Min="0"
+                                 Required="true"
+                                 RequiredError="Goals is required"
+                                 Class="mb-4" />
+                <MudNumericField @bind-Value="_addStatisticAssists"
+                                 Label="Assists"
+                                 Variant="Variant.Outlined"
+                                 Min="0"
+                                 Required="true"
+                                 RequiredError="Assists is required" />
+            </MudForm>
+            @if (!string.IsNullOrEmpty(_addStatisticErrorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-4">@_addStatisticErrorMessage</MudAlert>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="CloseAddStatisticDialog" Disabled="@_isSavingStatistic">Cancel</MudButton>
+            <MudButton Color="Color.Primary"
+                       Variant="Variant.Filled"
+                       OnClick="HandleAddStatistic"
+                       Disabled="@(!_addStatisticFormIsValid || _isSavingStatistic || _addStatisticTeamPlayerId == 0)">
+                @if (_isSavingStatistic)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Adding...</span>
+                }
+                else
+                {
+                    <span>Add</span>
+                }
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+
+    @* Edit Statistic Dialog *@
+    <MudDialog @bind-Visible="_showEditStatisticDialog">
+        <TitleContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Edit" />
+                <MudText Typo="Typo.h6">Edit Statistics</MudText>
+            </MudStack>
+        </TitleContent>
+        <DialogContent>
+            <MudForm @ref="_editStatisticForm" @bind-IsValid="_editStatisticFormIsValid">
+                <MudSelect @bind-Value="_editStatisticTeamPlayerId"
+                           Label="Team"
+                           Variant="Variant.Outlined"
+                           Required="true"
+                           RequiredError="Team is required"
+                           Class="mb-4">
+                    @foreach (var team in _teams.Where(t => t.IsActive))
+                    {
+                        <MudSelectItem Value="@team.TeamPlayerId">@team.TeamName (@team.ChampionshipName)</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudDatePicker @bind-Date="_editStatisticGameDate"
+                               Label="Game Date"
+                               Variant="Variant.Outlined"
+                               DateFormat="MM/dd/yyyy"
+                               MaxDate="DateTime.Today"
+                               Required="true"
+                               RequiredError="Game date is required"
+                               Class="mb-4" />
+                <MudNumericField @bind-Value="_editStatisticMinutesPlayed"
+                                 Label="Minutes Played"
+                                 Variant="Variant.Outlined"
+                                 Min="0"
+                                 Max="120"
+                                 Required="true"
+                                 RequiredError="Minutes played is required"
+                                 Class="mb-4" />
+                <MudCheckBox @bind-Value="_editStatisticIsStarter"
+                             Label="Is Starter"
+                             Color="Color.Primary"
+                             Class="mb-4" />
+                <MudNumericField @bind-Value="_editStatisticJerseyNumber"
+                                 Label="Jersey Number"
+                                 Variant="Variant.Outlined"
+                                 Min="1"
+                                 Max="99"
+                                 Required="true"
+                                 RequiredError="Jersey number is required"
+                                 Class="mb-4" />
+                <MudNumericField @bind-Value="_editStatisticGoals"
+                                 Label="Goals"
+                                 Variant="Variant.Outlined"
+                                 Min="0"
+                                 Required="true"
+                                 RequiredError="Goals is required"
+                                 Class="mb-4" />
+                <MudNumericField @bind-Value="_editStatisticAssists"
+                                 Label="Assists"
+                                 Variant="Variant.Outlined"
+                                 Min="0"
+                                 Required="true"
+                                 RequiredError="Assists is required" />
+            </MudForm>
+            @if (!string.IsNullOrEmpty(_editStatisticErrorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-4">@_editStatisticErrorMessage</MudAlert>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="CloseEditStatisticDialog" Disabled="@_isSavingStatistic">Cancel</MudButton>
+            <MudButton Color="Color.Primary"
+                       Variant="Variant.Filled"
+                       OnClick="HandleEditStatistic"
+                       Disabled="@(!_editStatisticFormIsValid || _isSavingStatistic || _editStatisticTeamPlayerId == 0)">
+                @if (_isSavingStatistic)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Saving...</span>
+                }
+                else
+                {
+                    <span>Save</span>
+                }
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+
+    @* Delete Statistic Confirmation Dialog *@
+    <MudDialog @bind-Visible="_showDeleteStatisticDialog">
+        <TitleContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
+                <MudText Typo="Typo.h6">Delete Statistics</MudText>
+            </MudStack>
+        </TitleContent>
+        <DialogContent>
+            <MudText Typo="Typo.body1" Class="mb-2">
+                Are you sure you want to delete the statistics for the game on <strong>@_deletingStatistic?.GameDate.ToString("MM/dd/yyyy")</strong> with <strong>@_deletingStatistic?.TeamName</strong>?
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                This action cannot be undone. The statistics record will be permanently deleted.
+            </MudText>
+            @if (!string.IsNullOrEmpty(_deleteStatisticErrorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-4">@_deleteStatisticErrorMessage</MudAlert>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="CloseDeleteStatisticDialog" Disabled="@_isSavingStatistic">Cancel</MudButton>
+            <MudButton Color="Color.Error"
+                       Variant="Variant.Filled"
+                       OnClick="HandleDeleteStatistic"
+                       Disabled="@_isSavingStatistic">
+                @if (_isSavingStatistic)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Deleting...</span>
+                }
+                else
+                {
+                    <span>Delete</span>
+                }
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
 </MudContainer>
 
 @code {
@@ -498,6 +847,46 @@
     private bool _showRemoveTeamDialog;
     private TeamPlayerDto? _removingTeam;
     private string? _removeTeamErrorMessage;
+
+    // Statistics tab state
+    private List<PlayerStatisticDto> _statistics = [];
+    private PlayerStatisticAggregateResult _aggregates = PlayerStatisticAggregateResult.Empty();
+    private bool _isLoadingStatistics;
+    private bool _statisticsLoaded;
+    private string? _statisticsErrorMessage;
+
+    // Add Statistic dialog state
+    private bool _showAddStatisticDialog;
+    private MudForm? _addStatisticForm;
+    private bool _addStatisticFormIsValid;
+    private int _addStatisticTeamPlayerId;
+    private DateTime? _addStatisticGameDate = DateTime.Today;
+    private int _addStatisticMinutesPlayed;
+    private bool _addStatisticIsStarter;
+    private int _addStatisticJerseyNumber = 1;
+    private int _addStatisticGoals;
+    private int _addStatisticAssists;
+    private string? _addStatisticErrorMessage;
+    private bool _isSavingStatistic;
+
+    // Edit Statistic dialog state
+    private bool _showEditStatisticDialog;
+    private MudForm? _editStatisticForm;
+    private bool _editStatisticFormIsValid;
+    private PlayerStatisticDto? _editingStatistic;
+    private int _editStatisticTeamPlayerId;
+    private DateTime? _editStatisticGameDate;
+    private int _editStatisticMinutesPlayed;
+    private bool _editStatisticIsStarter;
+    private int _editStatisticJerseyNumber;
+    private int _editStatisticGoals;
+    private int _editStatisticAssists;
+    private string? _editStatisticErrorMessage;
+
+    // Delete Statistic dialog state
+    private bool _showDeleteStatisticDialog;
+    private PlayerStatisticDto? _deletingStatistic;
+    private string? _deleteStatisticErrorMessage;
 
     private string CurrentUserId => CurrentUserProvider.GetCurrentUser()?.Identity?.Name ?? "system";
 
@@ -675,6 +1064,17 @@
         if (index == 1 && !_teamsLoaded && _player is not null)
         {
             await LoadTeamsAsync();
+        }
+
+        // Lazy load statistics when Stats tab is first accessed (index 2)
+        if (index == 2 && !_statisticsLoaded && _player is not null)
+        {
+            // Also load teams if not already loaded (needed for dropdown)
+            if (!_teamsLoaded)
+            {
+                await LoadTeamsAsync();
+            }
+            await LoadStatisticsAsync();
         }
     }
 
@@ -900,6 +1300,261 @@
         finally
         {
             _isSavingTeam = false;
+        }
+    }
+
+    // Statistics methods
+    private async Task LoadStatisticsAsync()
+    {
+        _isLoadingStatistics = true;
+        _statisticsErrorMessage = null;
+
+        try
+        {
+            // Load statistics
+            var statisticsResult = await PlayerStatisticService.GetStatisticsByPlayerIdAsync(Id);
+
+            if (statisticsResult.Success && statisticsResult.Data is not null)
+            {
+                // Sort by GameDate DESC
+                _statistics = statisticsResult.Data
+                    .OrderByDescending(s => s.GameDate)
+                    .ToList();
+            }
+            else
+            {
+                _statisticsErrorMessage = statisticsResult.ErrorMessages.FirstOrDefault() ?? "Unable to load statistics.";
+            }
+
+            // Load aggregates
+            var aggregatesResult = await PlayerStatisticService.GetPlayerAggregatesAsync(Id);
+
+            if (aggregatesResult.Success && aggregatesResult.Data is not null)
+            {
+                _aggregates = aggregatesResult.Data;
+            }
+
+            _statisticsLoaded = true;
+        }
+        catch (Exception)
+        {
+            _statisticsErrorMessage = "An unexpected error occurred while loading statistics.";
+        }
+        finally
+        {
+            _isLoadingStatistics = false;
+        }
+    }
+
+    // Add Statistic Dialog methods
+    private void OpenAddStatisticDialog()
+    {
+        _addStatisticTeamPlayerId = _teams.Where(t => t.IsActive).Select(t => t.TeamPlayerId).FirstOrDefault();
+        _addStatisticGameDate = DateTime.Today;
+        _addStatisticMinutesPlayed = 0;
+        _addStatisticIsStarter = false;
+        _addStatisticJerseyNumber = 1;
+        _addStatisticGoals = 0;
+        _addStatisticAssists = 0;
+        _addStatisticErrorMessage = null;
+        _showAddStatisticDialog = true;
+    }
+
+    private void CloseAddStatisticDialog()
+    {
+        _showAddStatisticDialog = false;
+        _addStatisticErrorMessage = null;
+    }
+
+    private async Task HandleAddStatistic()
+    {
+        if (_addStatisticForm is null || !_addStatisticGameDate.HasValue)
+        {
+            return;
+        }
+
+        await _addStatisticForm.Validate();
+
+        if (!_addStatisticFormIsValid || _addStatisticTeamPlayerId == 0)
+        {
+            return;
+        }
+
+        _isSavingStatistic = true;
+        _addStatisticErrorMessage = null;
+
+        try
+        {
+            var createDto = new CreatePlayerStatisticDto
+            {
+                TeamPlayerId = _addStatisticTeamPlayerId,
+                GameDate = _addStatisticGameDate.Value,
+                MinutesPlayed = _addStatisticMinutesPlayed,
+                IsStarter = _addStatisticIsStarter,
+                JerseyNumber = _addStatisticJerseyNumber,
+                Goals = _addStatisticGoals,
+                Assists = _addStatisticAssists
+            };
+
+            var result = await PlayerStatisticService.AddStatisticAsync(createDto, CurrentUserId);
+
+            if (result.Success)
+            {
+                CloseAddStatisticDialog();
+                await LoadStatisticsAsync();
+                Snackbar.Add("Statistics added successfully.", Severity.Success);
+            }
+            else if (result.ValidationErrors.Count > 0)
+            {
+                var errors = result.ValidationErrors.SelectMany(e => e.Value);
+                _addStatisticErrorMessage = string.Join(" ", errors);
+            }
+            else
+            {
+                _addStatisticErrorMessage = result.ErrorMessages.FirstOrDefault() ?? "Unable to add statistics.";
+            }
+        }
+        catch (Exception)
+        {
+            _addStatisticErrorMessage = "An unexpected error occurred while adding statistics.";
+        }
+        finally
+        {
+            _isSavingStatistic = false;
+        }
+    }
+
+    // Edit Statistic Dialog methods
+    private void OpenEditStatisticDialog(PlayerStatisticDto statistic)
+    {
+        _editingStatistic = statistic;
+        _editStatisticTeamPlayerId = statistic.TeamPlayerId;
+        _editStatisticGameDate = statistic.GameDate;
+        _editStatisticMinutesPlayed = statistic.MinutesPlayed;
+        _editStatisticIsStarter = statistic.IsStarter;
+        _editStatisticJerseyNumber = statistic.JerseyNumber;
+        _editStatisticGoals = statistic.Goals;
+        _editStatisticAssists = statistic.Assists;
+        _editStatisticErrorMessage = null;
+        _showEditStatisticDialog = true;
+    }
+
+    private void CloseEditStatisticDialog()
+    {
+        _showEditStatisticDialog = false;
+        _editingStatistic = null;
+        _editStatisticErrorMessage = null;
+    }
+
+    private async Task HandleEditStatistic()
+    {
+        if (_editStatisticForm is null || _editingStatistic is null || !_editStatisticGameDate.HasValue)
+        {
+            return;
+        }
+
+        await _editStatisticForm.Validate();
+
+        if (!_editStatisticFormIsValid || _editStatisticTeamPlayerId == 0)
+        {
+            return;
+        }
+
+        _isSavingStatistic = true;
+        _editStatisticErrorMessage = null;
+
+        try
+        {
+            var updateDto = new UpdatePlayerStatisticDto
+            {
+                PlayerStatisticId = _editingStatistic.PlayerStatisticId,
+                TeamPlayerId = _editStatisticTeamPlayerId,
+                GameDate = _editStatisticGameDate.Value,
+                MinutesPlayed = _editStatisticMinutesPlayed,
+                IsStarter = _editStatisticIsStarter,
+                JerseyNumber = _editStatisticJerseyNumber,
+                Goals = _editStatisticGoals,
+                Assists = _editStatisticAssists
+            };
+
+            var result = await PlayerStatisticService.UpdateStatisticAsync(
+                _editingStatistic.PlayerStatisticId,
+                updateDto,
+                CurrentUserId);
+
+            if (result.Success)
+            {
+                CloseEditStatisticDialog();
+                await LoadStatisticsAsync();
+                Snackbar.Add("Statistics updated successfully.", Severity.Success);
+            }
+            else if (result.ValidationErrors.Count > 0)
+            {
+                var errors = result.ValidationErrors.SelectMany(e => e.Value);
+                _editStatisticErrorMessage = string.Join(" ", errors);
+            }
+            else
+            {
+                _editStatisticErrorMessage = result.ErrorMessages.FirstOrDefault() ?? "Unable to update statistics.";
+            }
+        }
+        catch (Exception)
+        {
+            _editStatisticErrorMessage = "An unexpected error occurred while updating statistics.";
+        }
+        finally
+        {
+            _isSavingStatistic = false;
+        }
+    }
+
+    // Delete Statistic Dialog methods
+    private void OpenDeleteStatisticDialog(PlayerStatisticDto statistic)
+    {
+        _deletingStatistic = statistic;
+        _deleteStatisticErrorMessage = null;
+        _showDeleteStatisticDialog = true;
+    }
+
+    private void CloseDeleteStatisticDialog()
+    {
+        _showDeleteStatisticDialog = false;
+        _deletingStatistic = null;
+        _deleteStatisticErrorMessage = null;
+    }
+
+    private async Task HandleDeleteStatistic()
+    {
+        if (_deletingStatistic is null)
+        {
+            return;
+        }
+
+        _isSavingStatistic = true;
+        _deleteStatisticErrorMessage = null;
+
+        try
+        {
+            var result = await PlayerStatisticService.DeleteStatisticAsync(_deletingStatistic.PlayerStatisticId);
+
+            if (result.Success)
+            {
+                CloseDeleteStatisticDialog();
+                await LoadStatisticsAsync();
+                Snackbar.Add("Statistics deleted successfully.", Severity.Success);
+            }
+            else
+            {
+                _deleteStatisticErrorMessage = result.ErrorMessages.FirstOrDefault() ?? "Unable to delete statistics.";
+            }
+        }
+        catch (Exception)
+        {
+            _deleteStatisticErrorMessage = "An unexpected error occurred while deleting statistics.";
+        }
+        finally
+        {
+            _isSavingStatistic = false;
         }
     }
 }
