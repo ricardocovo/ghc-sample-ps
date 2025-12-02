@@ -466,12 +466,44 @@ The `TeamPlayers` table stores player team assignments:
 **Foreign Key:**
 - `FK_TeamPlayers_Players_PlayerId` → `Players(Id)` with **CASCADE DELETE**
 
+### PlayerStatistics Table
+
+The `PlayerStatistics` table stores game-level performance statistics for players:
+
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| PlayerStatisticId | int | No | Primary key, auto-increment |
+| TeamPlayerId | int | No | FK to TeamPlayers(TeamPlayerId) |
+| GameDate | datetime2 | No | Date of the game |
+| MinutesPlayed | int | No | Minutes played in the game (≥ 0) |
+| IsStarter | bit | No | Whether the player started the game |
+| JerseyNumber | int | No | Player's jersey number (1-99) |
+| Goals | int | No | Goals scored (≥ 0) |
+| Assists | int | No | Assists made (≥ 0) |
+| CreatedAt | datetime2 | No | Record creation timestamp |
+| CreatedBy | nvarchar(450) | No | User who created record |
+| UpdatedAt | datetime2 | Yes | Last update timestamp |
+| UpdatedBy | nvarchar(450) | Yes | User who last updated |
+
+**Indexes:**
+- `IX_PlayerStatistics_TeamPlayerId` - Get statistics by team player
+- `IX_PlayerStatistics_GameDate` - Date-based queries
+- `IX_PlayerStatistics_TeamPlayerId_GameDate` - Composite for efficient lookups
+
+**Foreign Key:**
+- `FK_PlayerStatistics_TeamPlayers_TeamPlayerId` → `TeamPlayers(TeamPlayerId)` with **CASCADE DELETE**
+
 ### Cascade Delete Behavior
 
 When a Player is deleted:
 - All associated TeamPlayer records are automatically deleted
+- All associated PlayerStatistic records are automatically deleted (through TeamPlayer cascade)
 - This maintains referential integrity
-- No orphaned team assignments remain
+- No orphaned team assignments or statistics remain
+
+When a TeamPlayer is deleted:
+- All associated PlayerStatistic records are automatically deleted
+- Player record is unaffected
 
 ## Migration History
 
@@ -487,9 +519,30 @@ When a Player is deleted:
 - Creates FK to Players with cascade delete
 - Creates all indexes listed above
 
-### Rollback Procedure
+### AddPlayerStatisticsTable (20251202032639)
+- Creates `PlayerStatistics` table with all columns
+- Creates FK to TeamPlayers with cascade delete
+- Creates indexes: TeamPlayerId, GameDate, TeamPlayerId_GameDate composite
 
-To rollback the TeamPlayers migration:
+### Rollback Procedures
+
+**To rollback the PlayerStatistics migration:**
+
+```bash
+# Rollback to before AddPlayerStatisticsTable
+dotnet ef database update AddTeamPlayersTable \
+  --project src/GhcSamplePs.Core \
+  --startup-project src/GhcSamplePs.Web
+
+# Remove migration if needed
+dotnet ef migrations remove \
+  --project src/GhcSamplePs.Core \
+  --startup-project src/GhcSamplePs.Web
+```
+
+**Warning:** Rolling back will delete all data in the PlayerStatistics table.
+
+**To rollback the TeamPlayers migration:**
 
 ```bash
 # Rollback to before AddTeamPlayersTable
@@ -503,7 +556,39 @@ dotnet ef migrations remove \
   --startup-project src/GhcSamplePs.Web
 ```
 
-**Warning:** Rolling back will delete all data in the TeamPlayers table.
+**Warning:** Rolling back will delete all data in the TeamPlayers table and cascade to PlayerStatistics.
+
+### Aggregate Query Patterns
+
+Common aggregate queries for player statistics:
+
+**Get total goals for a player:**
+```sql
+SELECT SUM(ps.Goals) as TotalGoals
+FROM PlayerStatistics ps
+INNER JOIN TeamPlayers tp ON ps.TeamPlayerId = tp.TeamPlayerId
+WHERE tp.PlayerId = @PlayerId
+```
+
+**Get averages per game:**
+```sql
+SELECT 
+    COUNT(*) as GameCount,
+    AVG(CAST(ps.Goals as FLOAT)) as AvgGoals,
+    AVG(CAST(ps.Assists as FLOAT)) as AvgAssists,
+    AVG(CAST(ps.MinutesPlayed as FLOAT)) as AvgMinutes
+FROM PlayerStatistics ps
+INNER JOIN TeamPlayers tp ON ps.TeamPlayerId = tp.TeamPlayerId
+WHERE tp.PlayerId = @PlayerId
+```
+
+**Get statistics for specific team:**
+```sql
+SELECT *
+FROM PlayerStatistics
+WHERE TeamPlayerId = @TeamPlayerId
+ORDER BY GameDate DESC
+```
 
 ## Quick Reference
 
