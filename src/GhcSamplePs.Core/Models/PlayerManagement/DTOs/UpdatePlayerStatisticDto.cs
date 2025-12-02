@@ -3,22 +3,22 @@ using System.ComponentModel.DataAnnotations;
 namespace GhcSamplePs.Core.Models.PlayerManagement.DTOs;
 
 /// <summary>
-/// Data transfer object for updating an existing player statistic record.
+/// Data transfer object for updating an existing player statistic.
 /// Contains all updatable properties for player statistic modification with validation attributes.
 /// </summary>
 public sealed record UpdatePlayerStatisticDto
 {
     /// <summary>
-    /// Gets the unique identifier of the player statistic record to update. Required.
+    /// Gets the unique identifier of the player statistic to update. Required.
     /// </summary>
     [Required(ErrorMessage = "Player Statistic ID is required.")]
     public required int PlayerStatisticId { get; init; }
 
     /// <summary>
-    /// Gets the foreign key to the associated TeamPlayer entity. Required, must be positive.
+    /// Gets the foreign key to the associated TeamPlayer entity. Required.
     /// </summary>
     [Required(ErrorMessage = "Team Player ID is required.")]
-    [Range(1, int.MaxValue, ErrorMessage = "Team Player ID must be a positive integer.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Team Player ID must be greater than 0.")]
     public required int TeamPlayerId { get; init; }
 
     /// <summary>
@@ -28,10 +28,10 @@ public sealed record UpdatePlayerStatisticDto
     public required DateTime GameDate { get; init; }
 
     /// <summary>
-    /// Gets the number of minutes the player played in the game. Required, must be 0-120.
+    /// Gets the number of minutes the player played in the game. Required, must be non-negative.
     /// </summary>
     [Required(ErrorMessage = "Minutes played is required.")]
-    [Range(0, 120, ErrorMessage = "Minutes played must be between 0 and 120.")]
+    [Range(0, int.MaxValue, ErrorMessage = "Minutes played must be non-negative.")]
     public required int MinutesPlayed { get; init; }
 
     /// <summary>
@@ -41,38 +41,32 @@ public sealed record UpdatePlayerStatisticDto
     public required bool IsStarter { get; init; }
 
     /// <summary>
-    /// Gets the player's jersey number for this game. Required, must be 1-99.
+    /// Gets the player's jersey number for this game. Required, must be greater than 0.
     /// </summary>
     [Required(ErrorMessage = "Jersey number is required.")]
-    [Range(1, 99, ErrorMessage = "Jersey number must be between 1 and 99.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Jersey number must be greater than 0.")]
     public required int JerseyNumber { get; init; }
 
     /// <summary>
     /// Gets the number of goals scored by the player in the game. Required, must be non-negative.
     /// </summary>
     [Required(ErrorMessage = "Goals is required.")]
-    [Range(0, int.MaxValue, ErrorMessage = "Goals must be a non-negative integer.")]
+    [Range(0, int.MaxValue, ErrorMessage = "Goals must be non-negative.")]
     public required int Goals { get; init; }
 
     /// <summary>
     /// Gets the number of assists made by the player in the game. Required, must be non-negative.
     /// </summary>
     [Required(ErrorMessage = "Assists is required.")]
-    [Range(0, int.MaxValue, ErrorMessage = "Assists must be a non-negative integer.")]
+    [Range(0, int.MaxValue, ErrorMessage = "Assists must be non-negative.")]
     public required int Assists { get; init; }
 
     /// <summary>
-    /// Applies the updates from this DTO to an existing PlayerStatistic entity.
+    /// Creates a new PlayerStatistic entity from this DTO values for updating.
     /// </summary>
-    /// <param name="existingStatistic">The existing player statistic entity to update.</param>
-    /// <param name="updatedBy">The identifier of the user making the update.</param>
+    /// <param name="currentUserId">The identifier of the user making the update.</param>
     /// <returns>A new PlayerStatistic entity with updated values.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when existingStatistic is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when updatedBy is null, empty, or whitespace.</exception>
-    /// <remarks>
-    /// This method creates a new PlayerStatistic entity with the updated values.
-    /// The CreatedAt and CreatedBy fields are preserved from the original entity.
-    /// </remarks>
+    /// <exception cref="ArgumentException">Thrown when currentUserId is null, empty, or whitespace.</exception>
     /// <example>
     /// <code>
     /// var updateDto = new UpdatePlayerStatisticDto
@@ -86,21 +80,19 @@ public sealed record UpdatePlayerStatisticDto
     ///     Goals = 3,
     ///     Assists = 1
     /// };
-    /// var updatedStatistic = updateDto.ApplyTo(existingStatistic, "admin-user");
+    /// var entity = updateDto.ToEntity("admin-user");
     /// </code>
     /// </example>
-    public PlayerStatistic ApplyTo(PlayerStatistic existingStatistic, string updatedBy)
+    public PlayerStatistic ToEntity(string currentUserId)
     {
-        ArgumentNullException.ThrowIfNull(existingStatistic);
-
-        if (string.IsNullOrWhiteSpace(updatedBy))
+        if (string.IsNullOrWhiteSpace(currentUserId))
         {
-            throw new ArgumentException("UpdatedBy cannot be null, empty, or whitespace.", nameof(updatedBy));
+            throw new ArgumentException("CurrentUserId cannot be null, empty, or whitespace.", nameof(currentUserId));
         }
 
-        var statistic = new PlayerStatistic
+        var entity = new PlayerStatistic
         {
-            PlayerStatisticId = existingStatistic.PlayerStatisticId,
+            PlayerStatisticId = PlayerStatisticId,
             TeamPlayerId = TeamPlayerId,
             GameDate = GameDate,
             MinutesPlayed = MinutesPlayed,
@@ -108,12 +100,11 @@ public sealed record UpdatePlayerStatisticDto
             JerseyNumber = JerseyNumber,
             Goals = Goals,
             Assists = Assists,
-            CreatedAt = existingStatistic.CreatedAt,
-            CreatedBy = existingStatistic.CreatedBy
+            CreatedBy = currentUserId
         };
 
-        statistic.UpdateLastModified(updatedBy);
+        entity.UpdateLastModified(currentUserId);
 
-        return statistic;
+        return entity;
     }
 }

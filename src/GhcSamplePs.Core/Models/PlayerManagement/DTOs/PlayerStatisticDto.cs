@@ -2,7 +2,7 @@ namespace GhcSamplePs.Core.Models.PlayerManagement.DTOs;
 
 /// <summary>
 /// Data transfer object for displaying player statistic information.
-/// Contains all player statistic properties for read operations, including team and championship information.
+/// Contains all player statistic properties including team context for read operations.
 /// </summary>
 public sealed record PlayerStatisticDto
 {
@@ -15,6 +15,16 @@ public sealed record PlayerStatisticDto
     /// Gets the foreign key to the associated TeamPlayer entity.
     /// </summary>
     public required int TeamPlayerId { get; init; }
+
+    /// <summary>
+    /// Gets the name of the team.
+    /// </summary>
+    public string? TeamName { get; init; }
+
+    /// <summary>
+    /// Gets the name of the championship.
+    /// </summary>
+    public string? ChampionshipName { get; init; }
 
     /// <summary>
     /// Gets the date of the game for which statistics are recorded.
@@ -47,19 +57,14 @@ public sealed record PlayerStatisticDto
     public required int Assists { get; init; }
 
     /// <summary>
-    /// Gets the name of the team. Retrieved from the TeamPlayer navigation.
-    /// </summary>
-    public string? TeamName { get; init; }
-
-    /// <summary>
-    /// Gets the name of the championship. Retrieved from the TeamPlayer navigation.
-    /// </summary>
-    public string? ChampionshipName { get; init; }
-
-    /// <summary>
     /// Gets the UTC timestamp when the player statistic record was created.
     /// </summary>
     public required DateTime CreatedAt { get; init; }
+
+    /// <summary>
+    /// Gets the identifier of the user who created this player statistic record.
+    /// </summary>
+    public required string CreatedBy { get; init; }
 
     /// <summary>
     /// Gets the UTC timestamp when the player statistic record was last updated.
@@ -67,14 +72,19 @@ public sealed record PlayerStatisticDto
     public DateTime? UpdatedAt { get; init; }
 
     /// <summary>
+    /// Gets the identifier of the user who last updated this player statistic record.
+    /// </summary>
+    public string? UpdatedBy { get; init; }
+
+    /// <summary>
     /// Creates a PlayerStatisticDto from a PlayerStatistic entity.
     /// </summary>
-    /// <param name="playerStatistic">The player statistic entity to map from.</param>
+    /// <param name="statistic">The player statistic entity to map from.</param>
     /// <returns>A new PlayerStatisticDto instance.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when playerStatistic is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when statistic is null.</exception>
     /// <example>
     /// <code>
-    /// var playerStatistic = new PlayerStatistic
+    /// var statistic = new PlayerStatistic
     /// {
     ///     PlayerStatisticId = 1,
     ///     TeamPlayerId = 1,
@@ -86,27 +96,29 @@ public sealed record PlayerStatisticDto
     ///     Assists = 1,
     ///     CreatedBy = "system"
     /// };
-    /// var dto = PlayerStatisticDto.FromEntity(playerStatistic);
+    /// var dto = PlayerStatisticDto.FromEntity(statistic);
     /// </code>
     /// </example>
-    public static PlayerStatisticDto FromEntity(PlayerStatistic playerStatistic)
+    public static PlayerStatisticDto FromEntity(PlayerStatistic statistic)
     {
-        ArgumentNullException.ThrowIfNull(playerStatistic);
+        ArgumentNullException.ThrowIfNull(statistic);
 
         return new PlayerStatisticDto
         {
-            PlayerStatisticId = playerStatistic.PlayerStatisticId,
-            TeamPlayerId = playerStatistic.TeamPlayerId,
-            GameDate = playerStatistic.GameDate,
-            MinutesPlayed = playerStatistic.MinutesPlayed,
-            IsStarter = playerStatistic.IsStarter,
-            JerseyNumber = playerStatistic.JerseyNumber,
-            Goals = playerStatistic.Goals,
-            Assists = playerStatistic.Assists,
-            TeamName = playerStatistic.TeamPlayer?.TeamName?.Trim(),
-            ChampionshipName = playerStatistic.TeamPlayer?.ChampionshipName?.Trim(),
-            CreatedAt = playerStatistic.CreatedAt,
-            UpdatedAt = playerStatistic.UpdatedAt
+            PlayerStatisticId = statistic.PlayerStatisticId,
+            TeamPlayerId = statistic.TeamPlayerId,
+            TeamName = statistic.TeamPlayer?.TeamName?.Trim(),
+            ChampionshipName = statistic.TeamPlayer?.ChampionshipName?.Trim(),
+            GameDate = statistic.GameDate,
+            MinutesPlayed = statistic.MinutesPlayed,
+            IsStarter = statistic.IsStarter,
+            JerseyNumber = statistic.JerseyNumber,
+            Goals = statistic.Goals,
+            Assists = statistic.Assists,
+            CreatedAt = statistic.CreatedAt,
+            CreatedBy = statistic.CreatedBy,
+            UpdatedAt = statistic.UpdatedAt,
+            UpdatedBy = statistic.UpdatedBy
         };
     }
 }

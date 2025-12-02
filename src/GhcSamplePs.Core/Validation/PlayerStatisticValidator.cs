@@ -10,13 +10,12 @@ namespace GhcSamplePs.Core.Validation;
 /// <remarks>
 /// <para>Validation Rules:</para>
 /// <list type="bullet">
-///   <item><description><b>TeamPlayerId:</b> Required, must be a positive integer</description></item>
-///   <item><description><b>GameDate:</b> Required, must be a valid date, not in the future</description></item>
-///   <item><description><b>MinutesPlayed:</b> Required, must be ≥ 0 and ≤ 120</description></item>
-///   <item><description><b>IsStarter:</b> Required boolean</description></item>
-///   <item><description><b>JerseyNumber:</b> Required, must be &gt; 0 and ≤ 99</description></item>
-///   <item><description><b>Goals:</b> Required, must be ≥ 0</description></item>
-///   <item><description><b>Assists:</b> Required, must be ≥ 0</description></item>
+///   <item><description><b>TeamPlayerId:</b> Required, must be greater than 0</description></item>
+///   <item><description><b>GameDate:</b> Required, valid date, not in future</description></item>
+///   <item><description><b>MinutesPlayed:</b> Required, ≥ 0, ≤ 120 (soft limit)</description></item>
+///   <item><description><b>JerseyNumber:</b> Required, 1-99 (reasonable range)</description></item>
+///   <item><description><b>Goals:</b> Required, ≥ 0</description></item>
+///   <item><description><b>Assists:</b> Required, ≥ 0</description></item>
 /// </list>
 /// </remarks>
 /// <example>
@@ -44,12 +43,17 @@ namespace GhcSamplePs.Core.Validation;
 public static class PlayerStatisticValidator
 {
     /// <summary>
-    /// Maximum allowed minutes played in a single game.
+    /// Maximum allowed minutes played in a game (soft limit).
     /// </summary>
     public const int MaxMinutesPlayed = 120;
 
     /// <summary>
-    /// Maximum allowed jersey number.
+    /// Minimum allowed jersey number.
+    /// </summary>
+    public const int MinJerseyNumber = 1;
+
+    /// <summary>
+    /// Maximum allowed jersey number (reasonable range).
     /// </summary>
     public const int MaxJerseyNumber = 99;
 
@@ -68,8 +72,8 @@ public static class PlayerStatisticValidator
     ///     MinutesPlayed = 90,
     ///     IsStarter = true,
     ///     JerseyNumber = 10,
-    ///     Goals = 2,
-    ///     Assists = 1
+    ///     Goals = 0,
+    ///     Assists = 0
     /// };
     /// var result = PlayerStatisticValidator.ValidateCreatePlayerStatistic(createDto);
     /// Console.WriteLine(result.IsValid); // True
@@ -133,9 +137,9 @@ public static class PlayerStatisticValidator
     /// <summary>
     /// Validates a PlayerStatistic entity against all business rules.
     /// </summary>
-    /// <param name="playerStatistic">The PlayerStatistic entity to validate.</param>
+    /// <param name="statistic">The PlayerStatistic entity to validate.</param>
     /// <returns>A ValidationResult containing all validation errors found, or a valid result if no errors.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when playerStatistic is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when statistic is null.</exception>
     /// <example>
     /// <code>
     /// var statistic = new PlayerStatistic
@@ -153,18 +157,18 @@ public static class PlayerStatisticValidator
     /// Console.WriteLine(result.IsValid); // True
     /// </code>
     /// </example>
-    public static ValidationResult ValidatePlayerStatistic(PlayerStatistic playerStatistic)
+    public static ValidationResult ValidatePlayerStatistic(PlayerStatistic statistic)
     {
-        ArgumentNullException.ThrowIfNull(playerStatistic);
+        ArgumentNullException.ThrowIfNull(statistic);
 
         var errors = new Dictionary<string, List<string>>();
 
-        ValidateTeamPlayerId(playerStatistic.TeamPlayerId, errors);
-        ValidateGameDate(playerStatistic.GameDate, errors);
-        ValidateMinutesPlayed(playerStatistic.MinutesPlayed, errors);
-        ValidateJerseyNumber(playerStatistic.JerseyNumber, errors);
-        ValidateGoals(playerStatistic.Goals, errors);
-        ValidateAssists(playerStatistic.Assists, errors);
+        ValidateTeamPlayerId(statistic.TeamPlayerId, errors);
+        ValidateGameDate(statistic.GameDate, errors);
+        ValidateMinutesPlayed(statistic.MinutesPlayed, errors);
+        ValidateJerseyNumber(statistic.JerseyNumber, errors);
+        ValidateGoals(statistic.Goals, errors);
+        ValidateAssists(statistic.Assists, errors);
 
         return BuildResult(errors);
     }
@@ -189,7 +193,7 @@ public static class PlayerStatisticValidator
     {
         if (teamPlayerId <= 0)
         {
-            AddError(errors, nameof(PlayerStatistic.TeamPlayerId), "Team Player ID is required and must be a positive integer");
+            AddError(errors, nameof(PlayerStatistic.TeamPlayerId), "Team player ID must be greater than 0");
         }
     }
 
@@ -211,23 +215,23 @@ public static class PlayerStatisticValidator
     {
         if (minutesPlayed < 0)
         {
-            AddError(errors, nameof(PlayerStatistic.MinutesPlayed), "Minutes played must be a non-negative integer");
+            AddError(errors, nameof(PlayerStatistic.MinutesPlayed), "Minutes played must be non-negative");
         }
         else if (minutesPlayed > MaxMinutesPlayed)
         {
-            AddError(errors, nameof(PlayerStatistic.MinutesPlayed), $"Minutes played must not exceed {MaxMinutesPlayed}");
+            AddError(errors, nameof(PlayerStatistic.MinutesPlayed), $"Minutes played should not exceed {MaxMinutesPlayed}");
         }
     }
 
     private static void ValidateJerseyNumber(int jerseyNumber, Dictionary<string, List<string>> errors)
     {
-        if (jerseyNumber <= 0)
+        if (jerseyNumber < MinJerseyNumber)
         {
-            AddError(errors, nameof(PlayerStatistic.JerseyNumber), "Jersey number must be a positive integer");
+            AddError(errors, nameof(PlayerStatistic.JerseyNumber), "Jersey number must be greater than 0");
         }
         else if (jerseyNumber > MaxJerseyNumber)
         {
-            AddError(errors, nameof(PlayerStatistic.JerseyNumber), $"Jersey number must not exceed {MaxJerseyNumber}");
+            AddError(errors, nameof(PlayerStatistic.JerseyNumber), $"Jersey number should not exceed {MaxJerseyNumber}");
         }
     }
 
@@ -235,7 +239,7 @@ public static class PlayerStatisticValidator
     {
         if (goals < 0)
         {
-            AddError(errors, nameof(PlayerStatistic.Goals), "Goals must be a non-negative integer");
+            AddError(errors, nameof(PlayerStatistic.Goals), "Goals must be non-negative");
         }
     }
 
@@ -243,7 +247,7 @@ public static class PlayerStatisticValidator
     {
         if (assists < 0)
         {
-            AddError(errors, nameof(PlayerStatistic.Assists), "Assists must be a non-negative integer");
+            AddError(errors, nameof(PlayerStatistic.Assists), "Assists must be non-negative");
         }
     }
 

@@ -37,12 +37,17 @@ GhcSamplePs.Core/
 │   └── PlayerManagement/        # Player management domain models
 │       ├── DTOs/
 │       │   ├── CreatePlayerDto.cs
+│       │   ├── CreatePlayerStatisticDto.cs
 │       │   ├── CreateTeamPlayerDto.cs
 │       │   ├── PlayerDto.cs
+│       │   ├── PlayerStatisticAggregateResult.cs
+│       │   ├── PlayerStatisticDto.cs
 │       │   ├── TeamPlayerDto.cs
 │       │   ├── UpdatePlayerDto.cs
+│       │   ├── UpdatePlayerStatisticDto.cs
 │       │   └── UpdateTeamPlayerDto.cs
 │       ├── Player.cs
+│       ├── PlayerStatistic.cs
 │       └── TeamPlayer.cs
 ├── Services/
 │   ├── Interfaces/              # Service contracts
@@ -50,23 +55,28 @@ GhcSamplePs.Core/
 │   │   ├── IAuthorizationService.cs
 │   │   ├── ICurrentUserProvider.cs
 │   │   ├── IPlayerService.cs
+│   │   ├── IPlayerStatisticService.cs
 │   │   ├── ITeamPlayerService.cs
 │   │   └── AuthorizationResult.cs
 │   └── Implementations/         # Service implementations
 │       ├── AuthenticationService.cs
 │       ├── AuthorizationService.cs
 │       ├── PlayerService.cs
+│       ├── PlayerStatisticService.cs
 │       └── TeamPlayerService.cs
 ├── Repositories/                # Repository interfaces and implementations
 │   ├── Interfaces/
 │   │   ├── IPlayerRepository.cs
+│   │   ├── IPlayerStatisticRepository.cs
 │   │   └── ITeamPlayerRepository.cs
 │   └── Implementations/
 │       ├── MockPlayerRepository.cs
 │       ├── EfPlayerRepository.cs
+│       ├── EfPlayerStatisticRepository.cs
 │       └── EfTeamPlayerRepository.cs
 ├── Validation/                  # Business validation rules
 │   ├── PlayerValidator.cs
+│   ├── PlayerStatisticValidator.cs
 │   └── TeamPlayerValidator.cs
 └── Exceptions/                  # Custom domain exceptions
     ├── AuthenticationException.cs
@@ -691,9 +701,155 @@ catch (RepositoryException ex) when (ex.Operation == "UpdateAsync")
 }
 ```
 
+### PlayerStatistic Service ✅
+
+**PlayerStatisticService** (`Services/Implementations/PlayerStatisticService.cs`):
+- Service layer for player game statistics management
+- Coordinates between presentation and data layers
+- Applies business rules and validation
+- Manages audit fields (CreatedBy, UpdatedBy, timestamps UTC)
+- Provides aggregate calculations (totals and averages)
+
+**Features:**
+- **Statistics Management**: Manage game-level performance statistics for players
+- **Business Rules**: Validates numeric ranges, dates, and team player references
+- **Aggregate Calculations**: Totals and averages for goals, assists, minutes
+- **Audit Trail**: Automatic population of audit fields
+- **ServiceResult Pattern**: Consistent success/failure handling
+
+**Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `GetStatisticsByPlayerIdAsync(playerId)` | Get all statistics for a player across all teams |
+| `GetStatisticsByTeamPlayerIdAsync(teamPlayerId)` | Get statistics for a specific team assignment |
+| `GetStatisticByIdAsync(statisticId)` | Get a single statistic by ID |
+| `AddStatisticAsync(createDto, currentUserId)` | Add a new game statistic |
+| `UpdateStatisticAsync(statisticId, updateDto, currentUserId)` | Update an existing statistic |
+| `DeleteStatisticAsync(statisticId)` | Delete a statistic |
+| `GetPlayerAggregatesAsync(playerId, teamPlayerId?)` | Get aggregate statistics (totals and averages) |
+| `ValidateStatisticAsync(createDto)` | Validate statistic data |
+
+**Business Rules:**
+- TeamPlayerId: Required, must reference existing TeamPlayer
+- GameDate: Required, cannot be in the future
+- MinutesPlayed: Required, ≥ 0, ≤ 120 (soft limit)
+- JerseyNumber: Required, 1-99 (reasonable range)
+- Goals: Required, ≥ 0
+- Assists: Required, ≥ 0
+- All dates stored in UTC
+
+**Aggregate Calculations:**
+- GamesPlayed: COUNT(*)
+- TotalMinutes: SUM(MinutesPlayed)
+- TotalGoals: SUM(Goals)
+- TotalAssists: SUM(Assists)
+- AverageGoalsPerGame: TotalGoals / GamesPlayed (rounded to 2 decimals)
+- AverageAssistsPerGame: TotalAssists / GamesPlayed (rounded to 2 decimals)
+
+**Usage Example:**
+```csharp
+// Register in DI
+builder.Services.AddScoped<IPlayerStatisticService, PlayerStatisticService>();
+
+// Use in a component
+public class StatisticsComponent
+{
+    private readonly IPlayerStatisticService _statisticService;
+
+    public StatisticsComponent(IPlayerStatisticService statisticService)
+    {
+        _statisticService = statisticService;
+    }
+
+    public async Task AddGameStatisticAsync()
+    {
+        var createDto = new CreatePlayerStatisticDto
+        {
+            TeamPlayerId = 1,
+            GameDate = DateTime.UtcNow.AddDays(-1),
+            MinutesPlayed = 90,
+            IsStarter = true,
+            JerseyNumber = 10,
+            Goals = 2,
+            Assists = 1
+        };
+
+        var result = await _statisticService.AddStatisticAsync(createDto, "admin-user");
+        
+        if (result.Success)
+        {
+            Console.WriteLine($"Created statistic with ID: {result.Data!.PlayerStatisticId}");
+        }
+    }
+
+    public async Task GetAggregatesAsync(int playerId)
+    {
+        var result = await _statisticService.GetPlayerAggregatesAsync(playerId);
+        
+        if (result.Success)
+        {
+            Console.WriteLine($"Games: {result.Data!.GameCount}");
+            Console.WriteLine($"Total Goals: {result.Data!.TotalGoals}");
+            Console.WriteLine($"Avg Goals: {result.Data!.AverageGoals:F2}");
+        }
+    }
+}
+```
+
+### PlayerStatistic Validation ✅
+
+**PlayerStatisticValidator** (`Validation/PlayerStatisticValidator.cs`):
+- Provides business rule validation for player statistic data
+- Validates CreatePlayerStatisticDto, UpdatePlayerStatisticDto, and PlayerStatistic entities
+- Returns ValidationResult with field-specific error messages
+
+#### Validation Rules
+
+| Field | Requirement | Error Message |
+|-------|-------------|---------------|
+| TeamPlayerId | Required, > 0 | "Team player ID must be greater than 0" |
+| GameDate | Required, not future | "Game date is required" or "Game date cannot be in the future" |
+| MinutesPlayed | Required, 0-120 | "Minutes played must be non-negative" or "Minutes played should not exceed 120" |
+| JerseyNumber | Required, 1-99 | "Jersey number must be greater than 0" or "Jersey number should not exceed 99" |
+| Goals | Required, ≥ 0 | "Goals must be non-negative" |
+| Assists | Required, ≥ 0 | "Assists must be non-negative" |
+
+#### Methods
+
+- `ValidateCreatePlayerStatistic(CreatePlayerStatisticDto)` - Validates statistic creation data
+- `ValidateUpdatePlayerStatistic(UpdatePlayerStatisticDto)` - Validates statistic update data
+- `ValidatePlayerStatistic(PlayerStatistic)` - Validates a PlayerStatistic entity
+- `Validate(CreatePlayerStatisticDto)` - Alias for ValidateCreatePlayerStatistic
+- `Validate(UpdatePlayerStatisticDto)` - Alias for ValidateUpdatePlayerStatistic
+
+#### Usage Example
+
+```csharp
+var dto = new CreatePlayerStatisticDto
+{
+    TeamPlayerId = 1,
+    GameDate = DateTime.UtcNow.AddDays(-1),
+    MinutesPlayed = 90,
+    IsStarter = true,
+    JerseyNumber = 10,
+    Goals = 2,
+    Assists = 1
+};
+
+var result = PlayerStatisticValidator.ValidateCreatePlayerStatistic(dto);
+if (!result.IsValid)
+{
+    foreach (var (field, messages) in result.Errors)
+    {
+        Console.WriteLine($"{field}: {string.Join(", ", messages)}");
+    }
+}
+```
+
 ### Test Coverage
 
-**Total Tests**: 576 tests, all passing ✅
+**Total Tests**: 753 tests, all passing ✅
 
 - **AuthenticationServiceTests**: 20 tests
 - **AuthorizationServiceTests**: 17 tests
@@ -710,6 +866,7 @@ catch (RepositoryException ex) when (ex.Operation == "UpdateAsync")
 - **MockPlayerRepositoryTests**: Various tests
 - **PlayerServiceTests**: 26 tests (service operations, validation, error handling)
 - **TeamPlayerServiceTests**: 28 tests (service operations, business rules, validation)
+- **PlayerStatisticServiceTests**: 37 tests (service operations, business rules, validation, aggregates)
 
 #### Authorization Scenario Tests
 
