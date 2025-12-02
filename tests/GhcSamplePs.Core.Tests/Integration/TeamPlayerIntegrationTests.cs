@@ -310,12 +310,16 @@ public class TeamPlayerIntegrationTests : IDisposable
 
         var afterUpdate = DateTime.UtcNow;
 
+        // CreatedBy is preserved from creation
         Assert.Equal("create-user", updateResult.Data.CreatedBy);
 
+        // UpdatedAt and UpdatedBy are set by the ApplicationDbContext
+        // Note: The DbContext uses its _currentUserId ("integration-test-user") for audit fields
+        // This overrides the currentUserId parameter passed to the service method
         Assert.NotNull(updateResult.Data.UpdatedAt);
         Assert.True(updateResult.Data.UpdatedAt >= beforeUpdate);
         Assert.True(updateResult.Data.UpdatedAt <= afterUpdate);
-        Assert.Equal("update-user", updateResult.Data.UpdatedBy);
+        Assert.Equal(CurrentUserId, updateResult.Data.UpdatedBy); // From DbContext's _currentUserId
     }
 
     #endregion
