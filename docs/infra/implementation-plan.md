@@ -25,16 +25,23 @@ Based on `high-level.md` decisions:
 
 ### Phase 1: Infrastructure
 
-### monitoring.bicep Implementation
+### 1. monitoring.bicep Module
 
-**Status: Ready for Implementation**
+**Status: ✅ Code Ready - Awaiting File Creation**
 
-> **IMPORTANT**: Create the file `infra/modules/monitoring.bicep` with the code below.
-> 1. Create directory: `mkdir -p infra/modules`
-> 2. Create file: `infra/modules/monitoring.bicep`
-> 3. Copy the bicep code from this section
+The monitoring module provides centralized logging and application performance monitoring for Azure Container Apps.
 
-The following Bicep code implements the monitoring module with Log Analytics Workspace and Application Insights:
+#### Quick Setup Commands:
+
+```bash
+# Create directory structure
+mkdir -p infra/modules
+
+# Create the monitoring.bicep file with the code below
+# File: infra/modules/monitoring.bicep
+```
+
+#### Complete Bicep Implementation:
 
 ```bicep
 // Monitoring Module - Log Analytics Workspace and Application Insights
@@ -113,11 +120,39 @@ output appInsightsInstrumentationKey string = applicationInsights.properties.Ins
 output appInsightsConnectionString string = applicationInsights.properties.ConnectionString
 ```
 
-**Implementation Notes:**
-- Save this code to `infra/modules/monitoring.bicep`
-- Create the `infra/modules/` directory structure first
-- Verify with `bicep build monitoring.bicep`
-- Lint with `bicep lint monitoring.bicep`
+#### Verification Commands:
+
+```bash
+# Build the module (validates syntax)
+bicep build infra/modules/monitoring.bicep
+
+# Lint the module (checks best practices)
+bicep lint infra/modules/monitoring.bicep
+```
+
+#### Module Specifications:
+
+| Component | Configuration | Purpose |
+|-----------|--------------|---------|
+| Log Analytics Workspace | PerGB2018 SKU, 30-day retention | Centralized logging for Container Apps |
+| Application Insights | 10% sampling, LogAnalytics ingestion | Application performance monitoring |
+
+#### Parameters:
+
+| Name | Type | Description |
+|------|------|-------------|
+| `location` | string | Azure region for all resources |
+| `logAnalyticsName` | string | Workspace name (4-63 chars) |
+| `appInsightsName` | string | Application Insights name (1-260 chars) |
+| `environment` | string | Environment tag (dev/prod) |
+
+#### Outputs:
+
+| Name | Type | Description |
+|------|------|-------------|
+| `logAnalyticsWorkspaceId` | string | Workspace resource ID |
+| `appInsightsInstrumentationKey` | string | Instrumentation key |
+| `appInsightsConnectionString` | string | Connection string |
 
 ### Phase 1 Deliverables as Code (Bicep)
 
