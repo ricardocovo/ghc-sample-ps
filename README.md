@@ -10,6 +10,20 @@ GhcSamplePs is a modern web application built with:
 - **Azure Entra ID** - Enterprise-grade authentication for external users
 - **Azure Container Apps** - Cloud-native hosting platform
 
+## Features
+
+### Player Management
+- Create, edit, and view player profiles
+- Store player information including name, date of birth, gender, and photo
+- Search and filter players
+
+### Team Management
+- Assign players to teams for specific championships
+- Track active and inactive team memberships
+- Mark players as left team with date tracking
+- Prevent duplicate active assignments (same player + team + championship)
+- Full audit trail (CreatedBy, UpdatedBy, timestamps)
+
 ## Architecture
 
 The solution follows clean architecture with strict separation of concerns:
@@ -27,10 +41,18 @@ The solution follows clean architecture with strict separation of concerns:
 ┌─────────────────────────────────────────────────────────────┐
 │                    Business Logic Layer                     │
 │                   (GhcSamplePs.Core)                        │
-│  - Domain Models                                            │
+│  - Domain Models (Player, TeamPlayer)                       │
 │  - Business Services                                        │
 │  - Repositories                                             │
 │  - Validation                                               │
+└────────────────────────┬────────────────────────────────────┘
+                         │ Persists to
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Database Layer                         │
+│                     (SQL Server)                            │
+│  - Players table                                            │
+│  - TeamPlayers table (FK → Players)                         │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -334,7 +356,7 @@ AZUREAD__CLIENTSECRET=@Microsoft.KeyVault(SecretUri=https://...)
 
 ### Setup and Configuration
 - [Azure Entra ID Setup Guide](docs/Azure_EntraID_Setup_Guide.md) - Complete infrastructure setup
-- [Database Connection Setup Guide](docs/Database_Connection_Setup.md) - Database connection string configuration
+- [Database Connection Setup Guide](docs/Database_Connection_Setup.md) - Database connection string configuration and schema
 - [Development Environment Setup](docs/Development_Environment_Setup.md) - Local development configuration
 - [Infrastructure Verification Checklist](docs/Infrastructure_Verification_Checklist.md) - Verify setup completion
 - [Configuration Reference](docs/Azure_EntraID_Configuration_Reference.md) - Quick reference guide
@@ -343,6 +365,9 @@ AZUREAD__CLIENTSECRET=@Microsoft.KeyVault(SecretUri=https://...)
 - [Entra ID External Identities Integration](docs/specs/EntraID_ExternalIdentities_Integration_Specification.md)
 - [MudBlazor Mobile Integration](docs/specs/MudBlazor_Mobile_Integration_Specification.md)
 - [Upgrade to .NET 10](docs/specs/UpgradeToDotNet10_Specification.md)
+
+### User Guides
+- [Team Management User Guide](docs/Team_Management_User_Guide.md) - How to manage player team assignments
 
 ### Testing & Quality
 - [Authorization Testing Guide](docs/Authorization_Testing_Guide.md) - Comprehensive authorization testing documentation

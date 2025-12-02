@@ -68,7 +68,61 @@ GhcSamplePs.Web/
 | `/` | Home.razor | Welcome page with role-based content | Authenticated users |
 | `/weather` | Weather.razor | Weather forecast display | Authenticated users |
 | `/admin` | AdminDashboard.razor | Administrative dashboard | Admin role required |
+| `/players` | ManagePlayers.razor | Player listing and management | Authenticated users |
+| `/players/create` | CreatePlayer.razor | Create new player form | Authenticated users |
+| `/players/edit/{Id:int}` | EditPlayer.razor | Edit player with tabbed interface | Authenticated users |
 | `/error` | Error.razor | Error handling page | All users |
+
+### Player Management
+
+The Player Management feature provides comprehensive player data management:
+
+**ManagePlayers.razor** - Player listing page:
+- Displays all players in a searchable table
+- Search by name with real-time filtering
+- Navigation to create and edit players
+- MudBlazor components: MudTable, MudTextField (search), MudButton
+
+**CreatePlayer.razor** - Player creation form:
+- Form with validation for player details
+- Fields: Name (required), Date of Birth (required), Gender (optional)
+- Age auto-calculated from date of birth
+- MudBlazor components: MudForm, MudTextField, MudDatePicker, MudSelect
+
+**EditPlayer.razor** - Tabbed player editor:
+- **Player Tab**: Edit basic player information
+- **Teams Tab**: Team assignments management (planned feature - shows "FUTURE DEV" placeholder)
+- **Stats Tab**: Player statistics (planned feature - shows "FUTURE DEV" placeholder)
+- MudBlazor components: MudTabs, MudTabPanel, MudForm, MudTextField, MudDatePicker, MudSelect, MudDialog (delete confirmation)
+
+### Team Management (Backend Ready)
+
+The Team Management backend is fully implemented in the Core project:
+- **TeamPlayer Entity**: Tracks player team memberships for championships
+- **TeamPlayerService**: Full CRUD operations with business validation
+- **TeamPlayerValidator**: Validation rules for team assignments
+- **EfTeamPlayerRepository**: Database persistence with duplicate detection
+
+The Teams tab in EditPlayer.razor displays a placeholder while the UI implementation is planned for a future release.
+
+#### User Workflows (When UI Complete)
+
+**Adding a Team Assignment:**
+1. Navigate to Edit Player page
+2. Select Teams tab
+3. Click "Add Team" button
+4. Enter Team Name, Championship Name, and Joined Date
+5. Save - system prevents duplicate active assignments
+
+**Editing a Team Assignment:**
+1. Select the team assignment from the list
+2. Modify the Left Date if player is leaving team
+3. Save changes
+
+**Marking Player as Left Team:**
+1. Find the active team assignment
+2. Set the Left Date (must be after Joined Date)
+3. Save - player status changes from Active to Inactive
 
 ### Authentication
 
