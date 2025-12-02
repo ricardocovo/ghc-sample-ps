@@ -21,7 +21,7 @@ param tenantId string
 
 // Key Vault - Standard tier with RBAC authorization
 // SKU: Standard
-// Security: Soft delete enabled, purge protection enabled, TLS 1.2 minimum
+// Security: Soft delete enabled, purge protection enabled, TLS 1.2 enforced by default
 // Authorization: RBAC mode (not access policies)
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: keyVaultName
