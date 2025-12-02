@@ -1,5 +1,5 @@
 // Container Apps Module - Container Apps Environment and Container App for Blazor Server
-// Purpose: Hosting for Blazor Server application with scale-to-zero capability
+// Purpose: Hosting for Blazor Server application with scale-to-zero capability and session affinity
 
 @description('Azure region for all resources')
 param location string
@@ -14,8 +14,12 @@ param environmentName string
 @maxLength(32)
 param appName string
 
-@description('Log Analytics Workspace ID for Container Apps Environment')
-param logAnalyticsWorkspaceId string
+@description('Log Analytics Workspace customer ID (GUID)')
+param logAnalyticsCustomerId string
+
+@description('Log Analytics Workspace shared key')
+@secure()
+param logAnalyticsSharedKey string
 
 @description('Docker image to deploy (full path including tag)')
 param containerImage string
@@ -39,10 +43,12 @@ param keyVaultUri string
 @description('Storage blob endpoint for data protection keys')
 param blobEndpoint string
 
-@description('Environment name for ASP.NET Core (Development, Production)')
+@description('Environment name for ASP.NET Core')
 @allowed([
   'Development'
+  'Staging'
   'Production'
+  'Test'
 ])
 param environment string = 'Development'
 
@@ -56,8 +62,8 @@ resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2024-03-01'
     appLogsConfiguration: {
       destination: 'log-analytics'
       logAnalyticsConfiguration: {
-        customerId: split(logAnalyticsWorkspaceId, '/')[8]
-        sharedKey: listKeys(logAnalyticsWorkspaceId, '2023-09-01').primarySharedKey
+        customerId: logAnalyticsCustomerId
+        sharedKey: logAnalyticsSharedKey
       }
     }
     zoneRedundant: false
