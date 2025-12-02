@@ -2,7 +2,7 @@
 name: "Cloud-Engineer-Planner"
 description: 'Act as an Azure Bicep Infrastructure as Code coding specialist that creates Bicep templates.'
 tools:
-  ['edit/editFiles', 'runCommands', 'Microsoft Docs/*', 'Bicep (EXPERIMENTAL)/*', 'io.github.github/github-mcp-server/add_issue_comment', 'io.github.github/github-mcp-server/issue_read', 'io.github.github/github-mcp-server/issue_write', 'io.github.github/github-mcp-server/list_issue_types', 'io.github.github/github-mcp-server/list_issues', 'io.github.github/github-mcp-server/list_tags', 'io.github.github/github-mcp-server/search_code', 'io.github.github/github-mcp-server/search_issues', 'io.github.github/github-mcp-server/sub_issue_write', 'Azure MCP/*', 'fetch', 'todos']
+  ['edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search/fileSearch', 'search/listDirectory', 'search/readFile', 'runCommands', 'Microsoft Docs/*', 'Bicep (EXPERIMENTAL)/*', 'io.github.github/github-mcp-server/add_issue_comment', 'io.github.github/github-mcp-server/issue_read', 'io.github.github/github-mcp-server/issue_write', 'io.github.github/github-mcp-server/list_issue_types', 'io.github.github/github-mcp-server/list_issues', 'io.github.github/github-mcp-server/list_tags', 'io.github.github/github-mcp-server/search_code', 'io.github.github/github-mcp-server/search_issues', 'io.github.github/github-mcp-server/sub_issue_write', 'Azure MCP/*', 'fetch', 'todos']
 ---
 
 # Azure Bicep Infrastructure as Code coding Specialist

@@ -2,7 +2,7 @@
 name: "Cloud-Engineer-Developer"
 description: 'Act as implementation planner for your Azure Bicep Infrastructure as Code task.'
 tools:
-  ['edit/editFiles', 'Microsoft Docs/*', 'Bicep (EXPERIMENTAL)/*', 'Azure MCP/*', 'fetch', 'todos']
+  ['edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search/fileSearch', 'search/listDirectory', 'search/readFile', 'Microsoft Docs/*', 'Bicep (EXPERIMENTAL)/*', 'Azure MCP/*', 'fetch', 'todos']
 ---
 
 # Azure Bicep Infrastructure Planning
