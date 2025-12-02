@@ -54,6 +54,8 @@ builder.Services.AddScoped<IPlayerRepository, EfPlayerRepository>();
 builder.Services.AddScoped<IPlayerService, PlayerService>();
 builder.Services.AddScoped<ITeamPlayerRepository, EfTeamPlayerRepository>();
 builder.Services.AddScoped<ITeamPlayerService, TeamPlayerService>();
+
+// Register Player Statistic services
 builder.Services.AddScoped<IPlayerStatisticRepository, EfPlayerStatisticRepository>();
 builder.Services.AddScoped<IPlayerStatisticService, PlayerStatisticService>();
 
