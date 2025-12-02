@@ -118,7 +118,7 @@ public class PlayerStatisticValidatorTests
 
         Assert.False(result.IsValid);
         Assert.True(result.Errors.TryGetValue("TeamPlayerId", out var teamPlayerIdErrors));
-        Assert.Contains("Team Player ID is required and must be a positive integer", teamPlayerIdErrors);
+        Assert.Contains("Team player ID must be greater than 0", teamPlayerIdErrors);
     }
 
     [Fact(DisplayName = "TeamPlayerId validation returns error when TeamPlayerId is negative")]
@@ -139,7 +139,7 @@ public class PlayerStatisticValidatorTests
 
         Assert.False(result.IsValid);
         Assert.True(result.Errors.TryGetValue("TeamPlayerId", out var teamPlayerIdErrors));
-        Assert.Contains("Team Player ID is required and must be a positive integer", teamPlayerIdErrors);
+        Assert.Contains("Team player ID must be greater than 0", teamPlayerIdErrors);
     }
 
     [Fact(DisplayName = "TeamPlayerId validation succeeds when TeamPlayerId is positive")]
@@ -267,7 +267,7 @@ public class PlayerStatisticValidatorTests
 
         Assert.False(result.IsValid);
         Assert.True(result.Errors.TryGetValue("MinutesPlayed", out var minutesPlayedErrors));
-        Assert.Contains("Minutes played must be a non-negative integer", minutesPlayedErrors);
+        Assert.Contains("Minutes played must be non-negative", minutesPlayedErrors);
     }
 
     [Fact(DisplayName = "MinutesPlayed validation returns error when MinutesPlayed exceeds 120")]
@@ -288,7 +288,7 @@ public class PlayerStatisticValidatorTests
 
         Assert.False(result.IsValid);
         Assert.True(result.Errors.TryGetValue("MinutesPlayed", out var minutesPlayedErrors));
-        Assert.Contains("Minutes played must not exceed 120", minutesPlayedErrors);
+        Assert.Contains("Minutes played should not exceed 120", minutesPlayedErrors);
     }
 
     [Fact(DisplayName = "MinutesPlayed validation succeeds when MinutesPlayed is zero")]
@@ -351,7 +351,7 @@ public class PlayerStatisticValidatorTests
 
         Assert.False(result.IsValid);
         Assert.True(result.Errors.TryGetValue("JerseyNumber", out var jerseyNumberErrors));
-        Assert.Contains("Jersey number must be a positive integer", jerseyNumberErrors);
+        Assert.Contains("Jersey number must be greater than 0", jerseyNumberErrors);
     }
 
     [Fact(DisplayName = "JerseyNumber validation returns error when JerseyNumber is negative")]
@@ -372,7 +372,7 @@ public class PlayerStatisticValidatorTests
 
         Assert.False(result.IsValid);
         Assert.True(result.Errors.TryGetValue("JerseyNumber", out var jerseyNumberErrors));
-        Assert.Contains("Jersey number must be a positive integer", jerseyNumberErrors);
+        Assert.Contains("Jersey number must be greater than 0", jerseyNumberErrors);
     }
 
     [Fact(DisplayName = "JerseyNumber validation returns error when JerseyNumber exceeds 99")]
@@ -393,7 +393,7 @@ public class PlayerStatisticValidatorTests
 
         Assert.False(result.IsValid);
         Assert.True(result.Errors.TryGetValue("JerseyNumber", out var jerseyNumberErrors));
-        Assert.Contains("Jersey number must not exceed 99", jerseyNumberErrors);
+        Assert.Contains("Jersey number should not exceed 99", jerseyNumberErrors);
     }
 
     [Fact(DisplayName = "JerseyNumber validation succeeds when JerseyNumber is 1")]
@@ -456,7 +456,7 @@ public class PlayerStatisticValidatorTests
 
         Assert.False(result.IsValid);
         Assert.True(result.Errors.TryGetValue("Goals", out var goalsErrors));
-        Assert.Contains("Goals must be a non-negative integer", goalsErrors);
+        Assert.Contains("Goals must be non-negative", goalsErrors);
     }
 
     [Fact(DisplayName = "Goals validation succeeds when Goals is zero")]
@@ -519,7 +519,7 @@ public class PlayerStatisticValidatorTests
 
         Assert.False(result.IsValid);
         Assert.True(result.Errors.TryGetValue("Assists", out var assistsErrors));
-        Assert.Contains("Assists must be a non-negative integer", assistsErrors);
+        Assert.Contains("Assists must be non-negative", assistsErrors);
     }
 
     [Fact(DisplayName = "Assists validation succeeds when Assists is zero")]
