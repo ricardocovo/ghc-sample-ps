@@ -67,6 +67,12 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
 @description('Resource ID of the Log Analytics Workspace')
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.id
 
+@description('Customer ID (Workspace ID) for Log Analytics')
+output logAnalyticsCustomerId string = logAnalyticsWorkspace.properties.customerId
+
+@description('Shared key for Log Analytics - used by Container Apps Environment')
+output logAnalyticsSharedKey string = logAnalyticsWorkspace.listKeys().primarySharedKey
+
 @description('Instrumentation key for Application Insights')
 output appInsightsInstrumentationKey string = applicationInsights.properties.InstrumentationKey
 
