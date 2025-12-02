@@ -313,3 +313,119 @@ dotnet test --filter "TeamPlayerValidatorTests"
 - **Validation**: TeamName length, ChampionshipName length, JoinedDate rules, LeftDate rules
 - **Entity**: MarkAsLeft method, Validate method, IsActive computed property
 - **DTOs**: FromEntity mapping, ToEntity mapping, validation attributes
+
+## Player Statistics Testing
+
+This project includes comprehensive unit tests for the player statistics feature:
+
+### Test Classes
+
+| Class | Description |
+|-------|-------------|
+| `PlayerStatisticServiceTests` | Service layer tests for statistic operations |
+| `EfPlayerStatisticRepositoryTests` | Repository tests with in-memory database |
+| `PlayerStatisticValidatorTests` | Validation rule tests |
+| `PlayerStatisticTests` | Entity tests for PlayerStatistic domain model |
+| `PlayerStatisticDtoTests` | DTO mapping and validation tests |
+| `PlayerStatisticAggregateTests` | Aggregate calculation tests |
+
+### Test Helpers
+
+**TestPlayerStatisticFactory** (`TestHelpers/TestPlayerStatisticFactory.cs`):
+Factory class providing test data builders for PlayerStatistic entities.
+
+| Method | Description |
+|--------|-------------|
+| `CreateValidPlayerStatistic()` | Creates a valid PlayerStatistic with default values |
+| `CreateMinimalPlayerStatistic()` | Creates PlayerStatistic with only required properties |
+| `CreateCustomPlayerStatistic(...)` | Creates PlayerStatistic with custom values |
+| `CreatePlayerStatisticWithInvalidTeamPlayerId()` | Creates invalid statistic (zero TeamPlayerId) |
+| `CreatePlayerStatisticWithDefaultGameDate()` | Creates invalid statistic (default GameDate) |
+| `CreatePlayerStatisticWithNegativeMinutesPlayed()` | Creates invalid statistic for validation |
+| `CreatePlayerStatisticWithInvalidJerseyNumber()` | Creates invalid statistic (zero jersey) |
+| `CreatePlayerStatisticWithNegativeGoals()` | Creates invalid statistic for validation |
+| `CreatePlayerStatisticWithNegativeAssists()` | Creates invalid statistic for validation |
+| `CreatePlayerStatisticWithEmptyCreatedBy()` | Creates invalid statistic for audit validation |
+| `CreatePlayerStatisticList()` | Creates list of statistics for aggregate testing |
+| `CreateValidTeamPlayerForStatistic(int)` | Creates associated TeamPlayer entity |
+
+**Usage Example:**
+```csharp
+[Fact]
+public void WhenValidPlayerStatistic_ThenValidationPasses()
+{
+    // Arrange
+    var statistic = TestPlayerStatisticFactory.CreateValidPlayerStatistic();
+    
+    // Act
+    var result = PlayerStatisticValidator.ValidatePlayerStatistic(statistic);
+    
+    // Assert
+    Assert.True(result.IsValid);
+}
+
+[Fact]
+public void WhenCalculatingAggregates_ThenTotalsAreCorrect()
+{
+    // Arrange
+    var statistics = TestPlayerStatisticFactory.CreatePlayerStatisticList();
+    
+    // Act
+    int totalGoals = PlayerStatistic.CalculateTotalGoals(statistics);
+    int totalAssists = PlayerStatistic.CalculateTotalAssists(statistics);
+    
+    // Assert
+    Assert.Equal(3, totalGoals);   // 2 + 1 + 0
+    Assert.Equal(6, totalAssists); // 1 + 2 + 3
+}
+```
+
+### Running Player Statistics Tests
+
+```bash
+# Run all player statistic tests
+dotnet test --filter "FullyQualifiedName~PlayerStatistic"
+
+# Run specific test class
+dotnet test --filter "PlayerStatisticServiceTests"
+
+# Run repository tests
+dotnet test --filter "EfPlayerStatisticRepositoryTests"
+
+# Run validation tests
+dotnet test --filter "PlayerStatisticValidatorTests"
+
+# Run aggregate calculation tests
+dotnet test --filter "FullyQualifiedName~Aggregate"
+```
+
+### Test Coverage Areas
+
+- **Service Layer**: AddStatisticAsync, UpdateStatisticAsync, DeleteStatisticAsync, GetStatisticsByPlayerIdAsync, GetPlayerAggregatesAsync
+- **Repository Layer**: CRUD operations, date range queries, aggregate calculations
+- **Validation**: TeamPlayerId > 0, GameDate not future, MinutesPlayed 0-120, JerseyNumber 1-99, Goals ≥ 0, Assists ≥ 0
+- **Entity**: Validate method, UpdateLastModified method, static aggregate methods
+- **DTOs**: FromEntity mapping, ToEntity mapping, validation attributes
+- **Aggregates**: Sum calculations, average calculations, division by zero handling
+
+### Aggregate Calculation Tests
+
+The aggregate calculation tests verify:
+- **GameCount**: Correctly counts number of statistics
+- **TotalGoals**: Sum of all goals is accurate
+- **TotalAssists**: Sum of all assists is accurate
+- **TotalMinutesPlayed**: Sum of all minutes is accurate
+- **AverageGoals**: Calculated as TotalGoals / GameCount
+- **AverageAssists**: Calculated as TotalAssists / GameCount
+- **AverageMinutesPlayed**: Calculated as TotalMinutesPlayed / GameCount
+- **Empty Collection**: Returns PlayerStatisticAggregateResult.Empty() with all zeros
+
+### Coverage Goals
+
+Target coverage for Player Statistics: **85%+**
+
+Critical paths requiring 100% coverage:
+- Aggregate calculation methods
+- Validation rules
+- Service CRUD operations
+- Repository error handling

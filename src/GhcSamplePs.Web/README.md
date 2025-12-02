@@ -91,8 +91,8 @@ The Player Management feature provides comprehensive player data management:
 
 **EditPlayer.razor** - Tabbed player editor:
 - **Player Tab**: Edit basic player information
-- **Teams Tab**: Team assignments management (planned feature - shows "FUTURE DEV" placeholder)
-- **Stats Tab**: Player statistics (planned feature - shows "FUTURE DEV" placeholder)
+- **Teams Tab**: Team assignments management
+- **Stats Tab**: Player game statistics management
 - MudBlazor components: MudTabs, MudTabPanel, MudForm, MudTextField, MudDatePicker, MudSelect, MudDialog (delete confirmation)
 
 ### Team Management (Backend Ready)
@@ -123,6 +123,60 @@ The Teams tab in EditPlayer.razor displays a placeholder while the UI implementa
 1. Find the active team assignment
 2. Set the Left Date (must be after Joined Date)
 3. Save - player status changes from Active to Inactive
+
+### Player Statistics (Backend Ready)
+
+The Player Statistics backend is fully implemented in the Core project:
+- **PlayerStatistic Entity**: Tracks game-level performance data for players
+- **PlayerStatisticService**: Full CRUD operations with aggregate calculations
+- **PlayerStatisticValidator**: Validation rules for statistics data
+- **EfPlayerStatisticRepository**: Database persistence with aggregate queries
+
+**Key Features:**
+- Track individual game performance statistics
+- Record goals, assists, minutes played, jersey number per game
+- Mark players as starters or substitutes
+- View aggregate statistics (totals and averages)
+
+**MudBlazor Components Used:**
+- MudTable - Display statistics in tabular format
+- MudTextField - Input for numeric statistics
+- MudDatePicker - Game date selection
+- MudCheckBox - Starter/substitute toggle
+- MudCard - Summary cards for aggregates
+- MudDialog - Delete confirmation dialogs
+- MudSelect - Team player selection
+
+#### User Workflows (When UI Complete)
+
+**Adding Game Statistics:**
+1. Navigate to Edit Player page
+2. Select Stats tab
+3. Select the team context (team player assignment)
+4. Click "Add Game Stats" button
+5. Enter game date, minutes played, goals, assists, jersey number
+6. Toggle "Started" checkbox if player started the game
+7. Save - statistics are recorded for the selected team
+
+**Editing Game Statistics:**
+1. Find the game entry in the statistics table
+2. Click edit button
+3. Modify the values as needed
+4. Save changes
+
+**Deleting Game Statistics:**
+1. Find the game entry in the statistics table
+2. Click delete button
+3. Confirm deletion in the dialog
+4. Statistics are permanently removed
+
+**Understanding Summary Cards:**
+The summary cards display aggregate statistics:
+- **Games Played**: Total number of games with recorded statistics
+- **Total Goals**: Sum of all goals scored
+- **Total Assists**: Sum of all assists made
+- **Average Goals**: Goals per game (TotalGoals / GamesPlayed)
+- **Average Assists**: Assists per game (TotalAssists / GamesPlayed)
 
 ### Authentication
 

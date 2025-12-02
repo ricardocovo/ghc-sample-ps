@@ -338,6 +338,39 @@ if (!result.IsValid)
 | `MarkAsLeft(leftDate, userId)` | Sets LeftDate and updates audit fields |
 | `UpdateLastModified(userId)` | Updates audit fields without changing LeftDate |
 
+#### PlayerStatistic Entity Configuration
+
+| Property | Type | Constraints |
+|----------|------|-------------|
+| PlayerStatisticId | int | Primary key, auto-generated |
+| TeamPlayerId | int | Required, FK → TeamPlayers(TeamPlayerId), indexed, cascade delete |
+| GameDate | DateTime | Required, indexed |
+| MinutesPlayed | int | Required, ≥ 0 |
+| IsStarter | bool | Required |
+| JerseyNumber | int | Required, 1-99 |
+| Goals | int | Required, ≥ 0 |
+| Assists | int | Required, ≥ 0 |
+| CreatedAt | DateTime | Required |
+| CreatedBy | string | Required, max 450 chars |
+| UpdatedAt | DateTime? | Optional |
+| UpdatedBy | string? | Optional, max 450 chars |
+
+#### PlayerStatistic Indexes
+
+- `IX_PlayerStatistics_TeamPlayerId` - For retrieving statistics by team player
+- `IX_PlayerStatistics_GameDate` - For date-based queries
+- `IX_PlayerStatistics_TeamPlayerId_GameDate` - Composite index for efficient queries
+
+#### PlayerStatistic Entity Methods
+
+| Method | Description |
+|--------|-------------|
+| `Validate()` | Validates entity against all business rules |
+| `UpdateLastModified(userId)` | Updates audit fields |
+| `CalculateTotalMinutes(statistics)` | Static: Calculates sum of minutes from collection |
+| `CalculateTotalGoals(statistics)` | Static: Calculates sum of goals from collection |
+| `CalculateTotalAssists(statistics)` | Static: Calculates sum of assists from collection |
+
 #### Registration
 
 Use the extension method in `Program.cs`:
@@ -386,6 +419,17 @@ dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\
 - Creates the `Players` table with all columns and constraints
 - Creates indexes for UserId, Name, and DateOfBirth
 
+**AddTeamPlayersTable** (`Migrations/[timestamp]_AddTeamPlayersTable.cs`):
+- Creates the `TeamPlayers` table with FK to Players
+- Creates indexes for PlayerId, TeamName, and composite indexes
+- Configures cascade delete for player team assignments
+
+**AddPlayerStatisticsTable** (`Migrations/[timestamp]_AddPlayerStatisticsTable.cs`):
+- Creates the `PlayerStatistics` table with FK to TeamPlayers
+- Creates indexes for TeamPlayerId and GameDate
+- Creates composite index for TeamPlayerId_GameDate
+- Configures cascade delete (deleting TeamPlayer deletes associated statistics)
+
 #### Running Migrations
 
 **Development**: Migrations are applied automatically on application startup when a connection string is configured.
@@ -409,6 +453,8 @@ dotnet ef migrations script --project src/GhcSamplePs.Core --startup-project src
 
 Pre-generated idempotent migration scripts are available in `docs/migrations/`:
 - `InitialCreate.sql` - Creates Players table and indexes
+- `AddTeamPlayersTable.sql` - Creates TeamPlayers table with FK and indexes
+- `AddPlayerStatisticsTable.sql` - Creates PlayerStatistics table with FK and indexes
 
 These scripts are safe to run multiple times and can be used for production deployments.
 
@@ -554,6 +600,46 @@ public class TeamPlayerService
 - Only considers active assignments (LeftDate is null)
 - Supports excludeId parameter for update scenarios
 - Case-sensitive matching (SQL Server default collation may differ)
+
+### PlayerStatistic Repository ✅
+
+**EfPlayerStatisticRepository** (`Repositories/Implementations/EfPlayerStatisticRepository.cs`):
+- Entity Framework Core implementation of IPlayerStatisticRepository
+- Manages game-level performance statistics for players
+- Full CRUD operations with team player-specific queries
+- Aggregate calculation support for totals and averages
+
+**Features:**
+- **CRUD Operations**: GetByIdAsync, AddAsync, UpdateAsync, DeleteAsync, ExistsAsync
+- **Query Methods**: GetAllByPlayerIdAsync, GetAllByTeamPlayerIdAsync, GetByDateRangeAsync
+- **Aggregate Calculations**: GetAggregatesAsync returns PlayerStatisticAggregateResult
+- **Performance**: AsNoTracking for all read-only queries
+- **Navigation Loading**: Includes TeamPlayer for context (team name, championship)
+- **Error Handling**: RepositoryException with operation context
+- **Logging**: Detailed operation logging at appropriate levels
+- **Cancellation Support**: All methods support CancellationToken
+
+**Key Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `GetAllByPlayerIdAsync(playerId)` | Get all statistics for a player across all teams |
+| `GetAllByTeamPlayerIdAsync(teamPlayerId)` | Get statistics for a specific team assignment |
+| `GetByDateRangeAsync(playerId, startDate, endDate)` | Get statistics within a date range |
+| `GetAggregatesAsync(playerId, teamPlayerId?)` | Calculate totals and averages |
+
+**Aggregate Calculation Logic:**
+
+The `GetAggregatesAsync` method calculates:
+- **GameCount**: Total number of games (COUNT)
+- **TotalGoals**: Sum of goals across all games
+- **TotalAssists**: Sum of assists across all games
+- **TotalMinutesPlayed**: Sum of minutes played
+- **AverageGoals**: TotalGoals / GameCount
+- **AverageAssists**: TotalAssists / GameCount
+- **AverageMinutesPlayed**: TotalMinutesPlayed / GameCount
+
+When no statistics exist, returns `PlayerStatisticAggregateResult.Empty()` with all values set to 0.
 
 ### TeamPlayer Service ✅
 

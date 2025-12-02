@@ -24,6 +24,14 @@ GhcSamplePs is a modern web application built with:
 - Prevent duplicate active assignments (same player + team + championship)
 - Full audit trail (CreatedBy, UpdatedBy, timestamps)
 
+### Player Statistics
+- Track individual game performance statistics for players
+- Record goals, assists, minutes played, and jersey number per game
+- Mark players as starters or substitutes
+- View aggregate statistics (totals and averages)
+- Summary cards showing games played, total goals, total assists
+- Statistics associated with team player assignments
+
 ## Architecture
 
 The solution follows clean architecture with strict separation of concerns:
@@ -41,7 +49,7 @@ The solution follows clean architecture with strict separation of concerns:
 ┌─────────────────────────────────────────────────────────────┐
 │                    Business Logic Layer                     │
 │                   (GhcSamplePs.Core)                        │
-│  - Domain Models (Player, TeamPlayer)                       │
+│  - Domain Models (Player, TeamPlayer, PlayerStatistic)      │
 │  - Business Services                                        │
 │  - Repositories                                             │
 │  - Validation                                               │
@@ -53,6 +61,7 @@ The solution follows clean architecture with strict separation of concerns:
 │                     (SQL Server)                            │
 │  - Players table                                            │
 │  - TeamPlayers table (FK → Players)                         │
+│  - PlayerStatistics table (FK → TeamPlayers)                │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -368,6 +377,7 @@ AZUREAD__CLIENTSECRET=@Microsoft.KeyVault(SecretUri=https://...)
 
 ### User Guides
 - [Team Management User Guide](docs/Team_Management_User_Guide.md) - How to manage player team assignments
+- [Player Statistics User Guide](docs/Player_Statistics_User_Guide.md) - How to manage game statistics
 
 ### Testing & Quality
 - [Authorization Testing Guide](docs/Authorization_Testing_Guide.md) - Comprehensive authorization testing documentation
