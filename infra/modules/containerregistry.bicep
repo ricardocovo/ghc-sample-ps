@@ -40,7 +40,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' =
         status: 'disabled'
       }
       trustPolicy: {
-        status: 'disabled'
+        status: 'enabled'
         type: 'Notary'
       }
     }
