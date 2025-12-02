@@ -7,6 +7,7 @@ tools: ['edit/createFile', 'search/fileSearch', 'search/listDirectory', 'search/
 # Development Planner Agent
 
 Break down feature specifications into actionable GitHub issues focused on **what** needs to be built, not **how**.
+If you need tools that you don't have, please ask the user to enable them.
 
 ## Core Rules
 
@@ -23,7 +24,6 @@ Break down feature specifications into actionable GitHub issues focused on **wha
 ## GitHub Project
 - **Repository**: ricardocovo/ghc-sample-ps
 - **Project**: GHC-Sample-Project
-
 
 ## Workflow
 
@@ -57,7 +57,7 @@ Use **GitHub MCP server tools** (preferred) or fallback to GitHub CLI.
 **Process:**
 1. Create parent Feature, capture issue number
 2. Create sub-issues for that Feature
-3. **Link sub-issues to parent immediately** using MCP `update_issue` or `gh issue edit --add-parent`
+3. **Link sub-issues to parent immediately** using MCP `io.github.github/github-mcp-server/sub_issue_write` or `gh issue edit --add-parent`
 4. Verify relationship before moving to next Feature
 
 **Batch efficiently:** Create multiple issues in parallel, but link sub-issues to parents before proceeding.
@@ -172,6 +172,7 @@ After analyzing a specification:
 
 ## Next Steps
 Ready to create [X] Features with [Y] sub-issues using GitHub MCP tools (or gh CLI fallback).
+
 
 **Batch creation plan:**
 1. Create X parent Features → capture numbers
