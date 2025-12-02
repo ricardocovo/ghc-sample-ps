@@ -29,6 +29,11 @@ Based on `high-level.md` decisions:
 
 **Status: Ready for Implementation**
 
+> **IMPORTANT**: Create the file `infra/modules/monitoring.bicep` with the code below.
+> 1. Create directory: `mkdir -p infra/modules`
+> 2. Create file: `infra/modules/monitoring.bicep`
+> 3. Copy the bicep code from this section
+
 The following Bicep code implements the monitoring module with Log Analytics Workspace and Application Insights:
 
 ```bicep
