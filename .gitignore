@@ -303,6 +303,9 @@ ehthumbs_vista.db
 [Dd]esktop.ini
 $RECYCLE.BIN/
 
+# Bicep build output (ARM templates)
+infra/**/*.json
+
 # Secrets and sensitive data (never commit these!)
 appsettings.*.json
 !appsettings.json
