@@ -1,382 +1,443 @@
 # GhcSamplePs.Core
 
-Business Logic Layer - UI-agnostic class library
+Business Logic Layer - UI-Agnostic Class Library
+
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![EF Core](https://img.shields.io/badge/EF%20Core-10.0-512BD4)](https://docs.microsoft.com/ef/core/)
+[![Tests](https://img.shields.io/badge/tests-802%20passing-success)](../../tests/GhcSamplePs.Core.Tests/)
 
 ## Purpose
 
-This project contains the business logic, domain models, and services for the GhcSamplePs application. It is completely UI-agnostic and fully testable.
+This project contains the business logic, domain models, data access layer, and services for the GhcSamplePs application. It is completely **UI-agnostic** and **fully testable**, following clean architecture principles.
 
-## Dependencies
+## Architecture Principle
 
-- `Microsoft.Extensions.Logging.Abstractions` - For logging in services
-- `Microsoft.EntityFrameworkCore.SqlServer` - For database access with SQL Server
+**Core is Independent**
 
-This project should not reference the Web project or any UI-specific libraries.
+```
+❌ Core → Web (NEVER)
+✅ Web → Core (ALWAYS)
+```
+
+- **Core** has no dependencies on Web or any UI framework
+- **Web** references Core and calls its services
+- This ensures business logic can be tested independently and reused across different UI technologies
+
+## Technology Stack
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **.NET** | 10.0 | Runtime framework |
+| **C#** | 14 | Programming language |
+| **Entity Framework Core** | 10.0 | ORM for database access |
+| **SQL Server** | Latest | Database provider |
+| **Microsoft.Extensions.Logging** | 10.0 | Logging abstractions |
 
 ## Project Structure
 
 ```
 GhcSamplePs.Core/
 ├── Common/                      # Common utilities and result types
-│   ├── ServiceResult.cs
-│   └── ValidationResult.cs
+│   ├── ServiceResult.cs         # Standard service return type
+│   └── ValidationResult.cs      # Validation result container
+│
 ├── Data/                        # Database context and configurations
-│   ├── ApplicationDbContext.cs
-│   └── Configurations/
-│       └── PlayerConfiguration.cs
+│   ├── ApplicationDbContext.cs  # EF Core DbContext
+│   ├── DesignTimeDbContextFactory.cs
+│   └── Configurations/          # Fluent API entity configurations
+│       ├── PlayerConfiguration.cs
+│       ├── TeamPlayerConfiguration.cs
+│       └── PlayerStatisticConfiguration.cs
+│
+├── Exceptions/                  # Custom domain exceptions
+│   ├── AuthenticationException.cs
+│   ├── AuthorizationException.cs
+│   ├── PlayerNotFoundException.cs
+│   ├── PlayerValidationException.cs
+│   ├── RepositoryException.cs
+│   └── TokenValidationException.cs
+│
 ├── Extensions/                  # Extension methods
-│   └── ServiceCollectionExtensions.cs
-├── Migrations/                  # Database migrations
+│   └── ServiceCollectionExtensions.cs  # DI registration helpers
+│
+├── Migrations/                  # EF Core database migrations
 │   ├── [timestamp]_InitialCreate.cs
-│   ├── [timestamp]_InitialCreate.Designer.cs
+│   ├── [timestamp]_AddTeamPlayersTable.cs
+│   ├── [timestamp]_AddPlayerStatisticsTable.cs
 │   └── ApplicationDbContextModelSnapshot.cs
-├── Models/
-│   ├── Identity/                # User identity domain models
+│
+├── Models/                      # Domain entities and DTOs
+│   ├── Identity/                # User identity models
 │   │   ├── ApplicationUser.cs
 │   │   └── UserClaim.cs
-│   └── PlayerManagement/        # Player management domain models
-│       ├── DTOs/
-│       │   ├── CreatePlayerDto.cs
-│       │   ├── CreatePlayerStatisticDto.cs
-│       │   ├── CreateTeamPlayerDto.cs
-│       │   ├── PlayerDto.cs
-│       │   ├── PlayerStatisticAggregateResult.cs
-│       │   ├── PlayerStatisticDto.cs
-│       │   ├── TeamPlayerDto.cs
-│       │   ├── UpdatePlayerDto.cs
-│       │   ├── UpdatePlayerStatisticDto.cs
-│       │   └── UpdateTeamPlayerDto.cs
-│       ├── Player.cs
-│       ├── PlayerStatistic.cs
-│       └── TeamPlayer.cs
-├── Services/
+│   └── PlayerManagement/        # Player domain models
+│       ├── Player.cs            # Player entity
+│       ├── TeamPlayer.cs        # Team assignment entity
+│       ├── PlayerStatistic.cs   # Game statistics entity
+│       └── DTOs/                # Data Transfer Objects
+│           ├── CreatePlayerDto.cs
+│           ├── UpdatePlayerDto.cs
+│           ├── PlayerDto.cs
+│           ├── CreateTeamPlayerDto.cs
+│           ├── UpdateTeamPlayerDto.cs
+│           ├── TeamPlayerDto.cs
+│           ├── CreatePlayerStatisticDto.cs
+│           ├── UpdatePlayerStatisticDto.cs
+│           ├── PlayerStatisticDto.cs
+│           └── PlayerStatisticAggregateResult.cs
+│
+├── Repositories/                # Data access layer
+│   ├── Interfaces/              # Repository contracts
+│   │   ├── IPlayerRepository.cs
+│   │   ├── ITeamPlayerRepository.cs
+│   │   └── IPlayerStatisticRepository.cs
+│   └── Implementations/         # Repository implementations
+│       ├── EfPlayerRepository.cs
+│       ├── MockPlayerRepository.cs
+│       ├── EfTeamPlayerRepository.cs
+│       └── EfPlayerStatisticRepository.cs
+│
+├── Services/                    # Business logic layer
 │   ├── Interfaces/              # Service contracts
 │   │   ├── IAuthenticationService.cs
 │   │   ├── IAuthorizationService.cs
 │   │   ├── ICurrentUserProvider.cs
 │   │   ├── IPlayerService.cs
-│   │   ├── IPlayerStatisticService.cs
 │   │   ├── ITeamPlayerService.cs
-│   │   └── AuthorizationResult.cs
+│   │   └── IPlayerStatisticService.cs
 │   └── Implementations/         # Service implementations
 │       ├── AuthenticationService.cs
 │       ├── AuthorizationService.cs
 │       ├── PlayerService.cs
-│       ├── PlayerStatisticService.cs
-│       └── TeamPlayerService.cs
-├── Repositories/                # Repository interfaces and implementations
-│   ├── Interfaces/
-│   │   ├── IPlayerRepository.cs
-│   │   ├── IPlayerStatisticRepository.cs
-│   │   └── ITeamPlayerRepository.cs
-│   └── Implementations/
-│       ├── MockPlayerRepository.cs
-│       ├── EfPlayerRepository.cs
-│       ├── EfPlayerStatisticRepository.cs
-│       └── EfTeamPlayerRepository.cs
-├── Validation/                  # Business validation rules
-│   ├── PlayerValidator.cs
-│   ├── PlayerStatisticValidator.cs
-│   └── TeamPlayerValidator.cs
-└── Exceptions/                  # Custom domain exceptions
-    ├── AuthenticationException.cs
-    ├── AuthorizationException.cs
-    ├── PlayerNotFoundException.cs
-    ├── PlayerValidationException.cs
-    ├── RepositoryException.cs
-    └── TokenValidationException.cs
+│       ├── TeamPlayerService.cs
+│       └── PlayerStatisticService.cs
+│
+└── Validation/                  # Business validation rules
+    ├── PlayerValidator.cs
+    ├── TeamPlayerValidator.cs
+    └── PlayerStatisticValidator.cs
 ```
 
-## Responsibilities
+## Key Responsibilities
 
-- Business rules and validation
-- Domain logic and calculations
-- Data access (repositories, queries)
-- Service interfaces and implementations
-- Domain entities and models
+### ✅ What This Project Contains
 
-## What NOT to Include
+- **Business Rules & Validation** - All domain logic and validation rules
+- **Domain Entities** - Player, TeamPlayer, PlayerStatistic models
+- **Data Access** - Repositories, DbContext, migrations
+- **Service Layer** - Business logic orchestration
+- **DTOs** - Data transfer objects for API contracts
+- **Custom Exceptions** - Domain-specific error handling
 
-- ❌ UI components or Blazor-specific code
-- ❌ HTTP context or request/response handling
-- ❌ UI state management
-- ❌ Any reference to GhcSamplePs.Web
+### ❌ What This Project Should NOT Contain
 
-## Development Guidelines
+- UI components or Blazor-specific code
+- HTTP context or request/response handling
+- UI state management
+- Any reference to `GhcSamplePs.Web`
 
-### Creating Services
+## Core Features
 
-1. Define interface in `Services/Interfaces/`
-2. Implement interface in `Services/Implementations/`
-3. Use dependency injection for dependencies
-4. Make services stateless where possible
-5. Use async/await for I/O operations
+### 1. Player Management
 
-Example:
-```
-Services/
-├── Interfaces/
-│   └── IUserService.cs
-└── Implementations/
-    └── UserService.cs
-```
+**Domain Model:**
+- Players with name, date of birth, gender, photo
+- Audit fields (CreatedAt, CreatedBy, UpdatedAt, UpdatedBy)
+- Automatic age calculation
 
-### Business Logic Best Practices
+**Services:**
+- `IPlayerService` - CRUD operations for players
+- `IPlayerRepository` - Data access abstraction
 
-- Validate input at service boundaries
-- Use precise exception types
-- Log important operations
-- Return meaningful results (success/failure with errors)
-- Keep services focused on single responsibility
+**Validation Rules:**
+- Name: Required, 1-200 characters
+- DateOfBirth: Required, past date, not more than 100 years ago
+- Gender: Optional (Male, Female, Non-binary, Prefer not to say)
+- PhotoUrl: Optional, max 500 chars, valid HTTP/HTTPS URL
 
-### Testing
+### 2. Team Management
 
-All public methods in this project should have corresponding unit tests in `GhcSamplePs.Core.Tests`.
+**Domain Model:**
+- TeamPlayer join entity linking players to teams
+- Support for multiple championships/seasons
+- Active/inactive status tracking (JoinedDate, LeftDate)
 
-## Service Registration
+**Services:**
+- `ITeamPlayerService` - Manage team assignments
+- `ITeamPlayerRepository` - Team assignment data access
 
-Services from this project are registered in `GhcSamplePs.Web/Program.cs`:
+**Business Rules:**
+- TeamName: Required, max 200 characters
+- ChampionshipName: Required, max 200 characters
+- JoinedDate: Required, not more than 1 year in future
+- LeftDate: Optional, must be after JoinedDate
+- No duplicate active assignments (player + team + championship)
+
+### 3. Player Statistics
+
+**Domain Model:**
+- Game-level performance statistics
+- Tracks goals, assists, minutes played, jersey number
+- Linked to specific team assignments
+
+**Services:**
+- `IPlayerStatisticService` - Manage game statistics
+- `IPlayerStatisticRepository` - Statistics data access
+
+**Features:**
+- CRUD operations for individual game stats
+- Aggregate calculations (totals and averages)
+- Date range queries
+- Team-specific statistics
+
+**Validation Rules:**
+- GameDate: Required, cannot be in future
+- MinutesPlayed: 0-120 minutes
+- JerseyNumber: 1-99
+- Goals: ≥ 0
+- Assists: ≥ 0
+
+### 4. Authentication & Authorization
+
+**Services:**
+- `IAuthenticationService` - User identity management
+- `IAuthorizationService` - Permission checking
+- `ICurrentUserProvider` - Abstract access to current user
+
+**Features:**
+- Entra ID (Azure AD) integration
+- Role-based authorization (Admin, User)
+- Policy-based authorization
+- Resource-based authorization (users can only edit their own data)
+- Claims-based identity
+
+**Authorization Policies:**
+- `RequireAuthenticatedUser` - Any authenticated user
+- `RequireAdminRole` - Admin role required
+- `RequireUserRole` - User or Admin role
+
+### 5. Data Access Layer
+
+**ApplicationDbContext:**
+- Entity Framework Core 10 DbContext
+- Automatic audit field population (CreatedAt, UpdatedAt, CreatedBy, UpdatedBy)
+- Fluent API entity configurations
+- SQL Server provider
+
+**Features:**
+- Connection resilience (automatic retry on transient failures)
+- Query splitting for better performance
+- Sensitive data logging (development only)
+- Detailed error messages (development only)
+
+**Migrations:**
+- `InitialCreate` - Creates Players table
+- `AddTeamPlayersTable` - Creates TeamPlayers table
+- `AddPlayerStatisticsTable` - Creates PlayerStatistics table
+
+### 6. Repository Pattern
+
+**Available Implementations:**
+- `EfPlayerRepository` - Production EF Core implementation
+- `MockPlayerRepository` - In-memory implementation for testing
+- `EfTeamPlayerRepository` - Team assignment data access
+- `EfPlayerStatisticRepository` - Statistics data access
+
+**Features:**
+- Async operations with cancellation token support
+- AsNoTracking for read-only queries
+- Comprehensive error handling
+- Detailed logging at appropriate levels
+
+## Service Layer Pattern
+
+All business logic follows the same pattern:
+
+### 1. Define Interface
 
 ```csharp
-builder.Services.AddScoped<ICurrentUserProvider, HttpContextCurrentUserProvider>();
-builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
-builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
+public interface IPlayerService
+{
+    Task<ServiceResult<IEnumerable<PlayerDto>>> GetAllPlayersAsync(
+        CancellationToken cancellationToken = default);
+    
+    Task<ServiceResult<PlayerDto>> GetPlayerByIdAsync(
+        int playerId, 
+        CancellationToken cancellationToken = default);
+    
+    Task<ServiceResult<PlayerDto>> CreatePlayerAsync(
+        CreatePlayerDto createDto,
+        string currentUserId,
+        CancellationToken cancellationToken = default);
+    
+    // ... more methods
+}
 ```
 
-## Implemented Features
-
-### Authentication and Authorization Services ✅
-
-#### Service Implementations
-
-**AuthenticationService** (`Services/Implementations/AuthenticationService.cs`):
-- Retrieves and validates authenticated user information from claims
-- Methods:
-  - `GetCurrentUserAsync()` - Get current authenticated user as ApplicationUser
-  - `GetUserClaimsAsync()` - Get all user claims as dictionary
-  - `GetUserRolesAsync()` - Get user roles as list
-  - `IsInRoleAsync(roleName)` - Check role membership
-  - `HasClaimAsync(type, value)` - Check specific claim
-- Maps standard claims (ObjectIdentifier, Email, Name, etc.) to ApplicationUser
-- Depends on `ICurrentUserProvider` for HTTP context abstraction
-
-**AuthorizationService** (`Services/Implementations/AuthorizationService.cs`):
-- Performs authorization checks and determines user permissions
-- Methods:
-  - `AuthorizeAsync(policyName)` - Check policy requirements
-  - `AuthorizeAsync(resource, policyName)` - Resource-based authorization
-  - `CanAccessAsync(resourceId)` - Check resource access (admins access all, users access own)
-  - `GetUserPermissionsAsync()` - Get permissions based on roles
-- Built-in policies: RequireAuthenticatedUser, RequireAdminRole, RequireUserRole
-- Built-in roles: Admin, User
-
-**ICurrentUserProvider** (`Services/Interfaces/ICurrentUserProvider.cs`):
-- Abstraction for accessing current user's ClaimsPrincipal
-- Allows Core to remain UI-agnostic while accessing user claims
-- Implemented in Web project via HttpContextAccessor
-
-#### Authorization Policy Evaluation
-
-The AuthorizationService evaluates policies based on user roles:
-
-| Policy | Required Role(s) | Description |
-|--------|-----------------|-------------|
-| `RequireAuthenticatedUser` | None | Any authenticated user |
-| `RequireAdminRole` | Admin | User must have Admin role |
-| `RequireUserRole` | User or Admin | User must have User or Admin role |
-
-#### Permission Model
-
-Permissions are derived from roles:
-
-| Role | Permissions |
-|------|-------------|
-| Admin | read, write, delete, admin.users, admin.settings |
-| User | read, write |
-
-#### Resource Access Model
-
-- **Admin users** can access any resource
-- **Regular users** can only access resources matching their user ID (case-insensitive comparison)
-
-#### Identity Models
-
-**ApplicationUser** (`Models/Identity/ApplicationUser.cs`):
-- Represents an authenticated user with identity information from Entra ID claims
-- Properties: Id, Email, DisplayName, GivenName, FamilyName, Roles, Claims, IsActive, LastLoginDate, CreatedDate
-- Methods: IsInRole, HasClaim, TryGetClaim
-
-**UserClaim** (`Models/Identity/UserClaim.cs`):
-- Represents a custom claim with type, value, issuer, and optional expiration
-- Methods: IsValid, Equals, GetHashCode, ToString
-
-#### Custom Exceptions
-
-- **AuthenticationException** - User authentication failures
-- **AuthorizationException** - Permission/access denials
-- **TokenValidationException** - JWT token validation failures
-
-### Player Validation ✅
-
-**PlayerValidator** (`Validation/PlayerValidator.cs`):
-- Provides business rule validation for player data
-- Validates CreatePlayerDto, UpdatePlayerDto, and Player entities
-- Returns ValidationResult with field-specific error messages
-
-#### Validation Rules
-
-| Field | Requirement | Error Message |
-|-------|-------------|---------------|
-| Name | Required, 1-200 characters, not whitespace | "Name is required" or "Name must not exceed 200 characters" |
-| DateOfBirth | Required, past date, not more than 100 years ago | "Date of birth is required", "Date of birth must be in the past", "Date of birth cannot be more than 100 years ago" |
-| Gender | Optional, if provided must be valid option | "Gender must be Male, Female, Non-binary, or Prefer not to say" |
-| PhotoUrl | Optional, max 500 chars, valid HTTP/HTTPS URL | "Photo URL must not exceed 500 characters", "Photo URL must be a valid HTTP or HTTPS URL" |
-
-#### Valid Gender Options
-
-- Male
-- Female
-- Non-binary
-- Prefer not to say
-
-(Case-insensitive comparison)
-
-#### Methods
-
-- `ValidateCreatePlayer(CreatePlayerDto)` - Validates player creation data
-- `ValidateUpdatePlayer(UpdatePlayerDto)` - Validates player update data
-- `ValidatePlayer(Player)` - Validates a Player entity
-
-#### Usage Example
+### 2. Implement Service
 
 ```csharp
-var dto = new CreatePlayerDto
+public class PlayerService : IPlayerService
 {
-    UserId = "user-123",
-    Name = "John Doe",
-    DateOfBirth = new DateTime(1990, 6, 15),
-    Gender = "Male"
-};
+    private readonly IPlayerRepository _repository;
+    private readonly ILogger<PlayerService> _logger;
 
-var result = PlayerValidator.ValidateCreatePlayer(dto);
-if (!result.IsValid)
-{
-    foreach (var (field, messages) in result.Errors)
+    public PlayerService(
+        IPlayerRepository repository, 
+        ILogger<PlayerService> logger)
     {
-        Console.WriteLine($"{field}: {string.Join(", ", messages)}");
+        _repository = repository;
+        _logger = logger;
+    }
+
+    public async Task<ServiceResult<PlayerDto>> CreatePlayerAsync(
+        CreatePlayerDto createDto,
+        string currentUserId,
+        CancellationToken cancellationToken)
+    {
+        // 1. Validate input
+        var validationResult = PlayerValidator.ValidateCreatePlayer(createDto);
+        if (!validationResult.IsValid)
+        {
+            return ServiceResult<PlayerDto>.Failure(
+                validationErrors: validationResult.Errors);
+        }
+
+        // 2. Create entity
+        var player = new Player
+        {
+            Name = createDto.Name.Trim(),
+            DateOfBirth = DateTime.SpecifyKind(createDto.DateOfBirth, DateTimeKind.Utc),
+            Gender = createDto.Gender?.Trim(),
+            PhotoUrl = createDto.PhotoUrl?.Trim(),
+            CreatedBy = currentUserId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        // 3. Save to database
+        try
+        {
+            await _repository.AddAsync(player, cancellationToken);
+            
+            // 4. Map to DTO
+            var dto = new PlayerDto
+            {
+                PlayerId = player.PlayerId,
+                // ... map properties
+            };
+
+            return ServiceResult<PlayerDto>.Success(dto);
+        }
+        catch (RepositoryException ex)
+        {
+            _logger.LogError(ex, "Failed to create player");
+            return ServiceResult<PlayerDto>.Failure("Failed to create player");
+        }
     }
 }
 ```
 
-### Entity Framework Core Database Context ✅
+### 3. Register in DI Container
 
-**ApplicationDbContext** (`Data/ApplicationDbContext.cs`):
-- Entity Framework Core 10 DbContext for managing database connections and entity tracking
-- Automatic audit field population (CreatedAt, CreatedBy, UpdatedAt, UpdatedBy)
-- Entity configurations using Fluent API
+```csharp
+// In Web project's Program.cs
+builder.Services.AddScoped<IPlayerService, PlayerService>();
+builder.Services.AddScoped<IPlayerRepository, EfPlayerRepository>();
+```
 
-#### Features
+### 4. Use in UI Layer
 
-- **Automatic Audit Fields**: SaveChanges/SaveChangesAsync automatically sets:
-  - `CreatedAt` and `CreatedBy` for new entities
-  - `UpdatedAt` and `UpdatedBy` for modified entities
-  
-- **Entity Configurations** (Fluent API):
-  - `PlayerConfiguration` - Configures Player entity with proper constraints and indexes
+```csharp
+@inject IPlayerService PlayerService
 
-#### Player Entity Configuration
+@code {
+    private async Task CreatePlayerAsync()
+    {
+        var result = await PlayerService.CreatePlayerAsync(createDto, userId);
+        
+        if (result.Success)
+        {
+            Snackbar.Add("Player created successfully", Severity.Success);
+            NavigationManager.NavigateTo("/players");
+        }
+        else if (result.ValidationErrors.Any())
+        {
+            foreach (var (field, errors) in result.ValidationErrors)
+            {
+                Snackbar.Add($"{field}: {string.Join(", ", errors)}", Severity.Error);
+            }
+        }
+        else
+        {
+            Snackbar.Add(result.ErrorMessage, Severity.Error);
+        }
+    }
+}
+```
 
-| Property | Type | Constraints |
-|----------|------|-------------|
-| Id | int | Primary key, auto-generated |
-| UserId | string | Required, max 450 chars, indexed |
-| Name | string | Required, max 200 chars, indexed |
-| DateOfBirth | DateTime | Required, indexed |
-| Gender | string | Optional, max 50 chars |
-| PhotoUrl | string | Optional, max 500 chars |
-| CreatedAt | DateTime | Required |
-| CreatedBy | string | Required, max 450 chars |
-| UpdatedAt | DateTime? | Optional |
-| UpdatedBy | string? | Optional, max 450 chars |
-| Age | int | Ignored (computed property) |
+## Validation Pattern
 
-#### Indexes
+All validation uses the `ValidationResult` pattern:
 
-- `IX_Players_UserId` - For filtering by user
-- `IX_Players_Name` - For search operations
-- `IX_Players_DateOfBirth` - For age-based queries
+```csharp
+public static class PlayerValidator
+{
+    public static ValidationResult ValidateCreatePlayer(CreatePlayerDto dto)
+    {
+        var result = new ValidationResult();
 
-#### TeamPlayer Entity Configuration
+        // Name validation
+        if (string.IsNullOrWhiteSpace(dto.Name))
+        {
+            result.AddError(nameof(dto.Name), "Name is required");
+        }
+        else if (dto.Name.Length > 200)
+        {
+            result.AddError(nameof(dto.Name), "Name must not exceed 200 characters");
+        }
 
-| Property | Type | Constraints |
-|----------|------|-------------|
-| TeamPlayerId | int | Primary key, auto-generated |
-| PlayerId | int | Required, FK → Players(Id), indexed, cascade delete |
-| TeamName | string | Required, max 200 chars, indexed |
-| ChampionshipName | string | Required, max 200 chars |
-| JoinedDate | DateTime | Required |
-| LeftDate | DateTime? | Optional (null = active) |
-| CreatedAt | DateTime | Required |
-| CreatedBy | string | Required, max 450 chars |
-| UpdatedAt | DateTime? | Optional |
-| UpdatedBy | string? | Optional, max 450 chars |
-| IsActive | bool | Computed property (LeftDate is null) |
+        // DateOfBirth validation
+        if (dto.DateOfBirth == default)
+        {
+            result.AddError(nameof(dto.DateOfBirth), "Date of birth is required");
+        }
+        else if (dto.DateOfBirth >= DateTime.UtcNow.Date)
+        {
+            result.AddError(nameof(dto.DateOfBirth), "Date of birth must be in the past");
+        }
 
-#### TeamPlayer Indexes
+        // ... more validation
 
-- `IX_TeamPlayers_PlayerId` - For retrieving player's teams
-- `IX_TeamPlayers_TeamName` - For team-based queries
-- `IX_TeamPlayers_IsActive` - For filtering active/inactive assignments (on LeftDate column)
-- `IX_TeamPlayers_PlayerId_IsActive` - Composite index for active player teams
-- `IX_TeamPlayers_PlayerId_TeamName_ChampionshipName` - For duplicate detection
+        return result;
+    }
+}
+```
 
-#### TeamPlayer Entity Methods
+## Database Configuration
 
-| Method | Description |
-|--------|-------------|
-| `Validate()` | Validates entity against all business rules |
-| `MarkAsLeft(leftDate, userId)` | Sets LeftDate and updates audit fields |
-| `UpdateLastModified(userId)` | Updates audit fields without changing LeftDate |
+### Connection String Setup
 
-#### PlayerStatistic Entity Configuration
+See [Database Connection Setup Guide](../../docs/Database_Connection_Setup.md) for detailed instructions.
 
-| Property | Type | Constraints |
-|----------|------|-------------|
-| PlayerStatisticId | int | Primary key, auto-generated |
-| TeamPlayerId | int | Required, FK → TeamPlayers(TeamPlayerId), indexed, cascade delete |
-| GameDate | DateTime | Required, indexed |
-| MinutesPlayed | int | Required, ≥ 0 |
-| IsStarter | bool | Required |
-| JerseyNumber | int | Required, 1-99 |
-| Goals | int | Required, ≥ 0 |
-| Assists | int | Required, ≥ 0 |
-| CreatedAt | DateTime | Required |
-| CreatedBy | string | Required, max 450 chars |
-| UpdatedAt | DateTime? | Optional |
-| UpdatedBy | string? | Optional, max 450 chars |
+**Development (User Secrets):**
 
-#### PlayerStatistic Indexes
+```bash
+cd src/GhcSamplePs.Web
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
+  "Server=(localdb)\\mssqllocaldb;Database=GhcSamplePs;Trusted_Connection=True;MultipleActiveResultSets=true"
+```
 
-- `IX_PlayerStatistics_TeamPlayerId` - For retrieving statistics by team player
-- `IX_PlayerStatistics_GameDate` - For date-based queries
-- `IX_PlayerStatistics_TeamPlayerId_GameDate` - Composite index for efficient queries
+**Production (Environment Variables):**
 
-#### PlayerStatistic Entity Methods
+```bash
+ConnectionStrings__DefaultConnection="Server=tcp:yourserver.database.windows.net,1433;Initial Catalog=GhcSamplePs;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=Active Directory Default;"
+```
 
-| Method | Description |
-|--------|-------------|
-| `Validate()` | Validates entity against all business rules |
-| `UpdateLastModified(userId)` | Updates audit fields |
-| `CalculateTotalMinutes(statistics)` | Static: Calculates sum of minutes from collection |
-| `CalculateTotalGoals(statistics)` | Static: Calculates sum of goals from collection |
-| `CalculateTotalAssists(statistics)` | Static: Calculates sum of assists from collection |
-
-#### Registration
+### Service Registration
 
 Use the extension method in `Program.cs`:
 
 ```csharp
-// SQL Server configuration with retry policies
 builder.Services.AddApplicationDbContext(
     connectionString: builder.Configuration.GetConnectionString("DefaultConnection")!,
     enableSensitiveDataLogging: builder.Environment.IsDevelopment(),
@@ -386,598 +447,274 @@ builder.Services.AddApplicationDbContext(
     commandTimeoutSeconds: 30);
 ```
 
-#### ServiceCollectionExtensions Configuration Options
+### Database Migrations
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `connectionString` | Required | SQL Server connection string |
-| `enableSensitiveDataLogging` | false | Log query parameter values (dev only) |
-| `enableDetailedErrors` | false | Include detailed error information (dev only) |
-| `maxRetryCount` | 5 | Maximum retry attempts for transient failures |
-| `maxRetryDelaySeconds` | 30 | Maximum delay between retries (seconds) |
-| `commandTimeoutSeconds` | 30 | Database command timeout (seconds) |
+**Add New Migration:**
 
-Additional configuration applied automatically:
-- **EnableRetryOnFailure** - Exponential backoff retry policy for transient failures
-- **UseQuerySplittingBehavior** - SplitQuery for better performance with related data
-
-#### Connection String Configuration
-
-> 📖 **Complete Guide**: For step-by-step setup instructions, see [Database Connection Setup Guide](../../docs/Database_Connection_Setup.md)
-
-**Development** - Use User Secrets (recommended):
 ```bash
-cd src/GhcSamplePs.Web
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\mssqllocaldb;Database=GhcSamplePs;Trusted_Connection=True;MultipleActiveResultSets=true"
+dotnet ef migrations add MigrationName \
+  --project src/GhcSamplePs.Core \
+  --startup-project src/GhcSamplePs.Web
 ```
 
-**Production**: Configure via environment variables or Azure Key Vault.
+**Apply Migrations:**
 
-### Database Migrations ✅
-
-**InitialCreate** (`Migrations/[timestamp]_InitialCreate.cs`):
-- Creates the `Players` table with all columns and constraints
-- Creates indexes for UserId, Name, and DateOfBirth
-
-**AddTeamPlayersTable** (`Migrations/[timestamp]_AddTeamPlayersTable.cs`):
-- Creates the `TeamPlayers` table with FK to Players
-- Creates indexes for PlayerId, TeamName, and composite indexes
-- Configures cascade delete for player team assignments
-
-**AddPlayerStatisticsTable** (`Migrations/[timestamp]_AddPlayerStatisticsTable.cs`):
-- Creates the `PlayerStatistics` table with FK to TeamPlayers
-- Creates indexes for TeamPlayerId and GameDate
-- Creates composite index for TeamPlayerId_GameDate
-- Configures cascade delete (deleting TeamPlayer deletes associated statistics)
-
-#### Running Migrations
-
-**Development**: Migrations are applied automatically on application startup when a connection string is configured.
-
-**Manual Commands**:
 ```bash
-# Add a new migration
-dotnet ef migrations add MigrationName --project src/GhcSamplePs.Core --startup-project src/GhcSamplePs.Web
-
-# Apply migrations to database
-dotnet ef database update --project src/GhcSamplePs.Core --startup-project src/GhcSamplePs.Web
-
-# Remove last migration (if not applied)
-dotnet ef migrations remove --project src/GhcSamplePs.Core --startup-project src/GhcSamplePs.Web
-
-# Generate idempotent SQL script for production
-dotnet ef migrations script --project src/GhcSamplePs.Core --startup-project src/GhcSamplePs.Web --idempotent --output migration.sql
+dotnet ef database update \
+  --project src/GhcSamplePs.Core \
+  --startup-project src/GhcSamplePs.Web
 ```
 
-#### Migration Scripts
+**Generate SQL Script:**
 
-Pre-generated idempotent migration scripts are available in `docs/migrations/`:
-- `InitialCreate.sql` - Creates Players table and indexes
-- `AddTeamPlayersTable.sql` - Creates TeamPlayers table with FK and indexes
-- `AddPlayerStatisticsTable.sql` - Creates PlayerStatistics table with FK and indexes
-
-These scripts are safe to run multiple times and can be used for production deployments.
-
-### Player Repository ✅
-
-Two repository implementations are available for player data access:
-
-#### EfPlayerRepository (Production)
-
-**EfPlayerRepository** (`Repositories/Implementations/EfPlayerRepository.cs`):
-- Entity Framework Core implementation of IPlayerRepository
-- Full database persistence with SQL Server
-- Optimized read operations using AsNoTracking
-- Comprehensive error handling and logging
-
-**Features:**
-- **CRUD Operations**: GetAllAsync, GetByIdAsync, AddAsync, UpdateAsync, DeleteAsync, ExistsAsync
-- **Performance**: AsNoTracking for read-only queries
-- **Error Handling**: Catches and translates DbUpdateException, DbUpdateConcurrencyException
-- **Logging**: Detailed operation logging at appropriate levels
-- **Cancellation Support**: All methods support CancellationToken
-
-**Exception Types:**
-- `PlayerNotFoundException` - Player with specified ID not found
-- `RepositoryException` - Database operation failures with context information
-
-**Usage Example:**
-```csharp
-// Register in DI (production configuration)
-builder.Services.AddScoped<IPlayerRepository, EfPlayerRepository>();
-
-// Use in a service
-public class PlayerService
-{
-    private readonly IPlayerRepository _repository;
-    private readonly ILogger<PlayerService> _logger;
-
-    public PlayerService(IPlayerRepository repository, ILogger<PlayerService> logger)
-    {
-        _repository = repository;
-        _logger = logger;
-    }
-
-    public async Task<Player?> GetPlayerAsync(int id, CancellationToken cancellationToken)
-    {
-        try
-        {
-            return await _repository.GetByIdAsync(id, cancellationToken);
-        }
-        catch (RepositoryException ex)
-        {
-            _logger.LogError(ex, "Failed to retrieve player {PlayerId}", id);
-            throw;
-        }
-    }
-}
+```bash
+dotnet ef migrations script \
+  --project src/GhcSamplePs.Core \
+  --startup-project src/GhcSamplePs.Web \
+  --idempotent \
+  --output migration.sql
 ```
 
-#### MockPlayerRepository (Development/Testing)
-
-**MockPlayerRepository** (`Repositories/Implementations/MockPlayerRepository.cs`):
-- In-memory implementation for development and testing
-- Pre-seeded with 10 sample players
-- Thread-safe using ConcurrentDictionary
-
-**Use Cases:**
-- Local development without database
-- Unit testing services without EF Core dependency
-- Demos and prototyping
-
-### TeamPlayer Repository ✅
-
-**EfTeamPlayerRepository** (`Repositories/Implementations/EfTeamPlayerRepository.cs`):
-- Entity Framework Core implementation of ITeamPlayerRepository
-- Manages player team assignments for championships
-- Full CRUD operations with player-specific queries
-- Active duplicate detection to prevent conflicting team memberships
-
-**Features:**
-- **CRUD Operations**: GetByIdAsync, AddAsync, UpdateAsync, DeleteAsync, ExistsAsync
-- **Player-Specific Queries**: GetAllByPlayerIdAsync, GetActiveByPlayerIdAsync (ordered by JoinedDate DESC)
-- **Duplicate Detection**: HasActiveDuplicateAsync checks for existing active team assignments
-- **Performance**: AsNoTracking for all read-only queries
-- **Error Handling**: RepositoryException with operation context
-- **Logging**: Detailed operation logging at appropriate levels
-- **Cancellation Support**: All methods support CancellationToken
-
-**Key Methods:**
-
-| Method | Description |
-|--------|-------------|
-| `GetAllByPlayerIdAsync(playerId)` | Get all team assignments for a player (active and inactive) |
-| `GetActiveByPlayerIdAsync(playerId)` | Get only active team assignments (where LeftDate is null) |
-| `HasActiveDuplicateAsync(playerId, teamName, championshipName, excludeId)` | Check if player already has an active assignment to the same team/championship |
-
-**Usage Example:**
-```csharp
-// Register in DI
-builder.Services.AddScoped<ITeamPlayerRepository, EfTeamPlayerRepository>();
-
-// Use in a service
-public class TeamPlayerService
-{
-    private readonly ITeamPlayerRepository _repository;
-
-    public async Task<ServiceResult> AssignPlayerToTeamAsync(
-        int playerId, 
-        string teamName, 
-        string championshipName,
-        CancellationToken cancellationToken)
-    {
-        // Check for existing active assignment
-        if (await _repository.HasActiveDuplicateAsync(
-            playerId, teamName, championshipName, cancellationToken: cancellationToken))
-        {
-            return ServiceResult.Failure("Player is already active on this team in this championship");
-        }
-
-        var teamPlayer = new TeamPlayer
-        {
-            PlayerId = playerId,
-            TeamName = teamName,
-            ChampionshipName = championshipName,
-            JoinedDate = DateTime.UtcNow,
-            CreatedBy = "system"
-        };
-
-        await _repository.AddAsync(teamPlayer, cancellationToken);
-        return ServiceResult.Success();
-    }
-
-    public async Task<IReadOnlyList<TeamPlayer>> GetActiveTeamsAsync(
-        int playerId, 
-        CancellationToken cancellationToken)
-    {
-        return await _repository.GetActiveByPlayerIdAsync(playerId, cancellationToken);
-    }
-}
-```
-
-**Duplicate Detection Logic:**
-- Checks PlayerId + TeamName + ChampionshipName combination
-- Only considers active assignments (LeftDate is null)
-- Supports excludeId parameter for update scenarios
-- Case-sensitive matching (SQL Server default collation may differ)
-
-### PlayerStatistic Repository ✅
-
-**EfPlayerStatisticRepository** (`Repositories/Implementations/EfPlayerStatisticRepository.cs`):
-- Entity Framework Core implementation of IPlayerStatisticRepository
-- Manages game-level performance statistics for players
-- Full CRUD operations with team player-specific queries
-- Aggregate calculation support for totals and averages
-
-**Features:**
-- **CRUD Operations**: GetByIdAsync, AddAsync, UpdateAsync, DeleteAsync, ExistsAsync
-- **Query Methods**: GetAllByPlayerIdAsync, GetAllByTeamPlayerIdAsync, GetByDateRangeAsync
-- **Aggregate Calculations**: GetAggregatesAsync returns PlayerStatisticAggregateResult
-- **Performance**: AsNoTracking for all read-only queries
-- **Navigation Loading**: Includes TeamPlayer for context (team name, championship)
-- **Error Handling**: RepositoryException with operation context
-- **Logging**: Detailed operation logging at appropriate levels
-- **Cancellation Support**: All methods support CancellationToken
-
-**Key Methods:**
-
-| Method | Description |
-|--------|-------------|
-| `GetAllByPlayerIdAsync(playerId)` | Get all statistics for a player across all teams |
-| `GetAllByTeamPlayerIdAsync(teamPlayerId)` | Get statistics for a specific team assignment |
-| `GetByDateRangeAsync(playerId, startDate, endDate)` | Get statistics within a date range |
-| `GetAggregatesAsync(playerId, teamPlayerId?)` | Calculate totals and averages |
-
-**Aggregate Calculation Logic:**
-
-The `GetAggregatesAsync` method calculates:
-- **GameCount**: Total number of games (COUNT)
-- **TotalGoals**: Sum of goals across all games
-- **TotalAssists**: Sum of assists across all games
-- **TotalMinutesPlayed**: Sum of minutes played
-- **AverageGoals**: TotalGoals / GameCount
-- **AverageAssists**: TotalAssists / GameCount
-- **AverageMinutesPlayed**: TotalMinutesPlayed / GameCount
-
-When no statistics exist, returns `PlayerStatisticAggregateResult.Empty()` with all values set to 0.
-
-### TeamPlayer Service ✅
-
-**TeamPlayerService** (`Services/Implementations/TeamPlayerService.cs`):
-- Service layer for team player management operations
-- Coordinates between presentation and data layers
-- Applies business rules and validation
-- Manages audit fields (CreatedBy, UpdatedBy, timestamps UTC)
-
-**Features:**
-- **Team Assignments**: Manage player team memberships for championships
-- **Business Rules**: Validates data and prevents duplicate active assignments
-- **Audit Trail**: Automatic population of audit fields
-- **ServiceResult Pattern**: Consistent success/failure handling
-
-**Methods:**
-
-| Method | Description |
-|--------|-------------|
-| `GetTeamsByPlayerIdAsync(playerId, includeInactive)` | Get all team assignments for a player |
-| `GetActiveTeamsByPlayerIdAsync(playerId)` | Get only active team assignments |
-| `GetTeamAssignmentByIdAsync(teamPlayerId)` | Get a single team assignment by ID |
-| `AddPlayerToTeamAsync(createDto, currentUserId)` | Add a player to a team |
-| `UpdateTeamAssignmentAsync(teamPlayerId, updateDto, currentUserId)` | Update a team assignment |
-| `RemovePlayerFromTeamAsync(teamPlayerId, leftDate, currentUserId)` | Remove a player from a team |
-| `ValidateTeamAssignmentAsync(createDto)` | Validate team assignment data |
-
-**Business Rules:**
-- TeamName: Required, trimmed, max 200 characters
-- ChampionshipName: Required, trimmed, max 200 characters
-- JoinedDate: Required, not more than 1 year in the future
-- LeftDate: Optional, must be after JoinedDate, not in the future
-- No duplicate active assignments (same player + team + championship)
-- All dates stored in UTC
-
-**Usage Example:**
-```csharp
-// Register in DI
-builder.Services.AddScoped<ITeamPlayerService, TeamPlayerService>();
-
-// Use in a component or controller
-public class TeamManagementComponent
-{
-    private readonly ITeamPlayerService _teamPlayerService;
-
-    public TeamManagementComponent(ITeamPlayerService teamPlayerService)
-    {
-        _teamPlayerService = teamPlayerService;
-    }
-
-    public async Task AssignPlayerToTeamAsync()
-    {
-        var createDto = new CreateTeamPlayerDto
-        {
-            PlayerId = 1,
-            TeamName = "Team Alpha",
-            ChampionshipName = "Championship 2024",
-            JoinedDate = DateTime.UtcNow
-        };
-
-        var result = await _teamPlayerService.AddPlayerToTeamAsync(createDto, "admin-user");
-        
-        if (result.Success)
-        {
-            Console.WriteLine($"Created assignment with ID: {result.Data!.TeamPlayerId}");
-        }
-        else if (result.ValidationErrors.Any())
-        {
-            foreach (var (field, errors) in result.ValidationErrors)
-            {
-                Console.WriteLine($"{field}: {string.Join(", ", errors)}");
-            }
-        }
-    }
-}
-```
-
-### TeamPlayer Validation ✅
-
-**TeamPlayerValidator** (`Validation/TeamPlayerValidator.cs`):
-- Provides business rule validation for team player data
-- Validates CreateTeamPlayerDto, UpdateTeamPlayerDto, and TeamPlayer entities
-- Returns ValidationResult with field-specific error messages
-
-#### Validation Rules
-
-| Field | Requirement | Error Message |
-|-------|-------------|---------------|
-| TeamName | Required, 1-200 characters, not whitespace | "Team name is required" or "Team name must not exceed 200 characters" |
-| ChampionshipName | Required, 1-200 characters, not whitespace | "Championship name is required" or "Championship name must not exceed 200 characters" |
-| JoinedDate | Required, not more than 1 year in future | "Joined date is required" or "Joined date cannot be more than 1 year in the future" |
-| LeftDate | Optional, must be after JoinedDate, not in future | "Left date must be after the joined date" or "Left date cannot be in the future" |
-
-#### Methods
-
-- `ValidateCreateTeamPlayer(CreateTeamPlayerDto)` - Validates team player creation data
-- `ValidateUpdateTeamPlayer(UpdateTeamPlayerDto, joinedDate)` - Validates team player update data
-- `ValidateTeamPlayer(TeamPlayer)` - Validates a TeamPlayer entity
-
-#### Usage Example
-
-```csharp
-var dto = new CreateTeamPlayerDto
-{
-    PlayerId = 1,
-    TeamName = "Team Alpha",
-    ChampionshipName = "Championship 2024",
-    JoinedDate = DateTime.UtcNow.AddMonths(-1)
-};
-
-var result = TeamPlayerValidator.ValidateCreateTeamPlayer(dto);
-if (!result.IsValid)
-{
-    foreach (var (field, messages) in result.Errors)
-    {
-        Console.WriteLine($"{field}: {string.Join(", ", messages)}");
-    }
-}
-```
-
-### Custom Exceptions
-
-#### RepositoryException
-
-**RepositoryException** (`Exceptions/RepositoryException.cs`):
-- Exception for database operation failures
-- Provides detailed context about the failed operation
-
-**Properties:**
-- `Operation` - Name of the failed operation (e.g., "GetByIdAsync")
-- `EntityType` - Type of entity involved (e.g., "Player")
-- `EntityId` - ID of the entity, if applicable
-
-**Usage Example:**
-```csharp
-try
-{
-    await repository.UpdateAsync(player);
-}
-catch (RepositoryException ex) when (ex.Operation == "UpdateAsync")
-{
-    logger.LogError(ex, "Update failed for {EntityType} with ID {EntityId}",
-        ex.EntityType, ex.EntityId);
-    // Handle specific update failure
-}
-```
-
-### PlayerStatistic Service ✅
-
-**PlayerStatisticService** (`Services/Implementations/PlayerStatisticService.cs`):
-- Service layer for player game statistics management
-- Coordinates between presentation and data layers
-- Applies business rules and validation
-- Manages audit fields (CreatedBy, UpdatedBy, timestamps UTC)
-- Provides aggregate calculations (totals and averages)
-
-**Features:**
-- **Statistics Management**: Manage game-level performance statistics for players
-- **Business Rules**: Validates numeric ranges, dates, and team player references
-- **Aggregate Calculations**: Totals and averages for goals, assists, minutes
-- **Audit Trail**: Automatic population of audit fields
-- **ServiceResult Pattern**: Consistent success/failure handling
-
-**Methods:**
-
-| Method | Description |
-|--------|-------------|
-| `GetStatisticsByPlayerIdAsync(playerId)` | Get all statistics for a player across all teams |
-| `GetStatisticsByTeamPlayerIdAsync(teamPlayerId)` | Get statistics for a specific team assignment |
-| `GetStatisticByIdAsync(statisticId)` | Get a single statistic by ID |
-| `AddStatisticAsync(createDto, currentUserId)` | Add a new game statistic |
-| `UpdateStatisticAsync(statisticId, updateDto, currentUserId)` | Update an existing statistic |
-| `DeleteStatisticAsync(statisticId)` | Delete a statistic |
-| `GetPlayerAggregatesAsync(playerId, teamPlayerId?)` | Get aggregate statistics (totals and averages) |
-| `ValidateStatisticAsync(createDto)` | Validate statistic data |
-
-**Business Rules:**
-- TeamPlayerId: Required, must reference existing TeamPlayer
-- GameDate: Required, cannot be in the future
-- MinutesPlayed: Required, ≥ 0, ≤ 120 (soft limit)
-- JerseyNumber: Required, 1-99 (reasonable range)
-- Goals: Required, ≥ 0
-- Assists: Required, ≥ 0
-- All dates stored in UTC
-
-**Aggregate Calculations:**
-- GamesPlayed: COUNT(*)
-- TotalMinutes: SUM(MinutesPlayed)
-- TotalGoals: SUM(Goals)
-- TotalAssists: SUM(Assists)
-- AverageGoalsPerGame: TotalGoals / GamesPlayed (rounded to 2 decimals)
-- AverageAssistsPerGame: TotalAssists / GamesPlayed (rounded to 2 decimals)
-
-**Usage Example:**
-```csharp
-// Register in DI
-builder.Services.AddScoped<IPlayerStatisticService, PlayerStatisticService>();
-
-// Use in a component
-public class StatisticsComponent
-{
-    private readonly IPlayerStatisticService _statisticService;
-
-    public StatisticsComponent(IPlayerStatisticService statisticService)
-    {
-        _statisticService = statisticService;
-    }
-
-    public async Task AddGameStatisticAsync()
-    {
-        var createDto = new CreatePlayerStatisticDto
-        {
-            TeamPlayerId = 1,
-            GameDate = DateTime.UtcNow.AddDays(-1),
-            MinutesPlayed = 90,
-            IsStarter = true,
-            JerseyNumber = 10,
-            Goals = 2,
-            Assists = 1
-        };
-
-        var result = await _statisticService.AddStatisticAsync(createDto, "admin-user");
-        
-        if (result.Success)
-        {
-            Console.WriteLine($"Created statistic with ID: {result.Data!.PlayerStatisticId}");
-        }
-    }
-
-    public async Task GetAggregatesAsync(int playerId)
-    {
-        var result = await _statisticService.GetPlayerAggregatesAsync(playerId);
-        
-        if (result.Success)
-        {
-            Console.WriteLine($"Games: {result.Data!.GameCount}");
-            Console.WriteLine($"Total Goals: {result.Data!.TotalGoals}");
-            Console.WriteLine($"Avg Goals: {result.Data!.AverageGoals:F2}");
-        }
-    }
-}
-```
-
-### PlayerStatistic Validation ✅
-
-**PlayerStatisticValidator** (`Validation/PlayerStatisticValidator.cs`):
-- Provides business rule validation for player statistic data
-- Validates CreatePlayerStatisticDto, UpdatePlayerStatisticDto, and PlayerStatistic entities
-- Returns ValidationResult with field-specific error messages
-
-#### Validation Rules
-
-| Field | Requirement | Error Message |
-|-------|-------------|---------------|
-| TeamPlayerId | Required, > 0 | "Team player ID must be greater than 0" |
-| GameDate | Required, not future | "Game date is required" or "Game date cannot be in the future" |
-| MinutesPlayed | Required, 0-120 | "Minutes played must be non-negative" or "Minutes played should not exceed 120" |
-| JerseyNumber | Required, 1-99 | "Jersey number must be greater than 0" or "Jersey number should not exceed 99" |
-| Goals | Required, ≥ 0 | "Goals must be non-negative" |
-| Assists | Required, ≥ 0 | "Assists must be non-negative" |
-
-#### Methods
-
-- `ValidateCreatePlayerStatistic(CreatePlayerStatisticDto)` - Validates statistic creation data
-- `ValidateUpdatePlayerStatistic(UpdatePlayerStatisticDto)` - Validates statistic update data
-- `ValidatePlayerStatistic(PlayerStatistic)` - Validates a PlayerStatistic entity
-- `Validate(CreatePlayerStatisticDto)` - Alias for ValidateCreatePlayerStatistic
-- `Validate(UpdatePlayerStatisticDto)` - Alias for ValidateUpdatePlayerStatistic
-
-#### Usage Example
-
-```csharp
-var dto = new CreatePlayerStatisticDto
-{
-    TeamPlayerId = 1,
-    GameDate = DateTime.UtcNow.AddDays(-1),
-    MinutesPlayed = 90,
-    IsStarter = true,
-    JerseyNumber = 10,
-    Goals = 2,
-    Assists = 1
-};
-
-var result = PlayerStatisticValidator.ValidateCreatePlayerStatistic(dto);
-if (!result.IsValid)
-{
-    foreach (var (field, messages) in result.Errors)
-    {
-        Console.WriteLine($"{field}: {string.Join(", ", messages)}");
-    }
-}
-```
+**Production:**
+- Migrations applied automatically on startup in development
+- Use idempotent SQL scripts for production deployments
+
+## Testing
 
 ### Test Coverage
 
-**Total Tests**: 753 tests, all passing ✅
+**Total: 802 tests passing ✅**
 
-- **AuthenticationServiceTests**: 20 tests
-- **AuthorizationServiceTests**: 17 tests
-- **AuthorizationScenariosTests**: 17 tests (comprehensive role-based scenarios)
-- **ApplicationUserTests**: 24 tests
-- **UserClaimTests**: 18 tests
-- **AuthorizationResultTests**: 8 tests
-- **Exception Tests**: 29 tests (includes RepositoryException)
-- **PlayerValidatorTests**: 43 tests
-- **ApplicationDbContextTests**: 16 tests (audit field population)
-- **PlayerConfigurationTests**: 25 tests (entity configuration)
-- **EfPlayerRepositoryTests**: 32 tests (CRUD operations, error handling)
-- **EfTeamPlayerRepositoryTests**: 50 tests (CRUD operations, duplicate detection, logging)
-- **MockPlayerRepositoryTests**: Various tests
-- **PlayerServiceTests**: 26 tests (service operations, validation, error handling)
-- **TeamPlayerServiceTests**: 28 tests (service operations, business rules, validation)
-- **PlayerStatisticServiceTests**: 37 tests (service operations, business rules, validation, aggregates)
+| Test Suite | Tests | Coverage Area |
+|------------|-------|---------------|
+| AuthenticationServiceTests | 20 | User authentication, claims, roles |
+| AuthorizationServiceTests | 17 | Permission checks, policies |
+| AuthorizationScenariosTests | 17 | End-to-end authorization scenarios |
+| ApplicationUserTests | 24 | User identity model |
+| UserClaimTests | 18 | Claims management |
+| AuthorizationResultTests | 8 | Authorization result model |
+| PlayerValidatorTests | 43 | Player validation rules |
+| TeamPlayerValidatorTests | 25 | Team assignment validation |
+| PlayerStatisticValidatorTests | 30 | Statistics validation |
+| ApplicationDbContextTests | 16 | Audit field population |
+| PlayerConfigurationTests | 25 | Entity configuration |
+| TeamPlayerConfigurationTests | 20 | Team player entity config |
+| PlayerStatisticConfigurationTests | 18 | Statistics entity config |
+| EfPlayerRepositoryTests | 32 | CRUD operations, error handling |
+| EfTeamPlayerRepositoryTests | 50 | Team assignments, duplicate detection |
+| EfPlayerStatisticRepositoryTests | 45 | Statistics CRUD, aggregates |
+| MockPlayerRepositoryTests | 30 | In-memory implementation |
+| PlayerServiceTests | 26 | Player business logic |
+| TeamPlayerServiceTests | 28 | Team management logic |
+| PlayerStatisticServiceTests | 37 | Statistics business logic |
+| ExceptionTests | 29 | Custom exceptions |
 
-#### Authorization Scenario Tests
+### Running Tests
 
-The `AuthorizationScenariosTests` class provides comprehensive coverage for authorization scenarios:
+```bash
+# Run all tests
+dotnet test
 
-- Anonymous user denied access to all policies
-- Regular user can access authenticated and user policies
-- Regular user denied access to admin policy
-- Admin user can access all standard policies
-- Admin has full permissions including admin-specific
-- Regular user has limited permissions
-- Admin can access any resource
-- Regular user can only access own resources
-- Inactive user treated as authenticated
-- User without roles fails role-based policies
-- Resource-based authorization respects admin role
-- Resource-based authorization denies regular user for admin policy
-- User ID case insensitivity for resource access
-- Custom policy falls back to role check
-- Authorization failure includes meaningful reason
+# Run specific test class
+dotnet test --filter "FullyQualifiedName~PlayerServiceTests"
 
-## See Also
+# Run tests with coverage
+dotnet test --collect:"XPlat Code Coverage"
 
-- [Database Connection Setup Guide](../../docs/Database_Connection_Setup.md) - Connection string configuration for development and production
-- [Architecture Guidelines](../../.github/instructions/blazor-architecture.instructions.md)
+# Generate coverage report
+reportgenerator -reports:**/coverage.cobertura.xml -targetdir:coveragereport
+```
+
+### Test Naming Convention
+
+```csharp
+[Fact]
+public void WhenCondition_ThenExpectedBehavior()
+{
+    // Arrange
+    var service = new PlayerService(repository, logger);
+    
+    // Act
+    var result = service.CreatePlayer(dto);
+    
+    // Assert
+    result.Should().BeSuccessful();
+}
+```
+
+## Development Guidelines
+
+### Creating New Features
+
+1. **Define Domain Entity** in `Models/`
+2. **Create DTOs** in `Models/[Domain]/DTOs/`
+3. **Add Validation** in `Validation/`
+4. **Define Repository Interface** in `Repositories/Interfaces/`
+5. **Implement Repository** in `Repositories/Implementations/`
+6. **Define Service Interface** in `Services/Interfaces/`
+7. **Implement Service** in `Services/Implementations/`
+8. **Write Unit Tests** in `GhcSamplePs.Core.Tests`
+9. **Add EF Core Configuration** (if database entity)
+10. **Create Migration** (if database changes)
+11. **Register Services** in Web project's `Program.cs`
+12. **Create UI Components** in Web project
+
+### Code Standards
+
+Follow `.github/instructions/csharp.instructions.md` and `.github/instructions/dotnet-architecture-good-practices.instructions.md`:
+
+✅ **DO:**
+- Use async/await for all I/O operations
+- Return `ServiceResult<T>` from service methods
+- Use dependency injection
+- Log important operations
+- Validate input at service boundaries
+- Use UTC for all dates
+- Throw specific exception types
+- Write unit tests for all public methods
+
+❌ **DON'T:**
+- Reference UI projects or frameworks
+- Use `HttpContext` or any web-specific types
+- Put business logic in repositories
+- Mix concerns (keep services focused)
+- Ignore cancellation tokens
+- Return null (use ServiceResult.Failure instead)
+
+### ServiceResult Pattern
+
+All service methods return `ServiceResult<T>`:
+
+```csharp
+public class ServiceResult<T>
+{
+    public bool Success { get; set; }
+    public T? Data { get; set; }
+    public string ErrorMessage { get; set; } = string.Empty;
+    public Dictionary<string, List<string>> ValidationErrors { get; set; } = new();
+
+    public static ServiceResult<T> Success(T data) 
+        => new() { Success = true, Data = data };
+
+    public static ServiceResult<T> Failure(string errorMessage) 
+        => new() { Success = false, ErrorMessage = errorMessage };
+
+    public static ServiceResult<T> Failure(
+        Dictionary<string, List<string>> validationErrors) 
+        => new() { Success = false, ValidationErrors = validationErrors };
+}
+```
+
+**Benefits:**
+- Consistent error handling
+- No exceptions for business logic failures
+- Rich validation error information
+- Easy to test
+
+## Exception Handling
+
+Custom exceptions for specific failure scenarios:
+
+| Exception | When to Use |
+|-----------|-------------|
+| `PlayerNotFoundException` | Player with ID not found |
+| `PlayerValidationException` | Player data validation failure |
+| `RepositoryException` | Database operation failure |
+| `AuthenticationException` | User authentication failure |
+| `AuthorizationException` | Permission denied |
+| `TokenValidationException` | JWT token validation failure |
+
+```csharp
+try
+{
+    var player = await _repository.GetByIdAsync(playerId);
+    if (player == null)
+    {
+        throw new PlayerNotFoundException(playerId);
+    }
+    return player;
+}
+catch (RepositoryException ex)
+{
+    _logger.LogError(ex, "Database error retrieving player {PlayerId}", playerId);
+    throw;
+}
+```
+
+## Aggregate Calculations
+
+The `PlayerStatisticService` provides aggregate statistics:
+
+```csharp
+var result = await _statisticService.GetPlayerAggregatesAsync(playerId);
+
+if (result.Success)
+{
+    var aggregates = result.Data!;
+    Console.WriteLine($"Games: {aggregates.GameCount}");
+    Console.WriteLine($"Total Goals: {aggregates.TotalGoals}");
+    Console.WriteLine($"Total Assists: {aggregates.TotalAssists}");
+    Console.WriteLine($"Total Minutes: {aggregates.TotalMinutesPlayed}");
+    Console.WriteLine($"Avg Goals/Game: {aggregates.AverageGoals:F2}");
+    Console.WriteLine($"Avg Assists/Game: {aggregates.AverageAssists:F2}");
+    Console.WriteLine($"Avg Minutes/Game: {aggregates.AverageMinutesPlayed:F1}");
+}
+```
+
+## Performance Considerations
+
+### Repository Best Practices
+
+- Use `AsNoTracking()` for read-only queries
+- Avoid loading related entities unless needed
+- Use pagination for large result sets
+- Leverage indexes for frequently queried fields
+
+### Service Layer Optimizations
+
+- Cache frequently accessed data
+- Use bulk operations when appropriate
+- Avoid N+1 query problems
+- Batch database updates when possible
+
+## Additional Resources
+
+### Documentation
+
+- [Database Connection Setup](../../docs/Database_Connection_Setup.md)
+- [Player Statistics Requirements](../../docs/playerstats-requirements.md)
+- [Entra ID Integration Spec](../../docs/specs/EntraID_ExternalIdentities_Integration_Specification.md)
+
+### Architecture Guidelines
+
+- [Blazor Architecture](../../.github/instructions/blazor-architecture.instructions.md)
 - [C# Guidelines](../../.github/instructions/csharp.instructions.md)
 - [DDD Best Practices](../../.github/instructions/dotnet-architecture-good-practices.instructions.md)
-- [Entra ID Specification](../../docs/specs/EntraID_ExternalIdentities_Integration_Specification.md)
+
+### Related Projects
+
+- [GhcSamplePs.Web](../GhcSamplePs.Web/README.md) - Blazor UI layer
+- [GhcSamplePs.Core.Tests](../../tests/GhcSamplePs.Core.Tests/README.md) - Unit tests
+
+## Contributing
+
+When making changes to Core:
+
+1. Ensure Core remains UI-agnostic
+2. Follow clean architecture principles
+3. Write comprehensive unit tests
+4. Use consistent naming conventions
+5. Document public APIs with XML comments
+6. Update relevant documentation
+7. Run all tests before committing
+
+## License
+
+This project is part of the GhcSamplePs solution. See the main repository LICENSE file for details.
+
+---
+
+**Last Updated:** December 3, 2025  
+**Version:** 1.0.0  
+**Target Framework:** .NET 10.0  
+**Test Status:** ✅ 802 tests passing
