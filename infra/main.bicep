@@ -1,12 +1,12 @@
-// Main Bicep Orchestration Template
-// Purpose: Deploy all infrastructure modules and configure RBAC assignments for GhcSamplePs
-// Orchestrates: monitoring, storage, keyvault, sql, containerregistry, containerapp
+// Main orchestration template for GhcSamplePs infrastructure deployment
+// Purpose: Deploys all Azure resources for the Blazor Server application
+// Environment: Development (scale-to-zero, cost-optimized)
 
 targetScope = 'resourceGroup'
 
-// =============================================================================
-// PARAMETERS
-// =============================================================================
+// ==============================================================================
+// Parameters
+// ==============================================================================
 
 @description('Azure region for all resources')
 param location string = 'canadacentral'
@@ -18,95 +18,86 @@ param location string = 'canadacentral'
 ])
 param environment string = 'dev'
 
-@description('Application name used in resource naming convention')
-@minLength(3)
-@maxLength(15)
+@description('Application name used for resource naming convention')
+@minLength(1)
+@maxLength(20)
 param appName string = 'ghcsampleps'
 
-@description('Entra ID admin email address for SQL Server')
+@description('Entra ID admin email address for SQL Server authentication')
 param sqlAdminEntraId string
 
-@description('Entra ID admin object ID for SQL Server')
+@description('Entra ID admin object ID for SQL Server authentication')
 param sqlAdminObjectId string
 
-@description('Entra ID client ID for authentication')
+@description('Entra ID client ID for application authentication')
 param entraIdClientId string
 
-@description('Entra ID tenant ID for authentication')
+@description('Entra ID tenant ID for application authentication')
 param entraIdTenantId string
 
-@description('Docker image to deploy (optional for initial deployment)')
-param containerImage string = ''
+// ==============================================================================
+// Variables - Resource Naming Convention: {appName}-{resource}-{environment}
+// ==============================================================================
 
-@description('Developer IP ranges for SQL firewall access')
-param allowedIpRanges array = []
-
-// =============================================================================
-// VARIABLES - Resource Naming Convention: {appName}-{resource}-{environment}
-// =============================================================================
-
-// Monitoring resources
-var logAnalyticsName = '${appName}-logs-${environment}'
-var appInsightsName = '${appName}-ai-${environment}'
-
-// Storage - must be lowercase alphanumeric, 3-24 chars
-var storageAccountName = toLower(replace('${appName}st${environment}', '-', ''))
-
-// Key Vault - alphanumeric and hyphens, 3-24 chars
-var keyVaultName = '${appName}-kv-${environment}'
-
-// SQL Server - lowercase alphanumeric and hyphens
-var sqlServerName = toLower('${appName}-sql-${environment}')
+var resourcePrefix = '${appName}-${environment}'
+var logAnalyticsName = '${resourcePrefix}-log'
+var appInsightsName = '${resourcePrefix}-ai'
+var storageAccountName = replace('${appName}${environment}st', '-', '')
+// Key Vault name must be 3-24 characters, globally unique
+var keyVaultName = '${appName}-${environment}-kv'
+var sqlServerName = '${resourcePrefix}-sql'
 var databaseName = '${appName}db'
+var registryName = replace('${appName}${environment}acr', '-', '')
+var containerAppEnvironmentName = '${resourcePrefix}-cae'
+var containerAppName = '${resourcePrefix}-app'
 
-// Container Registry - alphanumeric only, 5-50 chars
-var registryName = toLower(replace('${appName}acr${environment}', '-', ''))
+// ==============================================================================
+// Resources - Log Analytics Workspace (needed for listKeys at deploy time)
+// ==============================================================================
 
-// Container Apps
-var containerAppsEnvironmentName = '${appName}-env-${environment}'
-var containerAppName = '${appName}-app-${environment}'
-
-// Default container image when none provided
-var defaultContainerImage = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
-var deployImage = empty(containerImage) ? defaultContainerImage : containerImage
-
-// ASP.NET Core environment mapping
-var aspNetEnvironment = environment == 'prod' ? 'Production' : 'Development'
-
-// =============================================================================
-// BUILT-IN ROLE DEFINITIONS
-// =============================================================================
-
-// Key Vault Secrets User - Read secret contents
-var keyVaultSecretsUserRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
-
-// Key Vault Crypto User - Use keys for cryptographic operations
-var keyVaultCryptoUserRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '12338af0-0e69-4776-bea7-57ae8d297424')
-
-// Storage Blob Data Contributor - Read, write, delete blob data
-var storageBlobDataContributorRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
-
-// AcrPull - Pull images from container registry
-var acrPullRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
-
-// =============================================================================
-// MODULE DEPLOYMENTS
-// =============================================================================
-
-// 1. Monitoring - Log Analytics Workspace and Application Insights
-module monitoring 'modules/monitoring.bicep' = {
-  name: 'monitoringDeployment'
-  params: {
-    location: location
-    logAnalyticsName: logAnalyticsName
-    appInsightsName: appInsightsName
+// Log Analytics Workspace - deployed directly to enable listKeys for Container Apps
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
+  name: logAnalyticsName
+  location: location
+  tags: {
     environment: environment
+  }
+  properties: {
+    sku: {
+      name: 'PerGB2018'
+    }
+    retentionInDays: 30
+    features: {
+      enableLogAccessUsingOnlyResourcePermissions: true
+    }
   }
 }
 
-// 2. Storage Account - For Data Protection keys
+// Application Insights - Linked to Log Analytics workspace
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: appInsightsName
+  location: location
+  kind: 'web'
+  tags: {
+    environment: environment
+  }
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logAnalyticsWorkspace.id
+    IngestionMode: 'LogAnalytics'
+    publicNetworkAccessForIngestion: 'Enabled'
+    publicNetworkAccessForQuery: 'Enabled'
+    SamplingPercentage: 10
+  }
+}
+
+// ==============================================================================
+// Modules - Infrastructure Components
+// ==============================================================================
+
+// Storage: Storage Account for Data Protection keys
 module storage 'modules/storage.bicep' = {
-  name: 'storageDeployment'
+  name: 'storage-deployment'
   params: {
     location: location
     storageAccountName: storageAccountName
@@ -114,9 +105,9 @@ module storage 'modules/storage.bicep' = {
   }
 }
 
-// 3. Key Vault - For secrets and Data Protection key encryption
+// Key Vault: Secrets management and Data Protection key encryption
 module keyVault 'modules/keyvault.bicep' = {
-  name: 'keyVaultDeployment'
+  name: 'keyvault-deployment'
   params: {
     location: location
     keyVaultName: keyVaultName
@@ -125,9 +116,9 @@ module keyVault 'modules/keyvault.bicep' = {
   }
 }
 
-// 4. SQL Server and Database
+// SQL: Azure SQL Server and Serverless Database
 module sql 'modules/sql.bicep' = {
-  name: 'sqlDeployment'
+  name: 'sql-deployment'
   params: {
     location: location
     sqlServerName: sqlServerName
@@ -135,13 +126,12 @@ module sql 'modules/sql.bicep' = {
     environment: environment
     sqlAdminEntraId: sqlAdminEntraId
     sqlAdminObjectId: sqlAdminObjectId
-    allowedIpRanges: allowedIpRanges
   }
 }
 
-// 5. Container Registry
+// Container Registry: Docker image hosting
 module containerRegistry 'modules/containerregistry.bicep' = {
-  name: 'containerRegistryDeployment'
+  name: 'containerregistry-deployment'
   params: {
     location: location
     registryName: registryName
@@ -149,121 +139,101 @@ module containerRegistry 'modules/containerregistry.bicep' = {
   }
 }
 
-// 6. Container Apps Environment and Container App
+// Container App: Blazor Server application hosting
 module containerApp 'modules/containerapp.bicep' = {
-  name: 'containerAppDeployment'
+  name: 'containerapp-deployment'
   params: {
     location: location
-    environmentName: containerAppsEnvironmentName
+    environmentName: containerAppEnvironmentName
     appName: containerAppName
-    logAnalyticsCustomerId: monitoring.outputs.logAnalyticsCustomerId
-    logAnalyticsSharedKey: monitoring.outputs.logAnalyticsSharedKey
-    containerImage: deployImage
+    logAnalyticsCustomerId: logAnalyticsWorkspace.properties.customerId
+    logAnalyticsSharedKey: logAnalyticsWorkspace.listKeys().primarySharedKey
+    containerImage: '${containerRegistry.outputs.loginServer}/${appName}-web:latest'
     registryServer: containerRegistry.outputs.loginServer
     sqlConnectionString: sql.outputs.connectionStringFormat
     entraIdTenantId: entraIdTenantId
     entraIdClientId: entraIdClientId
     keyVaultUri: keyVault.outputs.keyVaultUri
     blobEndpoint: storage.outputs.blobEndpoint
-    environment: aspNetEnvironment
+    environment: 'Development'
   }
 }
 
-// =============================================================================
-// RBAC ROLE ASSIGNMENTS - Container App Managed Identity
-// Note: Using resource names for deterministic GUID generation
-// =============================================================================
+// ==============================================================================
+// RBAC Assignments - Grant Managed Identity access to resources
+// Note: Role assignments use deterministic names based on resource names
+// ==============================================================================
 
-// Key Vault Secrets User - Read secrets
-resource keyVaultSecretsUserAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, keyVaultName, containerAppName, 'KeyVaultSecretsUser')
-  scope: keyVaultResource
+// Storage Blob Data Contributor role for Container App Managed Identity
+var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+
+resource storageRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, storageAccountName, containerAppName, storageBlobDataContributorRoleId)
+  scope: resourceGroup()
   properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributorRoleId)
     principalId: containerApp.outputs.containerAppIdentityPrincipalId
-    roleDefinitionId: keyVaultSecretsUserRoleId
     principalType: 'ServicePrincipal'
   }
 }
 
-// Key Vault Crypto User - Use keys for Data Protection encryption
-resource keyVaultCryptoUserAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, keyVaultName, containerAppName, 'KeyVaultCryptoUser')
-  scope: keyVaultResource
+// Key Vault Secrets User role for Container App Managed Identity
+var keyVaultSecretsUserRoleId = '4633458b-17de-408a-b874-0445c86b69e6'
+
+resource keyVaultSecretsRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, keyVaultName, containerAppName, keyVaultSecretsUserRoleId)
+  scope: resourceGroup()
   properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', keyVaultSecretsUserRoleId)
     principalId: containerApp.outputs.containerAppIdentityPrincipalId
-    roleDefinitionId: keyVaultCryptoUserRoleId
     principalType: 'ServicePrincipal'
   }
 }
 
-// Storage Blob Data Contributor - Access Data Protection keys blob
-resource storageBlobContributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, storageAccountName, containerAppName, 'StorageBlobDataContributor')
-  scope: storageAccountResource
+// Key Vault Crypto User role for Container App Managed Identity
+var keyVaultCryptoUserRoleId = '12338af0-0e69-4776-bea7-57ae8d297424'
+
+resource keyVaultCryptoRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, keyVaultName, containerAppName, keyVaultCryptoUserRoleId)
+  scope: resourceGroup()
   properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', keyVaultCryptoUserRoleId)
     principalId: containerApp.outputs.containerAppIdentityPrincipalId
-    roleDefinitionId: storageBlobDataContributorRoleId
     principalType: 'ServicePrincipal'
   }
 }
 
-// ACR Pull - Pull container images
-resource acrPullAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, registryName, containerAppName, 'AcrPull')
-  scope: containerRegistryResource
+// ACR Pull role for Container App Managed Identity
+var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
+
+resource acrRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, registryName, containerAppName, acrPullRoleId)
+  scope: resourceGroup()
   properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleId)
     principalId: containerApp.outputs.containerAppIdentityPrincipalId
-    roleDefinitionId: acrPullRoleId
     principalType: 'ServicePrincipal'
   }
 }
 
-// =============================================================================
-// EXISTING RESOURCE REFERENCES FOR RBAC SCOPING
-// =============================================================================
+// ==============================================================================
+// Outputs
+// ==============================================================================
 
-resource keyVaultResource 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
-  name: keyVaultName
-  dependsOn: [
-    keyVault
-  ]
-}
-
-resource storageAccountResource 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
-  name: storageAccountName
-  dependsOn: [
-    storage
-  ]
-}
-
-resource containerRegistryResource 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
-  name: registryName
-  dependsOn: [
-    containerRegistry
-  ]
-}
-
-// =============================================================================
-// OUTPUTS
-// =============================================================================
-
-@description('Public FQDN of the Container App')
-output containerAppUrl string = containerApp.outputs.containerAppFqdn
+@description('Public URL for the Container App')
+output containerAppUrl string = 'https://${containerApp.outputs.containerAppFqdn}'
 
 @description('Fully qualified domain name of the SQL Server')
 output sqlServerFqdn string = sql.outputs.sqlServerFqdn
 
-@description('Name of the database')
+@description('Database name')
 output databaseName string = sql.outputs.databaseName
 
-@description('URI of the Key Vault')
-output keyVaultUri string = keyVault.outputs.keyVaultUri
-
-@description('Name of the Storage Account')
-output storageAccountName string = storage.outputs.storageAccountName
-
-@description('Login server URL for the Container Registry')
+@description('Container Registry login server')
 output registryLoginServer string = containerRegistry.outputs.loginServer
 
-@description('Managed Identity Principal ID for additional RBAC assignments')
-output containerAppIdentityId string = containerApp.outputs.containerAppIdentityPrincipalId
+@description('Application Insights instrumentation key')
+output appInsightsInstrumentationKey string = applicationInsights.properties.InstrumentationKey
+
+@description('Key Vault URI')
+output keyVaultUri string = keyVault.outputs.keyVaultUri
