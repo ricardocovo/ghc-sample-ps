@@ -32,15 +32,19 @@ param registryServer string
 param sqlConnectionString string
 
 @description('Entra ID tenant ID for authentication')
+@secure()
 param entraIdTenantId string
 
 @description('Entra ID client ID for authentication')
+@secure()
 param entraIdClientId string
 
 @description('Key Vault URI for secrets and data protection')
+@secure()
 param keyVaultUri string
 
 @description('Storage blob endpoint for data protection keys')
+@secure()
 param blobEndpoint string
 
 @description('Environment name for ASP.NET Core')

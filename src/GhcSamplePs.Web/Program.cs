@@ -14,8 +14,31 @@ using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
+using Azure.Identity;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Azure credential for Managed Identity (used in production)
+var azureCredential = new DefaultAzureCredential();
+
+// Configure Data Protection with Azure Blob + Key Vault for production
+if (!builder.Environment.IsDevelopment())
+{
+    var blobEndpoint = builder.Configuration["Storage:BlobEndpoint"];
+    var vaultUri = builder.Configuration["KeyVault:VaultUri"];
+    
+    if (!string.IsNullOrEmpty(blobEndpoint) && !string.IsNullOrEmpty(vaultUri))
+    {
+        builder.Services.AddDataProtection()
+            .PersistKeysToAzureBlobStorage(
+                new Uri($"{blobEndpoint}/dataprotection-keys/keys.xml"),
+                azureCredential)
+            .ProtectKeysWithAzureKeyVault(
+                new Uri($"{vaultUri}/keys/dataprotection"),
+                azureCredential);
+    }
+}
 
 // Add authentication services with Microsoft Identity Web
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)

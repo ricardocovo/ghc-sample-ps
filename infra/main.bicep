@@ -44,7 +44,8 @@ var logAnalyticsName = '${resourcePrefix}-log'
 var appInsightsName = '${resourcePrefix}-ai'
 var storageAccountName = replace('${appName}${environment}st', '-', '')
 // Key Vault name must be 3-24 characters, globally unique
-var keyVaultName = '${appName}-${environment}-kv'
+// Truncate appName to max 18 chars to ensure total length <24 with 'dev'/'prod' (3-4 chars) + 'kv' (2 chars)
+var keyVaultName = '${take(appName, 18)}${environment}kv'
 var sqlServerName = '${resourcePrefix}-sql'
 var databaseName = '${appName}db'
 var registryName = replace('${appName}${environment}acr', '-', '')
