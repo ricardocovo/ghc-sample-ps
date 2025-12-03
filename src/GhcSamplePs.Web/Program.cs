@@ -16,11 +16,23 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
 using Azure.Identity;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.ApplicationInsights.Extensibility;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure Azure credential for Managed Identity (used in production)
 var azureCredential = new DefaultAzureCredential();
+
+// Configure Application Insights telemetry
+builder.Services.AddApplicationInsightsTelemetry(options =>
+{
+    // Connection string is read from configuration (APPLICATIONINSIGHTS_CONNECTION_STRING or ApplicationInsights:ConnectionString)
+    options.EnableAdaptiveSampling = true;
+    options.EnableQuickPulseMetricStream = true;
+});
+
+// Register authentication telemetry service for tracking auth events
+builder.Services.AddScoped<IAuthenticationTelemetryService, AuthenticationTelemetryService>();
 
 // Configure Data Protection with Azure Blob + Key Vault for production
 if (!builder.Environment.IsDevelopment())
@@ -42,7 +54,81 @@ if (!builder.Environment.IsDevelopment())
 
 // Add authentication services with Microsoft Identity Web
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
+    .AddMicrosoftIdentityWebApp(options =>
+    {
+        builder.Configuration.GetSection("AzureAd").Bind(options);
+
+        // Configure OpenID Connect events for telemetry tracking
+        options.Events ??= new OpenIdConnectEvents();
+
+        var originalOnTokenValidated = options.Events.OnTokenValidated;
+        options.Events.OnTokenValidated = async context =>
+        {
+            var telemetryService = context.HttpContext.RequestServices.GetService<IAuthenticationTelemetryService>();
+            if (telemetryService is not null && context.Principal?.Identity?.IsAuthenticated == true)
+            {
+                var userId = context.Principal.FindFirst("oid")?.Value
+                          ?? context.Principal.FindFirst("sub")?.Value
+                          ?? "unknown";
+                telemetryService.TrackAuthenticationSuccess(userId, "OpenIdConnect");
+            }
+
+            if (originalOnTokenValidated is not null)
+            {
+                await originalOnTokenValidated(context);
+            }
+        };
+
+        var originalOnAuthenticationFailed = options.Events.OnAuthenticationFailed;
+        options.Events.OnAuthenticationFailed = async context =>
+        {
+            var telemetryService = context.HttpContext.RequestServices.GetService<IAuthenticationTelemetryService>();
+            if (telemetryService is not null)
+            {
+                var reason = context.Exception?.Message ?? "Unknown authentication error";
+                telemetryService.TrackAuthenticationFailure(reason, "OpenIdConnect");
+            }
+
+            if (originalOnAuthenticationFailed is not null)
+            {
+                await originalOnAuthenticationFailed(context);
+            }
+        };
+
+        var originalOnRemoteFailure = options.Events.OnRemoteFailure;
+        options.Events.OnRemoteFailure = async context =>
+        {
+            var telemetryService = context.HttpContext.RequestServices.GetService<IAuthenticationTelemetryService>();
+            if (telemetryService is not null)
+            {
+                var errorMessage = context.Failure?.Message ?? "Remote authentication failure";
+                telemetryService.TrackEntraIdConnectivityFailure("RemoteAuthentication", errorMessage, context.Failure);
+            }
+
+            if (originalOnRemoteFailure is not null)
+            {
+                await originalOnRemoteFailure(context);
+            }
+        };
+
+        var originalOnSignedOutCallbackRedirect = options.Events.OnSignedOutCallbackRedirect;
+        options.Events.OnSignedOutCallbackRedirect = async context =>
+        {
+            var telemetryService = context.HttpContext.RequestServices.GetService<IAuthenticationTelemetryService>();
+            if (telemetryService is not null)
+            {
+                var userId = context.HttpContext.User?.FindFirst("oid")?.Value
+                          ?? context.HttpContext.User?.FindFirst("sub")?.Value
+                          ?? "unknown";
+                telemetryService.TrackSignOut(userId);
+            }
+
+            if (originalOnSignedOutCallbackRedirect is not null)
+            {
+                await originalOnSignedOutCallbackRedirect(context);
+            }
+        };
+    });
 
 builder.Services.AddControllersWithViews()
     .AddMicrosoftIdentityUI();

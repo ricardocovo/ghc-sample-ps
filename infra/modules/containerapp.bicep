@@ -47,6 +47,10 @@ param keyVaultUri string
 @secure()
 param blobEndpoint string
 
+@description('Application Insights connection string for telemetry')
+@secure()
+param appInsightsConnectionString string = ''
+
 @description('Environment name for ASP.NET Core')
 @allowed([
   'Development'
@@ -104,7 +108,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           identity: 'system'
         }
       ]
-      secrets: [
+      secrets: concat([
         {
           name: 'connection-strings-default'
           value: sqlConnectionString
@@ -125,7 +129,12 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           name: 'storage-blob-endpoint'
           value: blobEndpoint
         }
-      ]
+      ], !empty(appInsightsConnectionString) ? [
+        {
+          name: 'appinsights-connection-string'
+          value: appInsightsConnectionString
+        }
+      ] : [])
     }
     template: {
       containers: [
@@ -136,7 +145,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             cpu: json('0.25')
             memory: '0.5Gi'
           }
-          env: [
+          env: concat([
             {
               name: 'ConnectionStrings__DefaultConnection'
               secretRef: 'connection-strings-default'
@@ -161,7 +170,12 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
               name: 'ASPNETCORE_ENVIRONMENT'
               value: environment
             }
-          ]
+          ], !empty(appInsightsConnectionString) ? [
+            {
+              name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+              secretRef: 'appinsights-connection-string'
+            }
+          ] : [])
         }
       ]
       scale: {

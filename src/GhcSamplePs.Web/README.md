@@ -631,6 +631,40 @@ dotnet ef database update --project ../GhcSamplePs.Core
 - Health check endpoint
 - Structured logging
 - Performance metrics
+- Authentication telemetry tracking
+
+## Monitoring
+
+### Application Insights Integration
+
+The application includes comprehensive telemetry for monitoring authentication and authorization events:
+
+- **Authentication Events**: Login success/failure tracking
+- **Authorization Events**: Access control monitoring
+- **Entra ID Connectivity**: Connection health tracking
+- **Custom Metrics**: Auth success/failure counters
+
+### Configuration
+
+Application Insights is configured via environment variable:
+
+```bash
+APPLICATIONINSIGHTS_CONNECTION_STRING=your-connection-string
+```
+
+Or in `appsettings.json`:
+
+```json
+{
+  "ApplicationInsights": {
+    "ConnectionString": "your-connection-string"
+  }
+}
+```
+
+### Documentation
+
+For detailed monitoring configuration, see the [Monitoring Guide](../../docs/Monitoring_Guide.md).
 
 ## Security
 

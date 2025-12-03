@@ -196,6 +196,7 @@ infra/
 ├── README.md                  # This file
 │
 ├── modules/                   # Modular Bicep templates
+│   ├── alerts.bicep           # Monitoring alerts for auth events
 │   ├── containerapp.bicep     # Container Apps Environment + App
 │   ├── containerregistry.bicep # Azure Container Registry
 │   ├── keyvault.bicep         # Azure Key Vault
@@ -213,6 +214,7 @@ infra/
 
 | Module | Resources Created | Purpose |
 |--------|-------------------|---------|
+| **alerts.bicep** | Alert Rules, Action Group | Authentication and authorization failure alerts |
 | **containerapp.bicep** | Container Apps Environment, Container App | Hosts Blazor Server app with session affinity |
 | **containerregistry.bicep** | Container Registry | Private Docker image repository |
 | **keyvault.bicep** | Key Vault | Secrets management, Data Protection encryption |
@@ -236,6 +238,9 @@ param sqlAdminObjectId = 'your-entra-object-id'  // Get from Azure Portal
 // Your app registration (from appsettings.json)
 param entraIdClientId = 'your-app-client-id'
 param entraIdTenantId = 'your-tenant-id'
+
+// Optional: Email for monitoring alerts (leave empty to skip alerts)
+param alertEmailAddress = 'admin@contoso.com'
 ```
 
 #### How to Get Required Values
@@ -609,6 +614,26 @@ builder.Services.AddDataProtection()
 
 ## Monitoring & Observability
 
+### Authentication Monitoring
+
+The application includes comprehensive authentication and authorization monitoring. For detailed information about:
+- Custom authentication event tracking
+- Alert rule configuration
+- Kusto queries for authentication analysis
+- Dashboard setup
+
+See the **[Monitoring Guide](../docs/Monitoring_Guide.md)**.
+
+### Alert Rules
+
+Three alert rules are deployed when `alertEmailAddress` is provided:
+
+| Alert | Severity | Trigger |
+|-------|----------|---------|
+| Authentication Failures | Warning | >5 failures in 15 minutes |
+| Authorization Failures | Warning | >10 failures in 15 minutes |
+| Entra ID Connectivity | Error | Any connectivity failure |
+
 ### Log Analytics Workspace
 
 **Configuration:**
@@ -632,6 +657,13 @@ AppTraces
 | where SeverityLevel >= 3  // Error and above
 | project TimeGenerated, Message, SeverityLevel
 | order by TimeGenerated desc
+
+// Authentication failures (custom events)
+customEvents
+| where name == "AuthenticationFailure"
+| where timestamp > ago(24h)
+| project timestamp, Reason = tostring(customDimensions.Reason)
+| order by timestamp desc
 ```
 
 ### Application Insights
@@ -640,6 +672,7 @@ AppTraces
 - Sampling: 10% (reduces cost)
 - Ingestion mode: LogAnalytics
 - Smart detection enabled
+- Custom events: Authentication telemetry
 
 **Key Metrics to Monitor:**
 
@@ -698,6 +731,7 @@ Create a custom dashboard in Azure Portal:
    - SQL Database DTU/vCore usage
    - Application Insights overview
    - Log Analytics query results
+   - Authentication success/failure metrics
 
 ---
 

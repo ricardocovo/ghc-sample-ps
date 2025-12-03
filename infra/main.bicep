@@ -35,6 +35,9 @@ param entraIdClientId string
 @description('Entra ID tenant ID for application authentication')
 param entraIdTenantId string
 
+@description('Email address for monitoring alert notifications')
+param alertEmailAddress string = ''
+
 // ==============================================================================
 // Variables - Resource Naming Convention: {appName}-{resource}-{environment}
 // ==============================================================================
@@ -156,7 +159,20 @@ module containerApp 'modules/containerapp.bicep' = {
     entraIdClientId: entraIdClientId
     keyVaultUri: keyVault.outputs.keyVaultUri
     blobEndpoint: storage.outputs.blobEndpoint
+    appInsightsConnectionString: applicationInsights.properties.ConnectionString
     environment: 'Development'
+  }
+}
+
+// Monitoring Alerts: Authentication and authorization alert rules
+module monitoringAlerts 'modules/alerts.bicep' = if (!empty(alertEmailAddress)) {
+  name: 'monitoring-alerts-deployment'
+  params: {
+    location: location
+    appInsightsId: applicationInsights.id
+    alertNamePrefix: resourcePrefix
+    alertEmailAddress: alertEmailAddress
+    environment: environment
   }
 }
 
