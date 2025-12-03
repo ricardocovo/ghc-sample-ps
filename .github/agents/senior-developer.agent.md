@@ -58,6 +58,9 @@ This ensures real-time visibility of progress and accurate issue tracking throug
 - Adding or changing environment variables
 - Updating deployment procedures
 
+**Guidelines for README content:**
+- Look into `.github\prompts\readme-blueprint-generator.prompt.md` for a detailed blueprint on structuring README files.
+
 ## .gitignore Requirements
 
 **ALWAYS ensure `.gitignore` is present and appropriate** for the repository:
