@@ -1,0 +1,72 @@
+<PageTitle>Page Not Found</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudPaper Elevation="2" Class="pa-6">
+        <MudStack AlignItems="AlignItems.Center" Spacing="4">
+            @* 404 Icon *@
+            <MudIcon Icon="@Icons.Material.Filled.SearchOff" 
+                     Color="Color.Info" 
+                     Size="Size.Large" 
+                     Style="font-size: 5rem;" />
+            
+            @* Title *@
+            <MudText Typo="Typo.h4" Color="Color.Info" Align="Align.Center">
+                Page Not Found
+            </MudText>
+
+            @* Message *@
+            <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-2">
+                The page you're looking for doesn't exist or may have been moved.
+            </MudText>
+
+            @* Suggestions *@
+            <MudAlert Severity="Severity.Info" Class="mt-2" Style="max-width: 500px;">
+                <MudText Typo="Typo.body2">
+                    <strong>Here are some helpful suggestions:</strong>
+                </MudText>
+                <MudList T="string" Dense="true" Class="mt-2">
+                    <MudListItem Icon="@Icons.Material.Filled.Check">
+                        Check that the URL is spelled correctly
+                    </MudListItem>
+                    <MudListItem Icon="@Icons.Material.Filled.Check">
+                        The page may have been moved or deleted
+                    </MudListItem>
+                    <MudListItem Icon="@Icons.Material.Filled.Check">
+                        Try using the navigation menu to find what you need
+                    </MudListItem>
+                </MudList>
+            </MudAlert>
+
+            <MudDivider Class="my-4" Style="width: 100%;" />
+
+            @* Action buttons *@
+            <MudStack Row="true" Spacing="2" Justify="Justify.Center">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.Home"
+                           Href="/">
+                    Go to Home
+                </MudButton>
+
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.ArrowBack"
+                           OnClick="GoBack">
+                    Go Back
+                </MudButton>
+            </MudStack>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    private void GoBack()
+    {
+        // Navigate back in browser history using JavaScript interop
+        // For simplicity, just navigate to home if we can't go back
+        NavigationManager.NavigateTo("/");
+    }
+}
