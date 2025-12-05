@@ -22,10 +22,12 @@ using Polly.Extensions.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Create a logger factory for early initialization logging (used in configuration callbacks)
-using var earlyLoggerFactory = LoggerFactory.Create(config => 
+// Create a logger for early initialization logging (used in configuration callbacks)
+// Note: We don't dispose this factory as it's needed for retry callbacks during HTTP calls
+var earlyLoggerFactory = LoggerFactory.Create(config => 
 {
     config.AddConsole();
+    config.SetMinimumLevel(LogLevel.Warning);
 });
 var tokenRefreshLogger = earlyLoggerFactory.CreateLogger("TokenRefresh");
 
