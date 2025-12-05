@@ -22,6 +22,13 @@ using Polly.Extensions.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Create a logger factory for early initialization logging (used in configuration callbacks)
+using var earlyLoggerFactory = LoggerFactory.Create(config => 
+{
+    config.AddConsole();
+});
+var tokenRefreshLogger = earlyLoggerFactory.CreateLogger("TokenRefresh");
+
 // Configure Azure credential for Managed Identity (used in production)
 var azureCredential = new DefaultAzureCredential();
 
@@ -64,13 +71,24 @@ builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                     TimeSpan.FromMilliseconds(Random.Shared.Next(0, 1000)),
                 onRetry: (outcome, timespan, retryAttempt, _) =>
                 {
-                    // Get logger from ILoggerFactory since we're in configuration phase
-                    // This will be called at runtime when a retry occurs
-                    var message = outcome.Exception is not null
-                        ? $"Token refresh retry attempt {retryAttempt} after {timespan.TotalSeconds:F2}s due to {outcome.Exception.GetType().Name}: {outcome.Exception.Message}"
-                        : $"Token refresh retry attempt {retryAttempt} after {timespan.TotalSeconds:F2}s due to HTTP {outcome.Result?.StatusCode}";
-                    
-                    Console.WriteLine(message);
+                    // Log retry attempts for token refresh operations
+                    if (outcome.Exception is not null)
+                    {
+                        tokenRefreshLogger.LogWarning(
+                            outcome.Exception,
+                            "Token refresh retry attempt {RetryAttempt} after {DelaySeconds:F2}s due to {ExceptionType}",
+                            retryAttempt,
+                            timespan.TotalSeconds,
+                            outcome.Exception.GetType().Name);
+                    }
+                    else
+                    {
+                        tokenRefreshLogger.LogWarning(
+                            "Token refresh retry attempt {RetryAttempt} after {DelaySeconds:F2}s due to HTTP {StatusCode}",
+                            retryAttempt,
+                            timespan.TotalSeconds,
+                            outcome.Result?.StatusCode);
+                    }
                 });
         
         // Configure backchannel HTTP handler with retry policy for transient failures
