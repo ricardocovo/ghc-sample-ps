@@ -1,3 +1,5 @@
+@inject IJSRuntime JSRuntime
+
 <PageTitle>Page Not Found</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
@@ -60,13 +62,9 @@
 </MudContainer>
 
 @code {
-    [Inject]
-    private NavigationManager NavigationManager { get; set; } = default!;
-
-    private void GoBack()
+    private async Task GoBack()
     {
         // Navigate back in browser history using JavaScript interop
-        // For simplicity, just navigate to home if we can't go back
-        NavigationManager.NavigateTo("/");
+        await JSRuntime.InvokeVoidAsync("history.back");
     }
 }

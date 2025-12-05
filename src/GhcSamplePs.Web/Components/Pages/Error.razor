@@ -183,13 +183,23 @@
         _ => "We're sorry, but something unexpected happened. Please try again or return to the home page."
     };
 
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
     private void RetryAction()
     {
-        // Force a page reload to retry the operation
-        if (HttpContext?.Request.Headers.Referer.ToString() is string referer && !string.IsNullOrEmpty(referer))
+        // Get the referring page from the HttpContext headers
+        var referer = HttpContext?.Request.Headers.Referer.ToString();
+        
+        if (!string.IsNullOrEmpty(referer))
         {
             // Navigate back to the referring page
+            NavigationManager.NavigateTo(referer, forceLoad: true);
         }
-        // Reload the current page
+        else
+        {
+            // Reload the current page if no referer is available
+            NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+        }
     }
 }
