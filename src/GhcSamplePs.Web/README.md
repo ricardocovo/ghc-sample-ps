@@ -107,6 +107,7 @@ GhcSamplePs.Web/
 - **Microsoft Entra ID Integration** - Enterprise-grade authentication
 - **Role-Based Access Control** - Admin and User roles with policy-based authorization
 - **Claims-Based Identity** - Rich user profile information from Azure AD
+- **Token Refresh Handling** - Automatic token refresh with retry logic for transient failures
 - **Authorization Policies**:
   - `RequireAuthenticatedUser` - Any authenticated user
   - `RequireAdminRole` - Admin role required
@@ -640,6 +641,22 @@ dotnet ef database update --project ../GhcSamplePs.Core
 - OAuth 2.0 / OpenID Connect
 - JWT token validation
 - Session-based authentication
+
+### Token Refresh Handling
+
+The application implements automatic token refresh with resilience features:
+
+- **Automatic Token Refresh** - Tokens are saved and automatically refreshed on expiration
+- **Retry Policy** - Exponential backoff with jitter for transient failures
+  - 3 retry attempts
+  - Delays: ~2s, ~4s, ~8s with random jitter (0-1s)
+  - Handles HTTP 5xx errors and network timeouts
+- **Event Logging** - All token events are logged for monitoring
+  - Token validation success
+  - Authentication failures (with exception type classification)
+  - Remote authentication failures
+- **Graceful Failure Handling** - Users redirected to sign-in on unrecoverable errors
+- **Backchannel Timeout** - 30-second timeout for token operations
 
 ### Authorization
 

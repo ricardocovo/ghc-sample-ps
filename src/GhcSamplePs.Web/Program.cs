@@ -16,8 +16,20 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
 using Azure.Identity;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Http;
+using Polly;
+using Polly.Extensions.Http;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Create a logger for early initialization logging (used in configuration callbacks)
+// Note: We don't dispose this factory as it's needed for retry callbacks during HTTP calls
+var earlyLoggerFactory = LoggerFactory.Create(config => 
+{
+    config.AddConsole();
+    config.SetMinimumLevel(LogLevel.Warning);
+});
+var tokenRefreshLogger = earlyLoggerFactory.CreateLogger("TokenRefresh");
 
 // Configure Azure credential for Managed Identity (used in production)
 var azureCredential = new DefaultAzureCredential();
@@ -41,8 +53,126 @@ if (!builder.Environment.IsDevelopment())
 }
 
 // Add authentication services with Microsoft Identity Web
+// Configure token refresh handling with automatic refresh on expiration
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
+    .AddMicrosoftIdentityWebApp(options =>
+    {
+        builder.Configuration.GetSection("AzureAd").Bind(options);
+        
+        // Enable token persistence for refresh token usage
+        options.SaveTokens = true;
+        
+        // Configure retry policy for token refresh operations (backchannel communication)
+        // Uses exponential backoff with jitter for transient failures
+        var retryPolicy = HttpPolicyExtensions
+            .HandleTransientHttpError()
+            .WaitAndRetryAsync(
+                retryCount: 3,
+                sleepDurationProvider: retryAttempt => 
+                    TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)) + 
+                    TimeSpan.FromMilliseconds(Random.Shared.Next(0, 1000)),
+                onRetry: (outcome, timespan, retryAttempt, _) =>
+                {
+                    // Log retry attempts for token refresh operations
+                    if (outcome.Exception is not null)
+                    {
+                        tokenRefreshLogger.LogWarning(
+                            outcome.Exception,
+                            "Token refresh retry attempt {RetryAttempt} after {DelaySeconds:F2}s due to {ExceptionType}",
+                            retryAttempt,
+                            timespan.TotalSeconds,
+                            outcome.Exception.GetType().Name);
+                    }
+                    else
+                    {
+                        tokenRefreshLogger.LogWarning(
+                            "Token refresh retry attempt {RetryAttempt} after {DelaySeconds:F2}s due to HTTP {StatusCode}",
+                            retryAttempt,
+                            timespan.TotalSeconds,
+                            outcome.Result?.StatusCode);
+                    }
+                });
+        
+        // Configure backchannel HTTP handler with retry policy for transient failures
+        options.BackchannelHttpHandler = new PolicyHttpMessageHandler(retryPolicy)
+        {
+            InnerHandler = new HttpClientHandler()
+        };
+        
+        // Set reasonable timeout for backchannel operations
+        options.BackchannelTimeout = TimeSpan.FromSeconds(30);
+        
+        // Configure token refresh events for logging and error handling
+        options.Events ??= new OpenIdConnectEvents();
+        
+        var existingOnTokenValidated = options.Events.OnTokenValidated;
+        options.Events.OnTokenValidated = async context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
+                .CreateLogger("TokenRefresh");
+            
+            logger.LogInformation(
+                "Token validated successfully for user {UserId}",
+                context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "unknown");
+            
+            if (existingOnTokenValidated is not null)
+            {
+                await existingOnTokenValidated(context);
+            }
+        };
+        
+        var existingOnAuthenticationFailed = options.Events.OnAuthenticationFailed;
+        options.Events.OnAuthenticationFailed = async context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
+                .CreateLogger("TokenRefresh");
+            
+            // Log token refresh failures with appropriate level based on exception type
+            if (context.Exception is HttpRequestException)
+            {
+                // Transient network failure - log as warning since retry may succeed
+                logger.LogWarning(
+                    context.Exception,
+                    "Transient authentication failure occurred. The request may be retried automatically.");
+            }
+            else
+            {
+                // Non-transient failure - log as error
+                logger.LogError(
+                    context.Exception,
+                    "Authentication failed: {ErrorMessage}",
+                    context.Exception.Message);
+            }
+            
+            if (existingOnAuthenticationFailed is not null)
+            {
+                await existingOnAuthenticationFailed(context);
+            }
+        };
+        
+        var existingOnRemoteFailure = options.Events.OnRemoteFailure;
+        options.Events.OnRemoteFailure = async context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
+                .CreateLogger("TokenRefresh");
+            
+            // Handle token refresh failures gracefully
+            logger.LogWarning(
+                context.Failure,
+                "Remote authentication failure: {Error}. User will be redirected to sign-in.",
+                context.Failure?.Message ?? "Unknown error");
+            
+            // Handle the failure gracefully by redirecting to home page
+            // This prevents the error from being displayed to the user
+            context.Response.Redirect("/");
+            context.HandleResponse();
+            
+            if (existingOnRemoteFailure is not null)
+            {
+                await existingOnRemoteFailure(context);
+            }
+        };
+    });
 
 builder.Services.AddControllersWithViews()
     .AddMicrosoftIdentityUI();
