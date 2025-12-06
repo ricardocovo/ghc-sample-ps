@@ -1,0 +1,94 @@
+@page "/access-denied"
+
+<PageTitle>Access Denied</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudPaper Elevation="2" Class="pa-6">
+        <MudStack AlignItems="AlignItems.Center" Spacing="4">
+            @* Access Denied Icon *@
+            <MudIcon Icon="@Icons.Material.Filled.Block" 
+                     Color="Color.Warning" 
+                     Size="Size.Large" 
+                     Style="font-size: 5rem;" />
+            
+            @* Title *@
+            <MudText Typo="Typo.h4" Color="Color.Warning" Align="Align.Center">
+                Access Denied
+            </MudText>
+
+            @* Message *@
+            <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-2">
+                You don't have permission to access this resource.
+            </MudText>
+
+            @* Helpful information *@
+            <MudAlert Severity="Severity.Warning" Class="mt-2" Style="max-width: 500px;">
+                <MudText Typo="Typo.body2">
+                    <strong>Why am I seeing this?</strong>
+                </MudText>
+                <MudList T="string" Dense="true" Class="mt-2">
+                    <MudListItem Icon="@Icons.Material.Filled.Info">
+                        Your account may not have the required role or permissions
+                    </MudListItem>
+                    <MudListItem Icon="@Icons.Material.Filled.Info">
+                        The resource may be restricted to specific users or groups
+                    </MudListItem>
+                    <MudListItem Icon="@Icons.Material.Filled.Info">
+                        If you believe this is an error, please contact your administrator
+                    </MudListItem>
+                </MudList>
+            </MudAlert>
+
+            <AuthorizeView>
+                <Authorized>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                        Signed in as: <strong>@context.User.Identity?.Name</strong>
+                    </MudText>
+                </Authorized>
+                <NotAuthorized>
+                    <MudAlert Severity="Severity.Info" Class="mt-2" Style="max-width: 500px;">
+                        <MudText Typo="Typo.body2">
+                            You're not currently signed in. Signing in may grant you access to this resource.
+                        </MudText>
+                    </MudAlert>
+                </NotAuthorized>
+            </AuthorizeView>
+
+            <MudDivider Class="my-4" Style="width: 100%;" />
+
+            @* Action buttons *@
+            <MudStack Row="true" Spacing="2" Justify="Justify.Center">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.Home"
+                           Href="/">
+                    Go to Home
+                </MudButton>
+
+                <AuthorizeView>
+                    <NotAuthorized>
+                        <MudButton Variant="Variant.Outlined" 
+                                   Color="Color.Primary" 
+                                   StartIcon="@Icons.Material.Filled.Login"
+                                   Href="MicrosoftIdentity/Account/SignIn">
+                            Sign In
+                        </MudButton>
+                    </NotAuthorized>
+                    <Authorized>
+                        <MudButton Variant="Variant.Outlined" 
+                                   Color="Color.Secondary" 
+                                   StartIcon="@Icons.Material.Filled.Logout"
+                                   Href="MicrosoftIdentity/Account/SignOut">
+                            Sign Out
+                        </MudButton>
+                    </Authorized>
+                </AuthorizeView>
+            </MudStack>
+
+            @* Contact support *@
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center" Class="mt-4">
+                Need access? Contact your system administrator for assistance.
+            </MudText>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
