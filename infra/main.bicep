@@ -209,11 +209,16 @@ resource keyVaultCryptoRbac 'Microsoft.Authorization/roleAssignments@2022-04-01'
 }
 
 // ACR Pull role for Container App Managed Identity
+// Reference the ACR resource to properly scope the role assignment
 var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 
+resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
+  name: registryName
+}
+
 resource acrRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, registryName, containerAppName, acrPullRoleId)
-  scope: resourceGroup()
+  name: guid(acr.id, containerAppName, acrPullRoleId)
+  scope: acr
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleId)
     principalId: containerApp.outputs.containerAppIdentityPrincipalId

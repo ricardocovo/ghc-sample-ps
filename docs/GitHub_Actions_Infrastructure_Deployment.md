@@ -29,6 +29,7 @@ az provider register --namespace Microsoft.Sql --wait
 az provider register --namespace Microsoft.Storage --wait
 az provider register --namespace Microsoft.OperationalInsights --wait
 az provider register --namespace Microsoft.Insights --wait
+az provider register -n Microsoft.App --wait
 
 # Verify registration
 az provider list --query "[?namespace=='Microsoft.ContainerRegistry'].{Namespace:namespace, State:registrationState}" --output table
