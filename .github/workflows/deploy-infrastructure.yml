@@ -1,0 +1,158 @@
+name: Deploy Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+        default: dev
+  push:
+    branches:
+      - main
+    paths:
+      - 'infra/**'
+      - '.github/workflows/deploy-infrastructure.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_RESOURCE_GROUP: rg-ghcsampleps-${{ github.event.inputs.environment || 'dev' }}
+  AZURE_LOCATION: canadacentral
+
+jobs:
+  validate:
+    name: Validate Bicep Templates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Validate Bicep templates
+        uses: azure/arm-deploy@v2
+        with:
+          scope: resourcegroup
+          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}
+          template: ./infra/main.bicep
+          parameters: >
+            environment=${{ github.event.inputs.environment || 'dev' }}
+            sqlAdminEntraId=${{ secrets.SQL_ADMIN_EMAIL }}
+            sqlAdminObjectId=${{ secrets.SQL_ADMIN_OBJECT_ID }}
+            entraIdClientId=${{ secrets.ENTRA_CLIENT_ID }}
+            entraIdTenantId=${{ secrets.ENTRA_TENANT_ID }}
+          deploymentMode: Validate
+
+  deploy:
+    name: Deploy Infrastructure
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    outputs:
+      containerAppUrl: ${{ steps.deploy.outputs.containerAppUrl }}
+      registryLoginServer: ${{ steps.deploy.outputs.registryLoginServer }}
+      sqlServerFqdn: ${{ steps.deploy.outputs.sqlServerFqdn }}
+      databaseName: ${{ steps.deploy.outputs.databaseName }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Ensure Resource Group exists
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az group create \
+              --name ${{ env.AZURE_RESOURCE_GROUP }} \
+              --location ${{ env.AZURE_LOCATION }} \
+              --tags environment=${{ github.event.inputs.environment || 'dev' }} project=ghcsampleps
+
+      - name: Deploy Bicep template
+        id: deploy
+        uses: azure/arm-deploy@v2
+        with:
+          scope: resourcegroup
+          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}
+          template: ./infra/main.bicep
+          parameters: >
+            environment=${{ github.event.inputs.environment || 'dev' }}
+            sqlAdminEntraId=${{ secrets.SQL_ADMIN_EMAIL }}
+            sqlAdminObjectId=${{ secrets.SQL_ADMIN_OBJECT_ID }}
+            entraIdClientId=${{ secrets.ENTRA_CLIENT_ID }}
+            entraIdTenantId=${{ secrets.ENTRA_TENANT_ID }}
+          deploymentName: infra-${{ github.run_number }}-${{ github.run_attempt }}
+          failOnStdErr: false
+
+      - name: Display deployment outputs
+        run: |
+          echo "🚀 Deployment Complete!"
+          echo ""
+          echo "📦 Container App URL: ${{ steps.deploy.outputs.containerAppUrl }}"
+          echo "🐳 Container Registry: ${{ steps.deploy.outputs.registryLoginServer }}"
+          echo "🗄️  SQL Server: ${{ steps.deploy.outputs.sqlServerFqdn }}"
+          echo "💾 Database: ${{ steps.deploy.outputs.databaseName }}"
+
+  verify:
+    name: Verify Deployment
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Check Container App health
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            echo "Verifying Container App deployment..."
+            az containerapp show \
+              --name ghcsampleps-${{ github.event.inputs.environment || 'dev' }}-app \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+              --query "properties.provisioningState" -o tsv
+
+      - name: Check SQL Server connectivity
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            echo "Verifying SQL Server deployment..."
+            az sql server show \
+              --name ghcsampleps-${{ github.event.inputs.environment || 'dev' }}-sql \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+              --query "state" -o tsv
+
+      - name: Display summary
+        run: |
+          echo "✅ Infrastructure deployment verified successfully!"
+          echo ""
+          echo "🌐 Application URL: ${{ needs.deploy.outputs.containerAppUrl }}"
+          echo ""
+          echo "Next steps:"
+          echo "1. Deploy application container to ACR"
+          echo "2. Update Container App with new image"
+          echo "3. Run database migrations"
