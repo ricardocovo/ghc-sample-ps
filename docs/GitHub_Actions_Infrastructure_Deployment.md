@@ -128,9 +128,6 @@ For better control and approvals:
 The workflow runs automatically when:
 
 1. **Manual trigger**: Use "Run workflow" button in GitHub Actions
-2. **Push to main**: When changes are pushed to main branch affecting:
-   - `infra/**` (any Bicep file changes)
-   - `.github/workflows/deploy-infrastructure.yml` (workflow changes)
 
 ## Manual Deployment
 

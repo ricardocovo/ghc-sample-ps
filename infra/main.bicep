@@ -209,20 +209,15 @@ resource keyVaultCryptoRbac 'Microsoft.Authorization/roleAssignments@2022-04-01'
 }
 
 // ACR Pull role for Container App Managed Identity
-// Reference the ACR resource to properly scope the role assignment
+// Use module with extension resource pattern to assign ACR Pull role
 var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 
-resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
-  name: registryName
-}
-
-resource acrRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(acr.id, containerAppName, acrPullRoleId)
-  scope: acr
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleId)
+module acrRbac 'modules/acr-rbac.bicep' = {
+  name: 'acr-rbac-assignment'
+  params: {
+    registryName: registryName
     principalId: containerApp.outputs.containerAppIdentityPrincipalId
-    principalType: 'ServicePrincipal'
+    roleDefinitionId: acrPullRoleId
   }
 }
 
