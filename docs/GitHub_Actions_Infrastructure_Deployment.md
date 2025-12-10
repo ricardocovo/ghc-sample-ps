@@ -10,6 +10,29 @@ This guide explains how to set up automated infrastructure deployment using GitH
 - Azure CLI installed locally (for initial setup)
 - GitHub repository with infrastructure code
 - Permissions to create service principals in Azure AD
+- All service providers are enabled
+
+If you need to enable the services:
+```powershell
+# Set your subscription
+$subscriptionId = "[your-subscription-id]"
+
+# Login to Azure (if needed)
+az login
+az account set --subscription $subscriptionId
+
+# Register all required providers
+az provider register --namespace Microsoft.App --wait
+az provider register --namespace Microsoft.ContainerRegistry --wait
+az provider register --namespace Microsoft.KeyVault --wait
+az provider register --namespace Microsoft.Sql --wait
+az provider register --namespace Microsoft.Storage --wait
+az provider register --namespace Microsoft.OperationalInsights --wait
+az provider register --namespace Microsoft.Insights --wait
+
+# Verify registration
+az provider list --query "[?namespace=='Microsoft.ContainerRegistry'].{Namespace:namespace, State:registrationState}" --output table
+```
 
 ## Azure Setup
 
@@ -19,7 +42,7 @@ GitHub Actions will use Federated Identity (OIDC) to authenticate with Azure wit
 
 ```powershell
 # Set variables
-$subscriptionId = "1e06b317-efe8-4e37-9aa6-881b07bb52ad"
+$subscriptionId = "[your-subscription-id]"
 $resourceGroup = "rg-ghcsampleps-dev"
 $appName = "ghcsampleps-github-deploy"
 $githubOrg = "ricardocovo"
