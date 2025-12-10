@@ -141,6 +141,7 @@ module containerRegistry 'modules/containerregistry.bicep' = {
 }
 
 // Container App: Blazor Server application hosting
+// Note: Using placeholder image initially. Deploy actual application image separately after infrastructure is ready.
 module containerApp 'modules/containerapp.bicep' = {
   name: 'containerapp-deployment'
   params: {
@@ -149,7 +150,7 @@ module containerApp 'modules/containerapp.bicep' = {
     appName: containerAppName
     logAnalyticsCustomerId: logAnalyticsWorkspace.properties.customerId
     logAnalyticsSharedKey: logAnalyticsWorkspace.listKeys().primarySharedKey
-    containerImage: '${containerRegistry.outputs.loginServer}/${appName}-web:latest'
+    containerImage: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
     registryServer: containerRegistry.outputs.loginServer
     sqlConnectionString: sql.outputs.connectionStringFormat
     entraIdTenantId: entraIdTenantId
@@ -172,7 +173,10 @@ resource storageRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(resourceGroup().id, storageAccountName, containerAppName, storageBlobDataContributorRoleId)
   scope: resourceGroup()
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributorRoleId)
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      storageBlobDataContributorRoleId
+    )
     principalId: containerApp.outputs.containerAppIdentityPrincipalId
     principalType: 'ServicePrincipal'
   }
