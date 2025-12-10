@@ -88,7 +88,6 @@ public static class TeamPlayerValidator
     /// Validates an UpdateTeamPlayerDto against all business rules.
     /// </summary>
     /// <param name="dto">The UpdateTeamPlayerDto to validate.</param>
-    /// <param name="joinedDate">The JoinedDate from the existing team player entity.</param>
     /// <returns>A ValidationResult containing all validation errors found, or a valid result if no errors.</returns>
     /// <exception cref="ArgumentNullException">Thrown when dto is null.</exception>
     /// <example>
@@ -96,19 +95,25 @@ public static class TeamPlayerValidator
     /// var updateDto = new UpdateTeamPlayerDto
     /// {
     ///     TeamPlayerId = 1,
+    ///     TeamName = "Team Alpha",
+    ///     ChampionshipName = "Championship 2024",
+    ///     JoinedDate = new DateTime(2024, 1, 15),
     ///     LeftDate = new DateTime(2024, 6, 30)
     /// };
-    /// var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(updateDto, new DateTime(2024, 1, 15));
+    /// var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(updateDto);
     /// Console.WriteLine(result.IsValid); // True
     /// </code>
     /// </example>
-    public static ValidationResult ValidateUpdateTeamPlayer(UpdateTeamPlayerDto dto, DateTime joinedDate)
+    public static ValidationResult ValidateUpdateTeamPlayer(UpdateTeamPlayerDto dto)
     {
         ArgumentNullException.ThrowIfNull(dto);
 
         var errors = new Dictionary<string, List<string>>();
 
-        ValidateLeftDate(dto.LeftDate, joinedDate, errors);
+        ValidateTeamName(dto.TeamName, errors);
+        ValidateChampionshipName(dto.ChampionshipName, errors);
+        ValidateJoinedDate(dto.JoinedDate, errors);
+        ValidateLeftDate(dto.LeftDate, dto.JoinedDate, errors);
 
         return BuildResult(errors);
     }

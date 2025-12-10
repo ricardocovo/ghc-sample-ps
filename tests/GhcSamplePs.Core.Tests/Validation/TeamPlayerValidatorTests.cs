@@ -41,11 +41,13 @@ public class TeamPlayerValidatorTests
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
+            TeamName = "Team Alpha",
+            ChampionshipName = "Championship 2024",
+            JoinedDate = DateTime.UtcNow.Date.AddDays(-30),
             LeftDate = DateTime.UtcNow.Date.AddDays(-10)
         };
-        var joinedDate = DateTime.UtcNow.Date.AddDays(-30);
 
-        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto, joinedDate);
+        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto);
 
         Assert.True(result.IsValid);
         Assert.Empty(result.Errors);
@@ -57,11 +59,13 @@ public class TeamPlayerValidatorTests
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
+            TeamName = "Team Alpha",
+            ChampionshipName = "Championship 2024",
+            JoinedDate = DateTime.UtcNow.Date.AddDays(-30),
             LeftDate = null
         };
-        var joinedDate = DateTime.UtcNow.Date.AddDays(-30);
 
-        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto, joinedDate);
+        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto);
 
         Assert.True(result.IsValid);
         Assert.Empty(result.Errors);
@@ -70,7 +74,7 @@ public class TeamPlayerValidatorTests
     [Fact(DisplayName = "ValidateUpdateTeamPlayer throws when dto is null")]
     public void ValidateUpdateTeamPlayer_WhenDtoIsNull_ThrowsArgumentNullException()
     {
-        Assert.Throws<ArgumentNullException>(() => TeamPlayerValidator.ValidateUpdateTeamPlayer(null!, DateTime.UtcNow));
+        Assert.Throws<ArgumentNullException>(() => TeamPlayerValidator.ValidateUpdateTeamPlayer(null!));
     }
 
     #endregion
@@ -471,11 +475,13 @@ public class TeamPlayerValidatorTests
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
+            TeamName = "Team Alpha",
+            ChampionshipName = "Championship 2024",
+            JoinedDate = DateTime.UtcNow.Date.AddDays(-30),
             LeftDate = null
         };
-        var joinedDate = DateTime.UtcNow.Date.AddDays(-30);
 
-        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto, joinedDate);
+        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto);
 
         Assert.True(result.IsValid);
     }
@@ -486,11 +492,13 @@ public class TeamPlayerValidatorTests
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
+            TeamName = "Team Alpha",
+            ChampionshipName = "Championship 2024",
+            JoinedDate = DateTime.UtcNow.Date.AddDays(-30),
             LeftDate = DateTime.UtcNow.Date.AddDays(1)
         };
-        var joinedDate = DateTime.UtcNow.Date.AddDays(-30);
 
-        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto, joinedDate);
+        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto);
 
         Assert.False(result.IsValid);
         Assert.True(result.Errors.TryGetValue("LeftDate", out var leftDateErrors));
@@ -503,11 +511,13 @@ public class TeamPlayerValidatorTests
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
+            TeamName = "Team Alpha",
+            ChampionshipName = "Championship 2024",
+            JoinedDate = DateTime.UtcNow.Date.AddDays(-60),
             LeftDate = DateTime.UtcNow.Date.AddDays(-30)
         };
-        var joinedDate = DateTime.UtcNow.Date.AddDays(-60);
 
-        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto, joinedDate);
+        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto);
 
         Assert.True(result.IsValid);
     }
@@ -518,11 +528,13 @@ public class TeamPlayerValidatorTests
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
+            TeamName = "Team Alpha",
+            ChampionshipName = "Championship 2024",
+            JoinedDate = DateTime.UtcNow.Date.AddDays(-30),
             LeftDate = DateTime.UtcNow.Date
         };
-        var joinedDate = DateTime.UtcNow.Date.AddDays(-30);
 
-        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto, joinedDate);
+        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto);
 
         Assert.True(result.IsValid);
     }
@@ -530,18 +542,17 @@ public class TeamPlayerValidatorTests
     [Fact(DisplayName = "LeftDate vs JoinedDate validation is enforced by domain entity")]
     public void ValidateUpdateTeamPlayer_LeftDateVsJoinedDate_EnforcedByDomainEntity()
     {
-        // Note: The UpdateTeamPlayerDto no longer contains JoinedDate since core identity
-        // fields are immutable. Cross-field validation (LeftDate must be after JoinedDate)
-        // is enforced by the domain entity's MarkAsLeft method when applying the update.
-        // This test verifies that the validator only checks the future date constraint.
+        // The validator checks that LeftDate must be after JoinedDate
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
-            LeftDate = DateTime.UtcNow.Date.AddDays(-30) // A past date - valid at DTO level
+            TeamName = "Team Alpha",
+            ChampionshipName = "Championship 2024",
+            JoinedDate = DateTime.UtcNow.Date.AddDays(-60),
+            LeftDate = DateTime.UtcNow.Date.AddDays(-30) // A past date - valid
         };
-        var joinedDate = DateTime.UtcNow.Date.AddDays(-60);
 
-        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto, joinedDate);
+        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto);
 
         // Valid at DTO level - domain will check against actual JoinedDate
         Assert.True(result.IsValid);
@@ -577,11 +588,13 @@ public class TeamPlayerValidatorTests
         var dto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
+            TeamName = "Team Alpha",
+            ChampionshipName = "Championship 2024",
+            JoinedDate = DateTime.UtcNow.Date.AddDays(-30),
             LeftDate = DateTime.UtcNow.Date.AddDays(1)
         };
-        var joinedDate = DateTime.UtcNow.Date.AddDays(-30);
 
-        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto, joinedDate);
+        var result = TeamPlayerValidator.ValidateUpdateTeamPlayer(dto);
 
         Assert.False(result.IsValid);
         Assert.Single(result.Errors);

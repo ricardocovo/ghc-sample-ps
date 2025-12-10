@@ -253,6 +253,9 @@ public class TeamPlayerServiceTests
         var updateDto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
+            TeamName = existingTeamPlayer.TeamName,
+            ChampionshipName = existingTeamPlayer.ChampionshipName,
+            JoinedDate = existingTeamPlayer.JoinedDate,
             LeftDate = DateTime.UtcNow.AddDays(-1)
         };
 
@@ -275,6 +278,9 @@ public class TeamPlayerServiceTests
         var updateDto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
+            TeamName = existingTeamPlayer.TeamName,
+            ChampionshipName = existingTeamPlayer.ChampionshipName,
+            JoinedDate = existingTeamPlayer.JoinedDate,
             LeftDate = existingTeamPlayer.JoinedDate.AddDays(-1) // Before JoinedDate
         };
 
@@ -293,6 +299,9 @@ public class TeamPlayerServiceTests
         var updateDto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 999,
+            TeamName = "Test Team",
+            ChampionshipName = "Test Championship",
+            JoinedDate = DateTime.UtcNow.AddDays(-30),
             LeftDate = DateTime.UtcNow.AddDays(-1)
         };
 
@@ -392,6 +401,9 @@ public class TeamPlayerServiceTests
         var updateDto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 1,
+            TeamName = "Test Team",
+            ChampionshipName = "Test Championship",
+            JoinedDate = DateTime.UtcNow.AddDays(-30),
             LeftDate = DateTime.UtcNow.AddDays(-1)
         };
 
@@ -427,6 +439,9 @@ public class TeamPlayerServiceTests
         var updateDto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = 2,
+            TeamName = "Test Team",
+            ChampionshipName = "Test Championship",
+            JoinedDate = DateTime.UtcNow.AddDays(-30),
             LeftDate = DateTime.UtcNow.AddDays(-1)
         };
 

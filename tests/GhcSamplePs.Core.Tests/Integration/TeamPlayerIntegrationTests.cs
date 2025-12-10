@@ -86,6 +86,9 @@ public class TeamPlayerIntegrationTests : IDisposable
         var updateDto1 = new UpdateTeamPlayerDto
         {
             TeamPlayerId = teamPlayer.TeamPlayerId,
+            TeamName = teamPlayer.TeamName,
+            ChampionshipName = teamPlayer.ChampionshipName,
+            JoinedDate = teamPlayer.JoinedDate,
             LeftDate = DateTime.UtcNow.AddDays(-5)
         };
 
@@ -217,6 +220,9 @@ public class TeamPlayerIntegrationTests : IDisposable
         var updateDto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = teamPlayer.TeamPlayerId,
+            TeamName = teamPlayer.TeamName,
+            ChampionshipName = teamPlayer.ChampionshipName,
+            JoinedDate = joinedDate,
             LeftDate = joinedDate.AddDays(-10) // Before joined date
         };
 
@@ -298,6 +304,9 @@ public class TeamPlayerIntegrationTests : IDisposable
         var updateDto = new UpdateTeamPlayerDto
         {
             TeamPlayerId = createResult.Data.TeamPlayerId,
+            TeamName = createResult.Data.TeamName,
+            ChampionshipName = createResult.Data.ChampionshipName,
+            JoinedDate = createResult.Data.JoinedDate,
             LeftDate = DateTime.UtcNow.AddDays(-1)
         };
 

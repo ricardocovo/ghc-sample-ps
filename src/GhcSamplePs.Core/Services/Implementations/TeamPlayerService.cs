@@ -234,7 +234,7 @@ public sealed class TeamPlayerService : ITeamPlayerService
                 return ServiceResult<TeamPlayerDto>.Fail($"Team assignment with ID {teamPlayerId} could not be found.");
             }
 
-            var validationResult = TeamPlayerValidator.ValidateUpdateTeamPlayer(updateDto, existingTeamPlayer.JoinedDate);
+            var validationResult = TeamPlayerValidator.ValidateUpdateTeamPlayer(updateDto);
             if (!validationResult.IsValid)
             {
                 _logger.LogWarning("Team player update validation failed for ID {TeamPlayerId}: {Errors}",

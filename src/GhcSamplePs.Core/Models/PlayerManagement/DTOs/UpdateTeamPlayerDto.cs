@@ -15,6 +15,27 @@ public sealed record UpdateTeamPlayerDto
     public required int TeamPlayerId { get; init; }
 
     /// <summary>
+    /// Gets the team name. Required, 1-200 characters, not whitespace only.
+    /// </summary>
+    [Required(ErrorMessage = "Team name is required.")]
+    [StringLength(200, MinimumLength = 1, ErrorMessage = "Team name must be between 1 and 200 characters.")]
+    public required string TeamName { get; init; }
+
+    /// <summary>
+    /// Gets the championship name. Required, 1-200 characters, not whitespace only.
+    /// </summary>
+    [Required(ErrorMessage = "Championship name is required.")]
+    [StringLength(200, MinimumLength = 1, ErrorMessage = "Championship name must be between 1 and 200 characters.")]
+    public required string ChampionshipName { get; init; }
+
+    /// <summary>
+    /// Gets the date when the player joined the team. Required.
+    /// Must not be more than 1 year in the future.
+    /// </summary>
+    [Required(ErrorMessage = "Joined date is required.")]
+    public required DateTime JoinedDate { get; init; }
+
+    /// <summary>
     /// Gets the date when the player left the team.
     /// Null indicates the player is still active on the team.
     /// If provided, must be after JoinedDate and not in the future.
