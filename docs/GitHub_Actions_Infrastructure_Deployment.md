@@ -41,11 +41,21 @@ az ad sp create-for-rbac --name $appName --role contributor --scopes /subscripti
 # Get the application ID
 $appId = az ad sp list --display-name $appName --query "[0].appId" -o tsv
 
+# Add User Access Administrator role (required for role assignments in Bicep)
+$spObjectId = az ad sp list --display-name $appName --query "[0].id" -o tsv
+az role assignment create --assignee-object-id $spObjectId --assignee-principal-type ServicePrincipal --role "User Access Administrator" --scope /subscriptions/$subscriptionId
+
 # Create federated credential for main branch
 az ad app federated-credential create --id $appId --parameters ('{\"name\":\"github-deploy-main\",\"issuer\":\"https://token.actions.githubusercontent.com\",\"subject\":\"repo:' + $githubOrg + '/' + $githubRepo + ':ref:refs/heads/main\",\"audiences\":[\"api://AzureADTokenExchange\"]}')
 
 # Create federated credential for pull requests (optional)
 az ad app federated-credential create --id $appId --parameters ('{\"name\":\"github-deploy-pr\",\"issuer\":\"https://token.actions.githubusercontent.com\",\"subject\":\"repo:' + $githubOrg + '/' + $githubRepo + ':pull_request\",\"audiences\":[\"api://AzureADTokenExchange\"]}')
+
+# Create federated credential for dev environment
+az ad app federated-credential create --id $appId --parameters ('{\"name\":\"github-deploy-env-dev\",\"issuer\":\"https://token.actions.githubusercontent.com\",\"subject\":\"repo:' + $githubOrg + '/' + $githubRepo + ':environment:dev\",\"audiences\":[\"api://AzureADTokenExchange\"]}')
+
+# Create federated credential for prod environment (optional)
+az ad app federated-credential create --id $appId --parameters ('{\"name\":\"github-deploy-env-prod\",\"issuer\":\"https://token.actions.githubusercontent.com\",\"subject\":\"repo:' + $githubOrg + '/' + $githubRepo + ':environment:prod\",\"audiences\":[\"api://AzureADTokenExchange\"]}')
 ```
 
 ### 2. Get SQL Admin Object ID
