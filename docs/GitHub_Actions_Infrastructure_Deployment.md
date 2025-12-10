@@ -19,7 +19,7 @@ GitHub Actions will use Federated Identity (OIDC) to authenticate with Azure wit
 
 ```powershell
 # Set variables
-$subscriptionId = "<your-subscription-id>"
+$subscriptionId = "1e06b317-efe8-4e37-9aa6-881b07bb52ad"
 $resourceGroup = "rg-ghcsampleps-dev"
 $appName = "ghcsampleps-github-deploy"
 $githubOrg = "ricardocovo"
@@ -42,24 +42,10 @@ az ad sp create-for-rbac --name $appName --role contributor --scopes /subscripti
 $appId = az ad sp list --display-name $appName --query "[0].appId" -o tsv
 
 # Create federated credential for main branch
-az ad app federated-credential create `
-  --id $appId `
-  --parameters '{
-    "name": "github-deploy-main",
-    "issuer": "https://token.actions.githubusercontent.com",
-    "subject": "repo:'"$githubOrg"'/'"$githubRepo"':ref:refs/heads/main",
-    "audiences": ["api://AzureADTokenExchange"]
-  }'
+az ad app federated-credential create --id $appId --parameters ('{\"name\":\"github-deploy-main\",\"issuer\":\"https://token.actions.githubusercontent.com\",\"subject\":\"repo:' + $githubOrg + '/' + $githubRepo + ':ref:refs/heads/main\",\"audiences\":[\"api://AzureADTokenExchange\"]}')
 
 # Create federated credential for pull requests (optional)
-az ad app federated-credential create `
-  --id $appId `
-  --parameters '{
-    "name": "github-deploy-pr",
-    "issuer": "https://token.actions.githubusercontent.com",
-    "subject": "repo:'"$githubOrg"'/'"$githubRepo"':pull_request",
-    "audiences": ["api://AzureADTokenExchange"]
-  }'
+az ad app federated-credential create --id $appId --parameters ('{\"name\":\"github-deploy-pr\",\"issuer\":\"https://token.actions.githubusercontent.com\",\"subject\":\"repo:' + $githubOrg + '/' + $githubRepo + ':pull_request\",\"audiences\":[\"api://AzureADTokenExchange\"]}')
 ```
 
 ### 2. Get SQL Admin Object ID
@@ -125,18 +111,21 @@ To manually deploy infrastructure:
 ## Workflow Stages
 
 ### 1. Validate Stage
+
 - Validates all Bicep templates
 - Checks for syntax errors
 - Verifies parameter values
 - Does not deploy any resources
 
 ### 2. Deploy Stage
+
 - Creates resource group if it doesn't exist
 - Deploys all infrastructure using Bicep
 - Outputs deployment information
 - Configures RBAC permissions
 
 ### 3. Verify Stage
+
 - Checks Container App provisioning state
 - Verifies SQL Server deployment
 - Displays deployment summary
@@ -158,12 +147,14 @@ After successful deployment, the following Azure resources will be created:
 
 ## Monitoring Deployment
 
-### View workflow progress:
+### View workflow progress
+
 1. Go to **Actions** tab
 2. Click on the running workflow
 3. Expand each job to see detailed logs
 
-### Check Azure deployment:
+### Check Azure deployment
+
 ```powershell
 # List all resources in the resource group
 az resource list --resource-group rg-ghcsampleps-dev --output table
@@ -200,7 +191,8 @@ az deployment group show \
   az provider register --namespace Microsoft.Storage
   ```
 
-### View detailed errors:
+### View detailed errors
+
 ```powershell
 # Get deployment error details
 az deployment group show \
@@ -256,5 +248,5 @@ az ad sp delete --id <client-id>
 For issues or questions:
 - Check workflow logs in GitHub Actions
 - Review Azure deployment logs
-- Consult Bicep documentation: https://learn.microsoft.com/azure/azure-resource-manager/bicep/
+- Consult Bicep documentation: <https://learn.microsoft.com/azure/azure-resource-manager/bicep/>
 - Open an issue in the repository
