@@ -150,7 +150,7 @@ module containerApp 'modules/containerapp.bicep' = {
     appName: containerAppName
     logAnalyticsCustomerId: logAnalyticsWorkspace.properties.customerId
     logAnalyticsSharedKey: logAnalyticsWorkspace.listKeys().primarySharedKey
-    containerImage: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+    containerImage: '${containerRegistry.outputs.loginServer}/${appName}-web:latest'
     registryServer: containerRegistry.outputs.loginServer
     sqlConnectionString: sql.outputs.connectionStringFormat
     entraIdTenantId: entraIdTenantId
