@@ -4,19 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy to'
+        description: "Environment to deploy to"
         required: true
         type: choice
         options:
           - dev
           - prod
         default: dev
-  push:
-    branches:
-      - main
-    paths:
-      - 'infra/**'
-      - '.github/workflows/deploy-infrastructure.yml'
 
 permissions:
   id-token: write
@@ -75,7 +69,7 @@ jobs:
       registryLoginServer: ${{ steps.deploy.outputs.registryLoginServer }}
       sqlServerFqdn: ${{ steps.deploy.outputs.sqlServerFqdn }}
       databaseName: ${{ steps.deploy.outputs.databaseName }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

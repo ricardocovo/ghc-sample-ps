@@ -15,12 +15,6 @@ on:
         description: "Docker image tag (e.g., v1.0.0, latest)"
         required: false
         default: "latest"
-  push:
-    branches:
-      - main
-    paths:
-      - "src/**"
-      - ".github/workflows/deploy-application.yml"
 
 permissions:
   id-token: write
