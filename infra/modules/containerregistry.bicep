@@ -28,22 +28,13 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' =
     environment: environment
   }
   sku: {
-    name: 'Standard'
+    name: 'Basic'
   }
   properties: {
     adminUserEnabled: false
     publicNetworkAccess: 'Enabled'
     // Note: Anonymous pull is disabled by default for Basic SKU
-    // and requires Premium SKU to enable
-    policies: {
-      retentionPolicy: {
-        status: 'disabled'
-      }
-      trustPolicy: {
-        status: 'enabled'
-        type: 'Notary'
-      }
-    }
+    // Trust policy and retention policy are only available in Standard/Premium SKUs
   }
 }
 
