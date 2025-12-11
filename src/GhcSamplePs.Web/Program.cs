@@ -24,7 +24,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Create a logger for early initialization logging (used in configuration callbacks)
 // Note: We don't dispose this factory as it's needed for retry callbacks during HTTP calls
-var earlyLoggerFactory = LoggerFactory.Create(config => 
+var earlyLoggerFactory = LoggerFactory.Create(config =>
 {
     config.AddConsole();
     config.SetMinimumLevel(LogLevel.Warning);
@@ -39,7 +39,7 @@ if (!builder.Environment.IsDevelopment())
 {
     var blobEndpoint = builder.Configuration["Storage:BlobEndpoint"];
     var vaultUri = builder.Configuration["KeyVault:VaultUri"];
-    
+
     if (!string.IsNullOrEmpty(blobEndpoint) && !string.IsNullOrEmpty(vaultUri))
     {
         builder.Services.AddDataProtection()
@@ -58,18 +58,18 @@ builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(options =>
     {
         builder.Configuration.GetSection("AzureAd").Bind(options);
-        
+
         // Enable token persistence for refresh token usage
         options.SaveTokens = true;
-        
+
         // Configure retry policy for token refresh operations (backchannel communication)
         // Uses exponential backoff with jitter for transient failures
         var retryPolicy = HttpPolicyExtensions
             .HandleTransientHttpError()
             .WaitAndRetryAsync(
                 retryCount: 3,
-                sleepDurationProvider: retryAttempt => 
-                    TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)) + 
+                sleepDurationProvider: retryAttempt =>
+                    TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)) +
                     TimeSpan.FromMilliseconds(Random.Shared.Next(0, 1000)),
                 onRetry: (outcome, timespan, retryAttempt, _) =>
                 {
@@ -92,41 +92,41 @@ builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                             outcome.Result?.StatusCode);
                     }
                 });
-        
+
         // Configure backchannel HTTP handler with retry policy for transient failures
         options.BackchannelHttpHandler = new PolicyHttpMessageHandler(retryPolicy)
         {
             InnerHandler = new HttpClientHandler()
         };
-        
+
         // Set reasonable timeout for backchannel operations
         options.BackchannelTimeout = TimeSpan.FromSeconds(30);
-        
+
         // Configure token refresh events for logging and error handling
         options.Events ??= new OpenIdConnectEvents();
-        
+
         var existingOnTokenValidated = options.Events.OnTokenValidated;
         options.Events.OnTokenValidated = async context =>
         {
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
                 .CreateLogger("TokenRefresh");
-            
+
             logger.LogInformation(
                 "Token validated successfully for user {UserId}",
                 context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "unknown");
-            
+
             if (existingOnTokenValidated is not null)
             {
                 await existingOnTokenValidated(context);
             }
         };
-        
+
         var existingOnAuthenticationFailed = options.Events.OnAuthenticationFailed;
         options.Events.OnAuthenticationFailed = async context =>
         {
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
                 .CreateLogger("TokenRefresh");
-            
+
             // Log token refresh failures with appropriate level based on exception type
             if (context.Exception is HttpRequestException)
             {
@@ -143,30 +143,30 @@ builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                     "Authentication failed: {ErrorMessage}",
                     context.Exception.Message);
             }
-            
+
             if (existingOnAuthenticationFailed is not null)
             {
                 await existingOnAuthenticationFailed(context);
             }
         };
-        
+
         var existingOnRemoteFailure = options.Events.OnRemoteFailure;
         options.Events.OnRemoteFailure = async context =>
         {
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
                 .CreateLogger("TokenRefresh");
-            
+
             // Handle token refresh failures gracefully
             logger.LogWarning(
                 context.Failure,
                 "Remote authentication failure: {Error}. User will be redirected to sign-in.",
                 context.Failure?.Message ?? "Unknown error");
-            
+
             // Handle the failure gracefully by redirecting to home page
             // This prevents the error from being displayed to the user
             context.Response.Redirect("/");
             context.HandleResponse();
-            
+
             if (existingOnRemoteFailure is not null)
             {
                 await existingOnRemoteFailure(context);
@@ -181,14 +181,14 @@ builder.Services.AddAuthorization(options =>
 {
     // Require authenticated user by default
     options.FallbackPolicy = options.DefaultPolicy;
-    
+
     // Define custom authorization policies
     options.AddPolicy("RequireAuthenticatedUser", policy =>
         policy.RequireAuthenticatedUser());
-    
+
     options.AddPolicy("RequireAdminRole", policy =>
         policy.RequireRole("Admin"));
-    
+
     options.AddPolicy("RequireUserRole", policy =>
         policy.RequireRole("User", "Admin"));
 });
@@ -255,7 +255,7 @@ builder.Services.AddResponseCompression(options =>
         "image/svg+xml"
     });
 });
-    
+
 // Configure compression levels
 builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
 {
@@ -298,7 +298,12 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// Only use HTTPS redirection in development
+// Azure Container Apps handles HTTPS at the ingress level
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 // Enable response compression
 app.UseResponseCompression();
