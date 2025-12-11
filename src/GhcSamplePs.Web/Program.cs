@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Http;
 using Polly;
 using Polly.Extensions.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -267,6 +268,16 @@ builder.Services.Configure<GzipCompressionProviderOptions>(options =>
     options.Level = CompressionLevel.Fastest;
 });
 
+// Configure forwarded headers for reverse proxy scenarios (Azure Container Apps, load balancers)
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Clear known networks and proxies to trust all proxies
+    // This is safe in Azure Container Apps as the ingress controller is trusted
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var app = builder.Build();
 
 // Apply database migrations automatically in development environment
@@ -291,6 +302,9 @@ if (app.Environment.IsDevelopment())
 }
 
 // Configure the HTTP request pipeline.
+// Use forwarded headers middleware FIRST to handle X-Forwarded-* headers from reverse proxies
+app.UseForwardedHeaders();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
