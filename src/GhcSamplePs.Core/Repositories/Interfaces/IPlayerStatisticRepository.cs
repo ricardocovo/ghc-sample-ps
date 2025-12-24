@@ -89,4 +89,13 @@ public interface IPlayerStatisticRepository
         int playerId,
         int? teamPlayerId = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves all player statistics for a specific user across all their players.
+    /// Includes navigation properties for TeamPlayer and Player.
+    /// </summary>
+    /// <param name="userId">The user identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of player statistics ordered by GameDate DESC.</returns>
+    Task<IReadOnlyList<PlayerStatistic>> GetAllByUserIdAsync(string userId, CancellationToken cancellationToken = default);
 }

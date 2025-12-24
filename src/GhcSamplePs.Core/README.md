@@ -4,7 +4,7 @@ Business Logic Layer - UI-Agnostic Class Library
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![EF Core](https://img.shields.io/badge/EF%20Core-10.0-512BD4)](https://docs.microsoft.com/ef/core/)
-[![Tests](https://img.shields.io/badge/tests-802%20passing-success)](../../tests/GhcSamplePs.Core.Tests/)
+[![Tests](https://img.shields.io/badge/tests-811%20passing-success)](../../tests/GhcSamplePs.Core.Tests/)
 
 ## Purpose
 
@@ -84,7 +84,9 @@ GhcSamplePs.Core/
 │           ├── CreatePlayerStatisticDto.cs
 │           ├── UpdatePlayerStatisticDto.cs
 │           ├── PlayerStatisticDto.cs
-│           └── PlayerStatisticAggregateResult.cs
+│           ├── PlayerStatisticAggregateResult.cs
+│           ├── RecentActivityDto.cs
+│           └── TopPerformerDto.cs
 │
 ├── Repositories/                # Data access layer
 │   ├── Interfaces/              # Repository contracts
@@ -189,6 +191,12 @@ GhcSamplePs.Core/
 - Aggregate calculations (totals and averages)
 - Date range queries
 - Team-specific statistics
+- **Recent activity retrieval** - Get last 10 games across all user's players
+- **Top performers ranking** - Get top 5 goal scorers with stats
+
+**Key Methods:**
+- `GetRecentActivityAsync(userId, count)` - Retrieves recent game statistics sorted by date
+- `GetTopPerformersAsync(userId, count)` - Retrieves top goal scorers with ranking
 
 **Validation Rules:**
 - GameDate: Required, cannot be in future

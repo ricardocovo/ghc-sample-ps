@@ -210,4 +210,52 @@ public interface IPlayerStatisticService
     Task<ValidationResult> ValidateStatisticAsync(
         CreatePlayerStatisticDto createDto,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves the most recent game statistics across all of a user's players.
+    /// </summary>
+    /// <param name="userId">The identifier of the user whose players' statistics to retrieve.</param>
+    /// <param name="count">The maximum number of recent games to retrieve. Defaults to 10.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A service result containing recent activity records sorted by game date descending.</returns>
+    /// <example>
+    /// <code>
+    /// var result = await statisticService.GetRecentActivityAsync("user-123", 10);
+    /// if (result.Success)
+    /// {
+    ///     foreach (var activity in result.Data!)
+    ///     {
+    ///         Console.WriteLine($"{activity.PlayerName} - {activity.TeamName}: {activity.Goals} goals on {activity.GameDate}");
+    ///     }
+    /// }
+    /// </code>
+    /// </example>
+    Task<ServiceResult<IReadOnlyList<RecentActivityDto>>> GetRecentActivityAsync(
+        string userId,
+        int count = 10,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves the top goal scorers across all of a user's players.
+    /// </summary>
+    /// <param name="userId">The identifier of the user whose players to rank.</param>
+    /// <param name="count">The maximum number of top performers to retrieve. Defaults to 5.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A service result containing top performers ranked by total goals, then by games played ascending.</returns>
+    /// <example>
+    /// <code>
+    /// var result = await statisticService.GetTopPerformersAsync("user-123", 5);
+    /// if (result.Success)
+    /// {
+    ///     foreach (var performer in result.Data!)
+    ///     {
+    ///         Console.WriteLine($"{performer.PlayerName}: {performer.TotalGoals} goals in {performer.GamesPlayed} games (avg: {performer.GoalsPerGame:F2})");
+    ///     }
+    /// }
+    /// </code>
+    /// </example>
+    Task<ServiceResult<IReadOnlyList<TopPerformerDto>>> GetTopPerformersAsync(
+        string userId,
+        int count = 5,
+        CancellationToken cancellationToken = default);
 }

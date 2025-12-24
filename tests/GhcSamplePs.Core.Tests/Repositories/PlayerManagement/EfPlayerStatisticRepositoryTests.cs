@@ -874,6 +874,136 @@ public class EfPlayerStatisticRepositoryTests : IDisposable
 
     #endregion
 
+    #region GetAllByUserIdAsync Tests
+
+    [Fact(DisplayName = "GetAllByUserIdAsync returns empty list when no statistics exist for user")]
+    public async Task GetAllByUserIdAsync_WhenNoStatisticsExist_ReturnsEmptyList()
+    {
+        var userId = Guid.NewGuid().ToString();
+
+        var result = await _repository.GetAllByUserIdAsync(userId);
+
+        Assert.NotNull(result);
+        Assert.Empty(result);
+    }
+
+    [Fact(DisplayName = "GetAllByUserIdAsync returns all statistics for user's players")]
+    public async Task GetAllByUserIdAsync_WhenStatisticsExist_ReturnsAllStatistics()
+    {
+        var userId = Guid.NewGuid().ToString();
+        var (player1, teamPlayer1) = await SeedPlayerWithTeamPlayerAsync("Team A", "Player 1", userId);
+        var (player2, teamPlayer2) = await SeedPlayerWithTeamPlayerAsync("Team B", "Player 2", userId);
+        
+        await SeedPlayerStatisticsAsync(teamPlayer1.TeamPlayerId, 2);
+        await SeedPlayerStatisticsAsync(teamPlayer2.TeamPlayerId, 3);
+
+        var result = await _repository.GetAllByUserIdAsync(userId);
+
+        Assert.Equal(5, result.Count);
+    }
+
+    [Fact(DisplayName = "GetAllByUserIdAsync returns statistics ordered by GameDate DESC")]
+    public async Task GetAllByUserIdAsync_WhenStatisticsExist_ReturnsOrderedByGameDateDesc()
+    {
+        var userId = Guid.NewGuid().ToString();
+        var (player, teamPlayer) = await SeedPlayerWithTeamPlayerAsync(userId: userId);
+        
+        _context.PlayerStatistics.AddRange(
+            CreatePlayerStatistic(teamPlayer.TeamPlayerId, new DateTime(2024, 1, 15)),
+            CreatePlayerStatistic(teamPlayer.TeamPlayerId, new DateTime(2024, 6, 15)),
+            CreatePlayerStatistic(teamPlayer.TeamPlayerId, new DateTime(2024, 3, 15)));
+        await _context.SaveChangesAsync();
+
+        var result = await _repository.GetAllByUserIdAsync(userId);
+
+        Assert.Equal(new DateTime(2024, 6, 15), result[0].GameDate);
+        Assert.Equal(new DateTime(2024, 3, 15), result[1].GameDate);
+        Assert.Equal(new DateTime(2024, 1, 15), result[2].GameDate);
+    }
+
+    [Fact(DisplayName = "GetAllByUserIdAsync includes TeamPlayer and Player navigation")]
+    public async Task GetAllByUserIdAsync_WhenStatisticsExist_IncludesNavigationProperties()
+    {
+        var userId = Guid.NewGuid().ToString();
+        var (player, teamPlayer) = await SeedPlayerWithTeamPlayerAsync(userId: userId);
+        await SeedPlayerStatisticsAsync(teamPlayer.TeamPlayerId, 1);
+
+        var result = await _repository.GetAllByUserIdAsync(userId);
+
+        Assert.NotNull(result[0].TeamPlayer);
+        Assert.NotNull(result[0].TeamPlayer.Player);
+        Assert.Equal(player.Name, result[0].TeamPlayer.Player.Name);
+        Assert.Equal(teamPlayer.TeamName, result[0].TeamPlayer.TeamName);
+    }
+
+    [Fact(DisplayName = "GetAllByUserIdAsync filters out other users' statistics")]
+    public async Task GetAllByUserIdAsync_WhenMultipleUsers_FiltersCorrectly()
+    {
+        var userId1 = Guid.NewGuid().ToString();
+        var userId2 = Guid.NewGuid().ToString();
+        
+        var (player1, teamPlayer1) = await SeedPlayerWithTeamPlayerAsync(userId: userId1);
+        var (player2, teamPlayer2) = await SeedPlayerWithTeamPlayerAsync(userId: userId2);
+        
+        await SeedPlayerStatisticsAsync(teamPlayer1.TeamPlayerId, 3);
+        await SeedPlayerStatisticsAsync(teamPlayer2.TeamPlayerId, 2);
+
+        var result = await _repository.GetAllByUserIdAsync(userId1);
+
+        Assert.Equal(3, result.Count);
+        Assert.All(result, s => Assert.Equal(userId1, s.TeamPlayer?.Player?.UserId));
+    }
+
+    [Fact(DisplayName = "GetAllByUserIdAsync respects cancellation token")]
+    public async Task GetAllByUserIdAsync_WhenCancelled_ThrowsOperationCanceledException()
+    {
+        var userId = Guid.NewGuid().ToString();
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => _repository.GetAllByUserIdAsync(userId, cts.Token));
+    }
+
+    [Fact(DisplayName = "GetAllByUserIdAsync throws when userId is null")]
+    public async Task GetAllByUserIdAsync_WhenUserIdIsNull_ThrowsArgumentNullException()
+    {
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            () => _repository.GetAllByUserIdAsync(null!));
+    }
+
+    [Fact(DisplayName = "GetAllByUserIdAsync handles null navigation properties gracefully")]
+    public async Task GetAllByUserIdAsync_WhenNavigationPropertiesNull_ReturnsEmptyList()
+    {
+        var userId = Guid.NewGuid().ToString();
+        
+        var result = await _repository.GetAllByUserIdAsync(userId);
+
+        Assert.NotNull(result);
+        Assert.Empty(result);
+    }
+
+    [Fact(DisplayName = "GetAllByUserIdAsync logs retrieval operation")]
+    public async Task GetAllByUserIdAsync_WhenCalled_LogsOperation()
+    {
+        var userId = Guid.NewGuid().ToString();
+        var (player, teamPlayer) = await SeedPlayerWithTeamPlayerAsync(userId: userId);
+        await SeedPlayerStatisticsAsync(teamPlayer.TeamPlayerId, 3);
+
+        await _repository.GetAllByUserIdAsync(userId);
+
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Retrieved 3 player statistics")),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static PlayerStatistic CreatePlayerStatistic(
@@ -910,11 +1040,12 @@ public class EfPlayerStatisticRepositoryTests : IDisposable
 
     private async Task<(Player player, TeamPlayer teamPlayer)> SeedPlayerWithTeamPlayerAsync(
         string teamName = "Test Team",
-        string playerName = "Test Player")
+        string playerName = "Test Player",
+        string? userId = null)
     {
         var player = new Player
         {
-            UserId = Guid.NewGuid().ToString(),
+            UserId = userId ?? Guid.NewGuid().ToString(),
             Name = playerName,
             DateOfBirth = new DateTime(2010, 1, 1),
             Gender = "Male",
