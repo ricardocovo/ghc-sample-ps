@@ -183,15 +183,19 @@
                                 @if (_activeTeamsList is not null && _activeTeamsList.Count > 0)
                                 {
                                     <MudList T="string" Dense="true">
-                                        @foreach (var team in _activeTeamsList)
+                                        @for (int i = 0; i < _activeTeamsList.Count; i++)
                                         {
+                                            var team = _activeTeamsList[i];
                                             <MudListItem>
                                                 <MudStack Spacing="0">
                                                     <MudText Typo="Typo.body2"><strong>@team.TeamName</strong></MudText>
                                                     <MudText Typo="Typo.caption" Color="Color.Secondary">@team.ChampionshipName</MudText>
                                                 </MudStack>
                                             </MudListItem>
-                                            <MudDivider />
+                                            @if (i < _activeTeamsList.Count - 1)
+                                            {
+                                                <MudDivider />
+                                            }
                                         }
                                     </MudList>
                                 }
