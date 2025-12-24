@@ -1,4 +1,10 @@
 ﻿@page "/"
+@using GhcSamplePs.Core.Services.Interfaces
+@using GhcSamplePs.Core.Models.PlayerManagement.DTOs
+@inject IPlayerService PlayerService
+@inject ITeamPlayerService TeamPlayerService
+@inject IPlayerStatisticService PlayerStatisticService
+@inject ICurrentUserProvider CurrentUserProvider
 
 <PageTitle>Home</PageTitle>
 
@@ -50,7 +56,145 @@
                     <MudText Typo="Typo.h6">Your Dashboard</MudText>
                 </MudStack>
 
+                @* Loading state *@
+                @if (_isLoading)
+                {
+                    <MudStack AlignItems="AlignItems.Center" Class="my-8">
+                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">Loading dashboard...</MudText>
+                    </MudStack>
+                }
+                @* Error state *@
+                else if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Class="mb-4">
+                        @_errorMessage
+                    </MudAlert>
+                }
+                @* Dashboard summary cards *@
+                else
+                {
+                    <MudGrid Spacing="3">
+                        @* Total Players Card *@
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Elevation="1" Class="pa-4 text-center">
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" Size="Size.Medium" />
+                                <MudText Typo="Typo.h4" Color="Color.Primary" Class="mt-2">@_totalPlayers</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Total Players</MudText>
+                            </MudPaper>
+                        </MudItem>
+
+                        @* Active Teams Card *@
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Elevation="1" Class="pa-4 text-center">
+                                <MudIcon Icon="@Icons.Material.Filled.Groups" Color="Color.Success" Size="Size.Medium" />
+                                <MudText Typo="Typo.h4" Color="Color.Success" Class="mt-2">@_activeTeams</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Active Teams</MudText>
+                            </MudPaper>
+                        </MudItem>
+
+                        @* Total Games Card *@
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Elevation="1" Class="pa-4 text-center">
+                                <MudIcon Icon="@Icons.Material.Filled.SportsSoccer" Color="Color.Info" Size="Size.Medium" />
+                                <MudText Typo="Typo.h4" Color="Color.Info" Class="mt-2">@_totalGames</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Games Played</MudText>
+                            </MudPaper>
+                        </MudItem>
+
+                        @* Total Goals Card *@
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Elevation="1" Class="pa-4 text-center">
+                                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Color="Color.Warning" Size="Size.Medium" />
+                                <MudText Typo="Typo.h4" Color="Color.Warning" Class="mt-2">@_totalGoals</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Total Goals</MudText>
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+                }
             </MudPaper>
         </Authorized>
     </AuthorizeView>
 </MudContainer>
+
+@code {
+    private bool _isLoading = true;
+    private string? _errorMessage;
+    private int _totalPlayers;
+    private int _activeTeams;
+    private int _totalGames;
+    private int _totalGoals;
+
+    private string CurrentUserId => CurrentUserProvider.GetCurrentUser()?.Identity?.Name ?? "system";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardDataAsync();
+    }
+
+    private async Task LoadDashboardDataAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+
+        try
+        {
+            var playersResult = await PlayerService.GetAllPlayersAsync();
+
+            if (!playersResult.Success || playersResult.Data is null)
+            {
+                _errorMessage = playersResult.ErrorMessages.FirstOrDefault() ?? "Unable to load dashboard data.";
+                return;
+            }
+
+            var players = playersResult.Data
+                .Where(p => string.Equals(p.UserId, CurrentUserId, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            _totalPlayers = players.Count;
+
+            if (_totalPlayers == 0)
+            {
+                _activeTeams = 0;
+                _totalGames = 0;
+                _totalGoals = 0;
+                return;
+            }
+
+            var activeTeamsSet = new HashSet<(string TeamName, string ChampionshipName)>();
+            var allGames = 0;
+            var allGoals = 0;
+
+            foreach (var player in players)
+            {
+                var teamsResult = await TeamPlayerService.GetActiveTeamsByPlayerIdAsync(player.Id);
+                if (teamsResult.Success && teamsResult.Data is not null)
+                {
+                    foreach (var team in teamsResult.Data)
+                    {
+                        activeTeamsSet.Add((team.TeamName, team.ChampionshipName));
+                    }
+                }
+
+                var statsResult = await PlayerStatisticService.GetStatisticsByPlayerIdAsync(player.Id);
+                if (statsResult.Success && statsResult.Data is not null)
+                {
+                    allGames += statsResult.Data.Count;
+                    allGoals += statsResult.Data.Sum(s => s.Goals);
+                }
+            }
+
+            _activeTeams = activeTeamsSet.Count;
+            _totalGames = allGames;
+            _totalGoals = allGoals;
+        }
+        catch (Exception)
+        {
+            _errorMessage = "An unexpected error occurred while loading dashboard data.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}
