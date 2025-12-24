@@ -282,7 +282,7 @@ public sealed class PlayerService : IPlayerService
                     "You do not have permission to upload a picture for this player.");
             }
 
-            if (player.HasPicture() && !string.IsNullOrWhiteSpace(player.PhotoUrl))
+            if (player.HasPicture())
             {
                 var blobNameToDelete = ExtractBlobNameFromUrl(player.PhotoUrl);
                 if (!string.IsNullOrWhiteSpace(blobNameToDelete))
