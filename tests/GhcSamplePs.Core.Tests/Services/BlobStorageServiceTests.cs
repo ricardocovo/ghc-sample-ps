@@ -70,11 +70,11 @@ public sealed class BlobStorageServiceTests
     }
 
     [Fact]
-    public void GeneratePlayerBlobName_NullExtension_ThrowsArgumentException()
+    public void GeneratePlayerBlobName_NullExtension_ThrowsArgumentNullException()
     {
         var service = new BlobStorageService(_loggerMock.Object, _configurationMock.Object);
 
-        Assert.Throws<ArgumentException>(() =>
+        Assert.Throws<ArgumentNullException>(() =>
             service.GeneratePlayerBlobName(123, null!));
     }
 
@@ -199,11 +199,11 @@ public sealed class BlobStorageServiceTests
     }
 
     [Fact]
-    public async Task GetPictureUrlWithSasAsync_NullBlobName_ThrowsArgumentException()
+    public async Task GetPictureUrlWithSasAsync_NullBlobName_ThrowsArgumentNullException()
     {
         var service = new BlobStorageService(_loggerMock.Object, _configurationMock.Object);
 
-        await Assert.ThrowsAsync<ArgumentException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             service.GetPictureUrlWithSasAsync(null!));
     }
 
