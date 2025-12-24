@@ -498,4 +498,41 @@ public sealed class EfPlayerStatisticRepository : IPlayerStatisticRepository
                 innerException: ex);
         }
     }
+
+    /// <inheritdoc />
+    /// <exception cref="RepositoryException">Thrown when a database error occurs.</exception>
+    public async Task<IReadOnlyList<PlayerStatistic>> GetAllByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(userId);
+
+        _logger.LogDebug("Retrieving all player statistics for user ID {UserId}", userId);
+
+        try
+        {
+            var statistics = await _context.PlayerStatistics
+                .AsNoTracking()
+                .Include(ps => ps.TeamPlayer)
+                    .ThenInclude(tp => tp!.Player)
+                .Where(ps => ps.TeamPlayer != null && ps.TeamPlayer.Player != null && ps.TeamPlayer.Player.UserId == userId)
+                .OrderByDescending(ps => ps.GameDate)
+                .ToListAsync(cancellationToken);
+
+            _logger.LogInformation("Retrieved {Count} player statistics for user ID {UserId}", statistics.Count, userId);
+            return statistics;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("GetAllByUserIdAsync operation was cancelled for user ID {UserId}", userId);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving player statistics for user ID {UserId}", userId);
+            throw new RepositoryException(
+                $"Failed to retrieve player statistics for user ID {userId}.",
+                nameof(GetAllByUserIdAsync),
+                nameof(PlayerStatistic),
+                innerException: ex);
+        }
+    }
 }

@@ -700,4 +700,429 @@ public class PlayerStatisticServiceTests
         Assert.False(result.Success);
         Assert.Contains("Unable to delete", result.ErrorMessages.First());
     }
+
+    [Fact(DisplayName = "GetRecentActivityAsync returns recent games sorted by date")]
+    public async Task GetRecentActivityAsync_WhenCalled_ReturnsRecentGamesSortedByDate()
+    {
+        var userId = "user-123";
+        var player1 = new Player
+        {
+            Id = 1,
+            UserId = userId,
+            Name = "John Doe",
+            DateOfBirth = new DateTime(2010, 1, 1),
+            CreatedBy = "system"
+        };
+
+        var teamPlayer1 = new TeamPlayer
+        {
+            TeamPlayerId = 1,
+            PlayerId = 1,
+            TeamName = "Team Alpha",
+            ChampionshipName = "Championship 2024",
+            JoinedDate = new DateTime(2024, 1, 1),
+            CreatedBy = "system",
+            Player = player1
+        };
+
+        var statistics = new List<PlayerStatistic>
+        {
+            new PlayerStatistic
+            {
+                PlayerStatisticId = 3,
+                TeamPlayerId = 1,
+                GameDate = new DateTime(2024, 3, 29, 0, 0, 0, DateTimeKind.Utc),
+                MinutesPlayed = 90,
+                IsStarter = true,
+                JerseyNumber = 10,
+                Goals = 1,
+                Assists = 2,
+                CreatedBy = "test-user",
+                TeamPlayer = teamPlayer1
+            },
+            new PlayerStatistic
+            {
+                PlayerStatisticId = 2,
+                TeamPlayerId = 1,
+                GameDate = new DateTime(2024, 3, 22, 0, 0, 0, DateTimeKind.Utc),
+                MinutesPlayed = 45,
+                IsStarter = false,
+                JerseyNumber = 10,
+                Goals = 2,
+                Assists = 1,
+                CreatedBy = "test-user",
+                TeamPlayer = teamPlayer1
+            },
+            new PlayerStatistic
+            {
+                PlayerStatisticId = 1,
+                TeamPlayerId = 1,
+                GameDate = new DateTime(2024, 3, 15, 0, 0, 0, DateTimeKind.Utc),
+                MinutesPlayed = 60,
+                IsStarter = true,
+                JerseyNumber = 10,
+                Goals = 0,
+                Assists = 3,
+                CreatedBy = "test-user",
+                TeamPlayer = teamPlayer1
+            }
+        };
+
+        _mockStatisticRepository.Setup(r => r.GetAllByUserIdAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(statistics);
+
+        var result = await _service.GetRecentActivityAsync(userId, 10);
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Data);
+        Assert.Equal(3, result.Data.Count);
+        Assert.Equal("John Doe", result.Data[0].PlayerName);
+        Assert.Equal("Team Alpha", result.Data[0].TeamName);
+        Assert.Equal(new DateTime(2024, 3, 29, 0, 0, 0, DateTimeKind.Utc), result.Data[0].GameDate);
+    }
+
+    [Fact(DisplayName = "GetRecentActivityAsync with count limits results")]
+    public async Task GetRecentActivityAsync_WithCount_LimitsResults()
+    {
+        var userId = "user-123";
+        var player1 = new Player
+        {
+            Id = 1,
+            UserId = userId,
+            Name = "John Doe",
+            DateOfBirth = new DateTime(2010, 1, 1),
+            CreatedBy = "system"
+        };
+
+        var teamPlayer1 = new TeamPlayer
+        {
+            TeamPlayerId = 1,
+            PlayerId = 1,
+            TeamName = "Team Alpha",
+            ChampionshipName = "Championship 2024",
+            JoinedDate = new DateTime(2024, 1, 1),
+            CreatedBy = "system",
+            Player = player1
+        };
+
+        var statistics = Enumerable.Range(1, 15).Select(i => new PlayerStatistic
+        {
+            PlayerStatisticId = i,
+            TeamPlayerId = 1,
+            GameDate = new DateTime(2024, 1, i, 0, 0, 0, DateTimeKind.Utc),
+            MinutesPlayed = 90,
+            IsStarter = true,
+            JerseyNumber = 10,
+            Goals = i % 3,
+            Assists = i % 2,
+            CreatedBy = "test-user",
+            TeamPlayer = teamPlayer1
+        }).ToList();
+
+        _mockStatisticRepository.Setup(r => r.GetAllByUserIdAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(statistics);
+
+        var result = await _service.GetRecentActivityAsync(userId, 5);
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Data);
+        Assert.Equal(5, result.Data.Count);
+    }
+
+    [Fact(DisplayName = "GetRecentActivityAsync with zero count returns error")]
+    public async Task GetRecentActivityAsync_WithZeroCount_ReturnsError()
+    {
+        var userId = "user-123";
+
+        var result = await _service.GetRecentActivityAsync(userId, 0);
+
+        Assert.False(result.Success);
+        Assert.Contains("greater than zero", result.ErrorMessages.First());
+    }
+
+    [Fact(DisplayName = "GetRecentActivityAsync throws when userId is null")]
+    public async Task GetRecentActivityAsync_WhenUserIdNull_ThrowsArgumentNullException()
+    {
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            _service.GetRecentActivityAsync(null!));
+    }
+
+    [Fact(DisplayName = "GetTopPerformersAsync returns top scorers ranked by goals")]
+    public async Task GetTopPerformersAsync_WhenCalled_ReturnsTopScorersRankedByGoals()
+    {
+        var userId = "user-123";
+        var player1 = new Player
+        {
+            Id = 1,
+            UserId = userId,
+            Name = "John Doe",
+            DateOfBirth = new DateTime(2010, 1, 1),
+            CreatedBy = "system"
+        };
+
+        var player2 = new Player
+        {
+            Id = 2,
+            UserId = userId,
+            Name = "Jane Smith",
+            DateOfBirth = new DateTime(2011, 2, 1),
+            CreatedBy = "system"
+        };
+
+        var teamPlayer1 = new TeamPlayer
+        {
+            TeamPlayerId = 1,
+            PlayerId = 1,
+            TeamName = "Team Alpha",
+            ChampionshipName = "Championship 2024",
+            JoinedDate = new DateTime(2024, 1, 1),
+            CreatedBy = "system",
+            Player = player1
+        };
+
+        var teamPlayer2 = new TeamPlayer
+        {
+            TeamPlayerId = 2,
+            PlayerId = 2,
+            TeamName = "Team Beta",
+            ChampionshipName = "Championship 2024",
+            JoinedDate = new DateTime(2024, 1, 1),
+            CreatedBy = "system",
+            Player = player2
+        };
+
+        var statistics = new List<PlayerStatistic>
+        {
+            new PlayerStatistic
+            {
+                PlayerStatisticId = 1,
+                TeamPlayerId = 1,
+                GameDate = new DateTime(2024, 3, 15, 0, 0, 0, DateTimeKind.Utc),
+                MinutesPlayed = 90,
+                IsStarter = true,
+                JerseyNumber = 10,
+                Goals = 3,
+                Assists = 1,
+                CreatedBy = "test-user",
+                TeamPlayer = teamPlayer1
+            },
+            new PlayerStatistic
+            {
+                PlayerStatisticId = 2,
+                TeamPlayerId = 1,
+                GameDate = new DateTime(2024, 3, 22, 0, 0, 0, DateTimeKind.Utc),
+                MinutesPlayed = 90,
+                IsStarter = true,
+                JerseyNumber = 10,
+                Goals = 2,
+                Assists = 2,
+                CreatedBy = "test-user",
+                TeamPlayer = teamPlayer1
+            },
+            new PlayerStatistic
+            {
+                PlayerStatisticId = 3,
+                TeamPlayerId = 2,
+                GameDate = new DateTime(2024, 3, 15, 0, 0, 0, DateTimeKind.Utc),
+                MinutesPlayed = 90,
+                IsStarter = true,
+                JerseyNumber = 9,
+                Goals = 1,
+                Assists = 3,
+                CreatedBy = "test-user",
+                TeamPlayer = teamPlayer2
+            }
+        };
+
+        _mockStatisticRepository.Setup(r => r.GetAllByUserIdAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(statistics);
+
+        var result = await _service.GetTopPerformersAsync(userId, 5);
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Data);
+        Assert.Equal(2, result.Data.Count);
+        Assert.Equal("John Doe", result.Data[0].PlayerName);
+        Assert.Equal(5, result.Data[0].TotalGoals);
+        Assert.Equal(2, result.Data[0].GamesPlayed);
+        Assert.Equal(2.5m, result.Data[0].GoalsPerGame);
+        Assert.Equal("Jane Smith", result.Data[1].PlayerName);
+        Assert.Equal(1, result.Data[1].TotalGoals);
+    }
+
+    [Fact(DisplayName = "GetTopPerformersAsync with ties ranks by games played")]
+    public async Task GetTopPerformersAsync_WithTies_RanksByGamesPlayed()
+    {
+        var userId = "user-123";
+        var player1 = new Player
+        {
+            Id = 1,
+            UserId = userId,
+            Name = "John Doe",
+            DateOfBirth = new DateTime(2010, 1, 1),
+            CreatedBy = "system"
+        };
+
+        var player2 = new Player
+        {
+            Id = 2,
+            UserId = userId,
+            Name = "Jane Smith",
+            DateOfBirth = new DateTime(2011, 2, 1),
+            CreatedBy = "system"
+        };
+
+        var teamPlayer1 = new TeamPlayer
+        {
+            TeamPlayerId = 1,
+            PlayerId = 1,
+            TeamName = "Team Alpha",
+            ChampionshipName = "Championship 2024",
+            JoinedDate = new DateTime(2024, 1, 1),
+            CreatedBy = "system",
+            Player = player1
+        };
+
+        var teamPlayer2 = new TeamPlayer
+        {
+            TeamPlayerId = 2,
+            PlayerId = 2,
+            TeamName = "Team Beta",
+            ChampionshipName = "Championship 2024",
+            JoinedDate = new DateTime(2024, 1, 1),
+            CreatedBy = "system",
+            Player = player2
+        };
+
+        var statistics = new List<PlayerStatistic>
+        {
+            new PlayerStatistic
+            {
+                PlayerStatisticId = 1,
+                TeamPlayerId = 1,
+                GameDate = new DateTime(2024, 3, 15, 0, 0, 0, DateTimeKind.Utc),
+                MinutesPlayed = 90,
+                IsStarter = true,
+                JerseyNumber = 10,
+                Goals = 2,
+                Assists = 0,
+                CreatedBy = "test-user",
+                TeamPlayer = teamPlayer1
+            },
+            new PlayerStatistic
+            {
+                PlayerStatisticId = 2,
+                TeamPlayerId = 1,
+                GameDate = new DateTime(2024, 3, 22, 0, 0, 0, DateTimeKind.Utc),
+                MinutesPlayed = 90,
+                IsStarter = true,
+                JerseyNumber = 10,
+                Goals = 3,
+                Assists = 0,
+                CreatedBy = "test-user",
+                TeamPlayer = teamPlayer1
+            },
+            new PlayerStatistic
+            {
+                PlayerStatisticId = 3,
+                TeamPlayerId = 2,
+                GameDate = new DateTime(2024, 3, 15, 0, 0, 0, DateTimeKind.Utc),
+                MinutesPlayed = 90,
+                IsStarter = true,
+                JerseyNumber = 9,
+                Goals = 5,
+                Assists = 0,
+                CreatedBy = "test-user",
+                TeamPlayer = teamPlayer2
+            }
+        };
+
+        _mockStatisticRepository.Setup(r => r.GetAllByUserIdAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(statistics);
+
+        var result = await _service.GetTopPerformersAsync(userId, 5);
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Data);
+        Assert.Equal(2, result.Data.Count);
+        Assert.Equal("Jane Smith", result.Data[0].PlayerName);
+        Assert.Equal(5, result.Data[0].TotalGoals);
+        Assert.Equal(1, result.Data[0].GamesPlayed);
+        Assert.Equal("John Doe", result.Data[1].PlayerName);
+        Assert.Equal(5, result.Data[1].TotalGoals);
+        Assert.Equal(2, result.Data[1].GamesPlayed);
+    }
+
+    [Fact(DisplayName = "GetTopPerformersAsync with count limits results")]
+    public async Task GetTopPerformersAsync_WithCount_LimitsResults()
+    {
+        var userId = "user-123";
+        var statistics = new List<PlayerStatistic>();
+
+        for (int i = 1; i <= 10; i++)
+        {
+            var player = new Player
+            {
+                Id = i,
+                UserId = userId,
+                Name = $"Player {i}",
+                DateOfBirth = new DateTime(2010, 1, 1),
+                CreatedBy = "system"
+            };
+
+            var teamPlayer = new TeamPlayer
+            {
+                TeamPlayerId = i,
+                PlayerId = i,
+                TeamName = "Team Alpha",
+                ChampionshipName = "Championship 2024",
+                JoinedDate = new DateTime(2024, 1, 1),
+                CreatedBy = "system",
+                Player = player
+            };
+
+            statistics.Add(new PlayerStatistic
+            {
+                PlayerStatisticId = i,
+                TeamPlayerId = i,
+                GameDate = new DateTime(2024, 3, 15, 0, 0, 0, DateTimeKind.Utc),
+                MinutesPlayed = 90,
+                IsStarter = true,
+                JerseyNumber = 10,
+                Goals = 11 - i,
+                Assists = 0,
+                CreatedBy = "test-user",
+                TeamPlayer = teamPlayer
+            });
+        }
+
+        _mockStatisticRepository.Setup(r => r.GetAllByUserIdAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(statistics);
+
+        var result = await _service.GetTopPerformersAsync(userId, 3);
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Data);
+        Assert.Equal(3, result.Data.Count);
+        Assert.Equal("Player 1", result.Data[0].PlayerName);
+        Assert.Equal(10, result.Data[0].TotalGoals);
+    }
+
+    [Fact(DisplayName = "GetTopPerformersAsync with zero count returns error")]
+    public async Task GetTopPerformersAsync_WithZeroCount_ReturnsError()
+    {
+        var userId = "user-123";
+
+        var result = await _service.GetTopPerformersAsync(userId, 0);
+
+        Assert.False(result.Success);
+        Assert.Contains("greater than zero", result.ErrorMessages.First());
+    }
+
+    [Fact(DisplayName = "GetTopPerformersAsync throws when userId is null")]
+    public async Task GetTopPerformersAsync_WhenUserIdNull_ThrowsArgumentNullException()
+    {
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            _service.GetTopPerformersAsync(null!));
+    }
 }
