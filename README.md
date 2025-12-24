@@ -161,7 +161,12 @@ GhcSamplePs.Web → GhcSamplePs.Core
 ### 1. Player Management
 
 - Create and manage player profiles with personal information
-- Upload player photos (future: Azure Blob Storage integration)
+- Upload and manage player pictures
+  - Support for JPEG, PNG, GIF, and WebP formats
+  - 5 MB maximum file size
+  - Secure storage in Azure Blob Storage
+  - Delete and re-upload capabilities
+  - Immediate preview after upload
 - Track player demographics (name, date of birth, gender)
 - View complete player history across all teams and seasons
 
