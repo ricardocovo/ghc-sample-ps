@@ -213,6 +213,25 @@
                         </MudItem>
                     </MudGrid>
 
+                    @* Quick Actions Section *@
+                    <MudPaper Elevation="2" Class="pa-4 mt-4">
+                        <MudText Typo="Typo.h6" Class="mb-3">Quick Actions</MudText>
+                        <MudStack Row="true" Spacing="2">
+                            <MudButton Variant="Variant.Filled" 
+                                       Color="Color.Primary" 
+                                       Href="/players"
+                                       StartIcon="@Icons.Material.Filled.People">
+                                View All Players
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" 
+                                       Color="Color.Primary" 
+                                       Href="/players/create"
+                                       StartIcon="@Icons.Material.Filled.PersonAdd">
+                                Add New Player
+                            </MudButton>
+                        </MudStack>
+                    </MudPaper>
+
                     @* Top Performers Section *@
                     @if (_topPerformers is not null && _topPerformers.Count > 0)
                     {
