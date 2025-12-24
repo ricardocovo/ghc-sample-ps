@@ -111,6 +111,99 @@
                             </MudPaper>
                         </MudItem>
                     </MudGrid>
+
+                    @* Recent Activity Section *@
+                    @if (_recentActivities is not null && _recentActivities.Count > 0)
+                    {
+                        <MudPaper Elevation="2" Class="pa-4 mt-4">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                                <MudIcon Icon="@Icons.Material.Filled.History" Color="Color.Primary" />
+                                <MudText Typo="Typo.h6">Recent Games</MudText>
+                            </MudStack>
+                            <MudTable Items="@_recentActivities" Hover="true" Dense="true" Striped="true">
+                                <HeaderContent>
+                                    <MudTh>Date</MudTh>
+                                    <MudTh>Player</MudTh>
+                                    <MudTh>Team</MudTh>
+                                    <MudTh>Championship</MudTh>
+                                    <MudTh>Goals</MudTh>
+                                    <MudTh>Assists</MudTh>
+                                    <MudTh>Minutes</MudTh>
+                                </HeaderContent>
+                                <RowTemplate Context="activity">
+                                    <MudTd DataLabel="Date">@activity.GameDate.ToString("MM/dd/yyyy")</MudTd>
+                                    <MudTd DataLabel="Player">@activity.PlayerName</MudTd>
+                                    <MudTd DataLabel="Team">@activity.TeamName</MudTd>
+                                    <MudTd DataLabel="Championship">@activity.ChampionshipName</MudTd>
+                                    <MudTd DataLabel="Goals">
+                                        @if (activity.Goals > 0)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Success">@activity.Goals</MudChip>
+                                        }
+                                        else
+                                        {
+                                            <MudText>0</MudText>
+                                        }
+                                    </MudTd>
+                                    <MudTd DataLabel="Assists">
+                                        @if (activity.Assists > 0)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Info">@activity.Assists</MudChip>
+                                        }
+                                        else
+                                        {
+                                            <MudText>0</MudText>
+                                        }
+                                    </MudTd>
+                                    <MudTd DataLabel="Minutes">@activity.MinutesPlayed'</MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        </MudPaper>
+                    }
+
+                    @* Top Performers Section *@
+                    @if (_topPerformers is not null && _topPerformers.Count > 0)
+                    {
+                        <MudPaper Elevation="2" Class="pa-4 mt-4">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                                <MudIcon Icon="@Icons.Material.Filled.Stars" Color="Color.Warning" />
+                                <MudText Typo="Typo.h6">Top Performers</MudText>
+                            </MudStack>
+                            <MudSimpleTable Hover="true" Dense="true" Striped="true">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Player</th>
+                                        <th>Total Goals</th>
+                                        <th>Games Played</th>
+                                        <th>Goals/Game</th>
+                                        <th>Total Assists</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < _topPerformers.Count; i++)
+                                    {
+                                        var rank = i + 1;
+                                        var performer = _topPerformers[i];
+                                        <tr>
+                                            <td>
+                                                <MudChip T="string" Size="Size.Small" Color="@GetRankColor(rank)">
+                                                    #@rank
+                                                </MudChip>
+                                            </td>
+                                            <td>@performer.PlayerName</td>
+                                            <td>
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Success">@performer.TotalGoals</MudChip>
+                                            </td>
+                                            <td>@performer.GamesPlayed</td>
+                                            <td>@performer.GoalsPerGame.ToString("F2")</td>
+                                            <td>@performer.TotalAssists</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                        </MudPaper>
+                    }
                 }
             </MudPaper>
         </Authorized>
@@ -124,6 +217,8 @@
     private int _activeTeams;
     private int _totalGames;
     private int _totalGoals;
+    private IReadOnlyList<RecentActivityDto>? _recentActivities;
+    private IReadOnlyList<TopPerformerDto>? _topPerformers;
 
     private string CurrentUserId => CurrentUserProvider.GetCurrentUser()?.Identity?.Name ?? "system";
 
@@ -158,6 +253,8 @@
                 _activeTeams = 0;
                 _totalGames = 0;
                 _totalGoals = 0;
+                _recentActivities = null;
+                _topPerformers = null;
                 return;
             }
 
@@ -187,6 +284,18 @@
             _activeTeams = activeTeamsSet.Count;
             _totalGames = allGames;
             _totalGoals = allGoals;
+
+            var recentActivityResult = await PlayerStatisticService.GetRecentActivityAsync(CurrentUserId, 10);
+            if (recentActivityResult.Success && recentActivityResult.Data is not null)
+            {
+                _recentActivities = recentActivityResult.Data;
+            }
+
+            var topPerformersResult = await PlayerStatisticService.GetTopPerformersAsync(CurrentUserId, 5);
+            if (topPerformersResult.Success && topPerformersResult.Data is not null)
+            {
+                _topPerformers = topPerformersResult.Data;
+            }
         }
         catch (Exception)
         {
@@ -196,5 +305,16 @@
         {
             _isLoading = false;
         }
+    }
+
+    private Color GetRankColor(int rank)
+    {
+        return rank switch
+        {
+            1 => Color.Warning,
+            2 => Color.Default,
+            3 => Color.Tertiary,
+            _ => Color.Default
+        };
     }
 }
