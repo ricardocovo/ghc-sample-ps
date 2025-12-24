@@ -291,7 +291,21 @@ public sealed class PlayerService : IPlayerService
                         "Deleting existing picture {BlobName} for player {PlayerId}",
                         blobNameToDelete, uploadDto.PlayerId);
 
-                    await _blobStorageService.DeletePlayerPictureAsync(blobNameToDelete, cancellationToken);
+                    try
+                    {
+                        await _blobStorageService.DeletePlayerPictureAsync(blobNameToDelete, cancellationToken);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        // Log deletion failure but continue with the upload to avoid breaking the user operation.
+                        // This may leave an orphaned blob in storage, which should be handled by separate cleanup.
+                        _logger.LogWarning(
+                            ex,
+                            "Failed to delete existing picture {BlobName} for player {PlayerId}. " +
+                            "Proceeding with new picture upload; an orphaned blob may remain.",
+                            blobNameToDelete,
+                            uploadDto.PlayerId);
+                    }
                 }
             }
 
