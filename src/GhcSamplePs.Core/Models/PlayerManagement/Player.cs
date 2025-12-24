@@ -33,10 +33,10 @@ public sealed class Player
     public string? Gender { get; init; }
 
     /// <summary>
-    /// Gets the URL to the player's photo. Maximum 500 characters.
+    /// Gets or sets the URL to the player's photo. Maximum 500 characters.
     /// Must be a valid URL format when provided.
     /// </summary>
-    public string? PhotoUrl { get; init; }
+    public string? PhotoUrl { get; set; }
 
     /// <summary>
     /// Gets the UTC timestamp when the player was created.
@@ -198,4 +198,10 @@ public sealed class Player
         UpdatedAt = DateTime.UtcNow;
         UpdatedBy = userId;
     }
+
+    /// <summary>
+    /// Checks if the player has a photo URL set.
+    /// </summary>
+    /// <returns>True if PhotoUrl is not null or empty; otherwise, false.</returns>
+    public bool HasPicture() => !string.IsNullOrWhiteSpace(PhotoUrl);
 }

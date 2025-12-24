@@ -138,4 +138,54 @@ public interface IPlayerService
     /// </code>
     /// </example>
     Task<ValidationResult> ValidatePlayerAsync(CreatePlayerDto createDto, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Uploads a picture for a player and updates the player record.
+    /// </summary>
+    /// <param name="uploadDto">The upload DTO containing picture data and metadata.</param>
+    /// <param name="currentUserId">The identifier of the user performing the upload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A service result containing the upload result DTO with picture URL or error details.</returns>
+    /// <example>
+    /// <code>
+    /// var uploadDto = new UploadPlayerPictureDto
+    /// {
+    ///     PlayerId = 1,
+    ///     FileContent = imageBytes,
+    ///     FileName = "player-photo.jpg",
+    ///     ContentType = "image/jpeg",
+    ///     FileSizeBytes = imageBytes.Length
+    /// };
+    /// var result = await playerService.UploadPlayerPictureAsync(uploadDto, "user-123");
+    /// if (result.Success)
+    /// {
+    ///     Console.WriteLine($"Picture uploaded: {result.Data!.PictureUrl}");
+    /// }
+    /// </code>
+    /// </example>
+    Task<ServiceResult<UploadPlayerPictureResultDto>> UploadPlayerPictureAsync(
+        UploadPlayerPictureDto uploadDto,
+        string currentUserId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes a player's picture from storage and updates the player record.
+    /// </summary>
+    /// <param name="playerId">The unique identifier of the player.</param>
+    /// <param name="currentUserId">The identifier of the user performing the deletion.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A service result indicating success or failure.</returns>
+    /// <example>
+    /// <code>
+    /// var result = await playerService.DeletePlayerPictureAsync(1, "user-123");
+    /// if (result.Success)
+    /// {
+    ///     Console.WriteLine("Picture deleted successfully");
+    /// }
+    /// </code>
+    /// </example>
+    Task<ServiceResult<bool>> DeletePlayerPictureAsync(
+        int playerId,
+        string currentUserId,
+        CancellationToken cancellationToken = default);
 }
