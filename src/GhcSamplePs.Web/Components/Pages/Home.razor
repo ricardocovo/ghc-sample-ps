@@ -112,54 +112,106 @@
                         </MudItem>
                     </MudGrid>
 
-                    @* Recent Activity Section *@
-                    @if (_recentActivities is not null && _recentActivities.Count > 0)
-                    {
-                        <MudPaper Elevation="2" Class="pa-4 mt-4">
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
-                                <MudIcon Icon="@Icons.Material.Filled.History" Color="Color.Primary" />
-                                <MudText Typo="Typo.h6">Recent Games</MudText>
-                            </MudStack>
-                            <MudTable Items="@_recentActivities" Hover="true" Dense="true" Striped="true">
-                                <HeaderContent>
-                                    <MudTh>Date</MudTh>
-                                    <MudTh>Player</MudTh>
-                                    <MudTh>Team</MudTh>
-                                    <MudTh>Championship</MudTh>
-                                    <MudTh>Goals</MudTh>
-                                    <MudTh>Assists</MudTh>
-                                    <MudTh>Minutes</MudTh>
-                                </HeaderContent>
-                                <RowTemplate Context="activity">
-                                    <MudTd DataLabel="Date">@activity.GameDate.ToString("MM/dd/yyyy")</MudTd>
-                                    <MudTd DataLabel="Player">@activity.PlayerName</MudTd>
-                                    <MudTd DataLabel="Team">@activity.TeamName</MudTd>
-                                    <MudTd DataLabel="Championship">@activity.ChampionshipName</MudTd>
-                                    <MudTd DataLabel="Goals">
-                                        @if (activity.Goals > 0)
+                    @* Recent Activity and Active Teams - Side by Side Panels *@
+                    <MudGrid Class="mt-4" Spacing="3">
+                        @* Left Panel - Recent Activity *@
+                        <MudItem xs="12" md="6">
+                            <MudPaper Elevation="2" Class="pa-4" Style="height: 100%;">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                                    <MudIcon Icon="@Icons.Material.Filled.History" Color="Color.Primary" />
+                                    <MudText Typo="Typo.h6">Recent Activity</MudText>
+                                </MudStack>
+
+                                @if (_recentActivities is not null && _recentActivities.Count > 0)
+                                {
+                                    <MudTable Items="@_recentActivities" Hover="true" Dense="true" Striped="true">
+                                        <HeaderContent>
+                                            <MudTh>Player / Team</MudTh>
+                                            <MudTh>Date</MudTh>
+                                            <MudTh>Stats</MudTh>
+                                        </HeaderContent>
+                                        <RowTemplate Context="activity">
+                                            <MudTd DataLabel="Player / Team">
+                                                <MudStack Spacing="0">
+                                                    <MudText Typo="Typo.body2"><strong>@activity.PlayerName</strong></MudText>
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@activity.TeamName</MudText>
+                                                </MudStack>
+                                            </MudTd>
+                                            <MudTd DataLabel="Date">
+                                                <MudText Typo="Typo.body2">@activity.GameDate.ToString("MM/dd/yyyy")</MudText>
+                                            </MudTd>
+                                            <MudTd DataLabel="Stats">
+                                                <MudStack Row="true" Spacing="1">
+                                                    @if (activity.Goals > 0)
+                                                    {
+                                                        <MudChip T="string" Size="Size.Small" Color="Color.Success">@activity.Goals G</MudChip>
+                                                    }
+                                                    @if (activity.Assists > 0)
+                                                    {
+                                                        <MudChip T="string" Size="Size.Small" Color="Color.Info">@activity.Assists A</MudChip>
+                                                    }
+                                                    @if (activity.Goals == 0 && activity.Assists == 0)
+                                                    {
+                                                        <MudText Typo="Typo.body2" Color="Color.Secondary">-</MudText>
+                                                    }
+                                                </MudStack>
+                                            </MudTd>
+                                        </RowTemplate>
+                                    </MudTable>
+                                }
+                                else
+                                {
+                                    <MudStack AlignItems="AlignItems.Center" Class="my-8">
+                                        <MudIcon Icon="@Icons.Material.Filled.SportsSoccer" Size="Size.Large" Color="Color.Secondary" />
+                                        <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mt-2">No recent games</MudText>
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                            Record game statistics to see recent activity.
+                                        </MudText>
+                                    </MudStack>
+                                }
+                            </MudPaper>
+                        </MudItem>
+
+                        @* Right Panel - Active Teams Overview *@
+                        <MudItem xs="12" md="6">
+                            <MudPaper Elevation="2" Class="pa-4" Style="height: 100%;">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                                    <MudIcon Icon="@Icons.Material.Filled.Groups" Color="Color.Warning" />
+                                    <MudText Typo="Typo.h6">Active Teams</MudText>
+                                </MudStack>
+
+                                @if (_activeTeamsList is not null && _activeTeamsList.Count > 0)
+                                {
+                                    <MudList T="string" Dense="true">
+                                        @for (int i = 0; i < _activeTeamsList.Count; i++)
                                         {
-                                            <MudChip T="string" Size="Size.Small" Color="Color.Success">@activity.Goals</MudChip>
+                                            var team = _activeTeamsList[i];
+                                            <MudListItem>
+                                                <MudStack Spacing="0">
+                                                    <MudText Typo="Typo.body2"><strong>@team.TeamName</strong></MudText>
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@team.ChampionshipName</MudText>
+                                                </MudStack>
+                                            </MudListItem>
+                                            @if (i < _activeTeamsList.Count - 1)
+                                            {
+                                                <MudDivider />
+                                            }
                                         }
-                                        else
-                                        {
-                                            <MudText>0</MudText>
-                                        }
-                                    </MudTd>
-                                    <MudTd DataLabel="Assists">
-                                        @if (activity.Assists > 0)
-                                        {
-                                            <MudChip T="string" Size="Size.Small" Color="Color.Info">@activity.Assists</MudChip>
-                                        }
-                                        else
-                                        {
-                                            <MudText>0</MudText>
-                                        }
-                                    </MudTd>
-                                    <MudTd DataLabel="Minutes">@activity.MinutesPlayed</MudTd>
-                                </RowTemplate>
-                            </MudTable>
-                        </MudPaper>
-                    }
+                                    </MudList>
+                                }
+                                else
+                                {
+                                    <MudStack AlignItems="AlignItems.Center" Class="my-8">
+                                        <MudIcon Icon="@Icons.Material.Filled.Groups" Size="Size.Large" Color="Color.Secondary" />
+                                        <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mt-2">No active teams</MudText>
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                            Join a team to see your active team assignments.
+                                        </MudText>
+                                    </MudStack>
+                                }
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
 
                     @* Top Performers Section *@
                     @if (_topPerformers is not null && _topPerformers.Count > 0)
@@ -219,6 +271,7 @@
     private int _totalGoals;
     private IReadOnlyList<RecentActivityDto>? _recentActivities;
     private IReadOnlyList<TopPerformerDto>? _topPerformers;
+    private List<(string TeamName, string ChampionshipName)>? _activeTeamsList;
 
     private string CurrentUserId => CurrentUserProvider.GetCurrentUser()?.Identity?.Name ?? "system";
 
@@ -255,6 +308,7 @@
                 _totalGoals = 0;
                 _recentActivities = null;
                 _topPerformers = null;
+                _activeTeamsList = null;
                 return;
             }
 
@@ -282,6 +336,7 @@
             }
 
             _activeTeams = activeTeamsSet.Count;
+            _activeTeamsList = activeTeamsSet.OrderBy(t => t.TeamName).ThenBy(t => t.ChampionshipName).ToList();
             _totalGames = allGames;
             _totalGoals = allGoals;
 
