@@ -60,8 +60,6 @@ public sealed class BlobStorageService : IBlobStorageService
             var blobServiceClient = GetBlobServiceClient();
             var containerClient = blobServiceClient.GetBlobContainerClient(_containerName);
 
-            await containerClient.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
-
             var fileExtension = Path.GetExtension(fileName);
             var blobName = GeneratePlayerBlobName(playerId, fileExtension);
             var blobClient = containerClient.GetBlobClient(blobName);
@@ -224,6 +222,49 @@ public sealed class BlobStorageService : IBlobStorageService
         var normalizedExtension = fileExtension.StartsWith('.') ? fileExtension : $".{fileExtension}";
 
         return $"player-{playerId}-{timestamp}{normalizedExtension}";
+    }
+
+    /// <inheritdoc/>
+    public async Task<ServiceResult<bool>> EnsureContainerExistsAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var blobServiceClient = GetBlobServiceClient();
+            var containerClient = blobServiceClient.GetBlobContainerClient(_containerName);
+
+            var response = await containerClient.CreateIfNotExistsAsync(
+                publicAccessType: Azure.Storage.Blobs.Models.PublicAccessType.None,
+                cancellationToken: cancellationToken);
+
+            if (response is not null && response.Value is not null)
+            {
+                _logger.LogInformation(
+                    "Created blob container '{ContainerName}' successfully",
+                    _containerName);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "Blob container '{ContainerName}' already exists",
+                    _containerName);
+            }
+
+            return ServiceResult<bool>.Ok(true);
+        }
+        catch (RequestFailedException ex)
+        {
+            _logger.LogError(ex,
+                "Azure Storage error while ensuring container exists. Container: {ContainerName}, Error: {ErrorCode}",
+                _containerName, ex.ErrorCode);
+            return ServiceResult<bool>.Fail($"Failed to ensure container exists: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Unexpected error while ensuring container exists. Container: {ContainerName}",
+                _containerName);
+            return ServiceResult<bool>.Fail("An unexpected error occurred while ensuring container exists.");
+        }
     }
 
     private BlobServiceClient GetBlobServiceClient()

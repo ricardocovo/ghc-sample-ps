@@ -91,4 +91,21 @@ public interface IBlobStorageService
     /// </code>
     /// </example>
     string GeneratePlayerBlobName(int playerId, string fileExtension);
+
+    /// <summary>
+    /// Ensures that the player pictures blob container exists.
+    /// Creates the container if it doesn't exist.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A service result indicating success or failure.</returns>
+    /// <example>
+    /// <code>
+    /// var result = await blobStorageService.EnsureContainerExistsAsync();
+    /// if (result.Success)
+    /// {
+    ///     Console.WriteLine("Container is ready");
+    /// }
+    /// </code>
+    /// </example>
+    Task<ServiceResult<bool>> EnsureContainerExistsAsync(CancellationToken cancellationToken = default);
 }
