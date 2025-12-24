@@ -1006,10 +1006,6 @@
     private bool _isDeletingPicture;
     private string? _deletePictureErrorMessage;
 
-    // File size limit: 5 MB
-    private const long MaxFileSizeBytes = 5_242_880;
-    private static readonly string[] AllowedContentTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-
     private string CurrentUserId => CurrentUserProvider.GetCurrentUser()?.Identity?.Name ?? "system";
 
     protected override async Task OnInitializedAsync()
@@ -1697,14 +1693,14 @@
         _uploadErrorMessage = null;
 
         // Validate file size
-        if (file.Size > MaxFileSizeBytes)
+        if (file.Size > PlayerPictureValidator.MaxFileSizeBytes)
         {
             _uploadErrorMessage = "The selected file exceeds the 5 MB size limit. Please choose a smaller image.";
             return;
         }
 
         // Validate file type
-        if (!AllowedContentTypes.Contains(file.ContentType.ToLowerInvariant()))
+        if (!PlayerPictureValidator.IsValidImageContentType(file.ContentType))
         {
             _uploadErrorMessage = "Invalid file format. Please upload a JPEG, PNG, GIF, or WebP image.";
             return;
@@ -1723,7 +1719,8 @@
         {
             // Read file content
             using var memoryStream = new MemoryStream();
-            await file.OpenReadStream(MaxFileSizeBytes).CopyToAsync(memoryStream);
+            await using var readStream = file.OpenReadStream(PlayerPictureValidator.MaxFileSizeBytes);
+            await readStream.CopyToAsync(memoryStream);
             var fileContent = memoryStream.ToArray();
 
             var uploadDto = new UploadPlayerPictureDto
@@ -1740,19 +1737,16 @@
             if (result.Success && result.Data is not null && result.Data.Success)
             {
                 // Update local player with new picture URL
-                if (_player is not null)
-                {
-                    _player = _player with { PhotoUrl = result.Data.PictureUrl };
-                }
+                _player = _player with { PhotoUrl = result.Data.PictureUrl };
 
                 _uploadSuccess = true;
 
                 // Auto-hide success message after 3 seconds
-                _ = Task.Run(async () =>
+                _ = InvokeAsync(async () =>
                 {
                     await Task.Delay(3000);
                     _uploadSuccess = false;
-                    await InvokeAsync(StateHasChanged);
+                    StateHasChanged();
                 });
             }
             else
@@ -1762,11 +1756,9 @@
                     ?? "Failed to upload picture. Please try again.";
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _uploadErrorMessage = ex.Message.Contains("size")
-                ? "The selected file is too large. Please choose a smaller image."
-                : "An unexpected error occurred while uploading the picture. Please try again.";
+            _uploadErrorMessage = "An unexpected error occurred while uploading the picture. Please try again.";
         }
         finally
         {
@@ -1811,10 +1803,7 @@
             if (result.Success)
             {
                 // Update local player to remove picture URL
-                if (_player is not null)
-                {
-                    _player = _player with { PhotoUrl = null };
-                }
+                _player = _player with { PhotoUrl = null };
 
                 CloseDeletePictureDialog();
                 Snackbar.Add("Picture deleted successfully.", Severity.Success);
