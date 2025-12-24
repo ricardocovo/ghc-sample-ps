@@ -1,10 +1,13 @@
 ﻿@page "/"
 @using GhcSamplePs.Core.Services.Interfaces
 @using GhcSamplePs.Core.Models.PlayerManagement.DTOs
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Policy = "RequireUserRole")]
 @inject IPlayerService PlayerService
 @inject ITeamPlayerService TeamPlayerService
 @inject IPlayerStatisticService PlayerStatisticService
 @inject ICurrentUserProvider CurrentUserProvider
+@inject ILogger<Home> Logger
 
 <PageTitle>Dashboard</PageTitle>
 
@@ -74,6 +77,27 @@
                 @* Dashboard summary cards *@
                 else
                 {
+                    @* Empty state for users with no players *@
+                    @if (_totalPlayers == 0)
+                    {
+                        <MudAlert Severity="Severity.Info" Class="mb-4">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="3" Class="my-4">
+                                <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Size="Size.Large" Color="Color.Info" />
+                                <MudText Typo="Typo.h6">No players yet</MudText>
+                                <MudText Typo="Typo.body2" Align="Align.Center">
+                                    Add your first player to get started and begin tracking statistics.
+                                </MudText>
+                                <MudButton Variant="Variant.Filled" 
+                                           Color="Color.Primary" 
+                                           Href="/players/create"
+                                           StartIcon="@Icons.Material.Filled.PersonAdd">
+                                    Add Your First Player
+                                </MudButton>
+                            </MudStack>
+                        </MudAlert>
+                    }
+                    else
+                    {
                     <MudGrid Spacing="3">
                         @* Total Players Card *@
                         <MudItem xs="12" sm="6" md="3">
@@ -275,6 +299,7 @@
                             </MudSimpleTable>
                         </MudPaper>
                     }
+                    }
                 }
             </MudPaper>
         </Authorized>
@@ -306,11 +331,17 @@
 
         try
         {
-            var playersResult = await PlayerService.GetAllPlayersAsync();
+            // Load all independent data in parallel for better performance
+            var playersTask = PlayerService.GetAllPlayersAsync();
+            var recentActivityTask = PlayerStatisticService.GetRecentActivityAsync(CurrentUserId, 10);
+            var topPerformersTask = PlayerStatisticService.GetTopPerformersAsync(CurrentUserId, 5);
 
+            await Task.WhenAll(playersTask, recentActivityTask, topPerformersTask);
+
+            var playersResult = playersTask.Result;
             if (!playersResult.Success || playersResult.Data is null)
             {
-                _errorMessage = playersResult.ErrorMessages.FirstOrDefault() ?? "Unable to load dashboard data.";
+                _errorMessage = "Unable to load dashboard data. Please try again.";
                 return;
             }
 
@@ -320,6 +351,7 @@
 
             _totalPlayers = players.Count;
 
+            // Handle empty state - new user with no players
             if (_totalPlayers == 0)
             {
                 _activeTeams = 0;
@@ -331,13 +363,20 @@
                 return;
             }
 
+            // Load team and statistics data in parallel for all players
+            var teamTasks = players.Select(p => TeamPlayerService.GetActiveTeamsByPlayerIdAsync(p.Id)).ToList();
+            var statsTasks = players.Select(p => PlayerStatisticService.GetStatisticsByPlayerIdAsync(p.Id)).ToList();
+
+            await Task.WhenAll(teamTasks.Cast<Task>().Concat(statsTasks.Cast<Task>()));
+
             var activeTeamsSet = new HashSet<(string TeamName, string ChampionshipName)>();
             var allGames = 0;
             var allGoals = 0;
 
-            foreach (var player in players)
+            // Process team data
+            foreach (var teamTask in teamTasks)
             {
-                var teamsResult = await TeamPlayerService.GetActiveTeamsByPlayerIdAsync(player.Id);
+                var teamsResult = teamTask.Result;
                 if (teamsResult.Success && teamsResult.Data is not null)
                 {
                     foreach (var team in teamsResult.Data)
@@ -345,8 +384,12 @@
                         activeTeamsSet.Add((team.TeamName, team.ChampionshipName));
                     }
                 }
+            }
 
-                var statsResult = await PlayerStatisticService.GetStatisticsByPlayerIdAsync(player.Id);
+            // Process statistics data
+            foreach (var statsTask in statsTasks)
+            {
+                var statsResult = statsTask.Result;
                 if (statsResult.Success && statsResult.Data is not null)
                 {
                     allGames += statsResult.Data.Count;
@@ -359,21 +402,40 @@
             _totalGames = allGames;
             _totalGoals = allGoals;
 
-            var recentActivityResult = await PlayerStatisticService.GetRecentActivityAsync(CurrentUserId, 10);
-            if (recentActivityResult.Success && recentActivityResult.Data is not null)
+            // Retrieve recent activities and top performers - allow partial failure
+            try
             {
-                _recentActivities = recentActivityResult.Data;
+                var recentActivityResult = recentActivityTask.Result;
+                if (recentActivityResult.Success && recentActivityResult.Data is not null)
+                {
+                    _recentActivities = recentActivityResult.Data;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to load recent activity for user {UserId}", CurrentUserId);
+                _recentActivities = null;
             }
 
-            var topPerformersResult = await PlayerStatisticService.GetTopPerformersAsync(CurrentUserId, 5);
-            if (topPerformersResult.Success && topPerformersResult.Data is not null)
+            try
             {
-                _topPerformers = topPerformersResult.Data;
+                var topPerformersResult = topPerformersTask.Result;
+                if (topPerformersResult.Success && topPerformersResult.Data is not null)
+                {
+                    _topPerformers = topPerformersResult.Data;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to load top performers for user {UserId}", CurrentUserId);
+                _topPerformers = null;
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            _errorMessage = "An unexpected error occurred while loading dashboard data.";
+            // Log exception for operational visibility while hiding technical details from users
+            Logger.LogError(ex, "Error loading dashboard data for user {UserId}", CurrentUserId);
+            _errorMessage = "Unable to load dashboard data. Please try again.";
         }
         finally
         {
