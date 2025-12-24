@@ -19,6 +19,7 @@ public sealed class BlobStorageService : IBlobStorageService
     private readonly IConfiguration _configuration;
     private readonly string _containerName;
     private readonly int _sasExpirationMinutes;
+    private readonly Lazy<BlobServiceClient> _blobServiceClient;
 
     public BlobStorageService(
         ILogger<BlobStorageService> logger,
@@ -31,6 +32,7 @@ public sealed class BlobStorageService : IBlobStorageService
         _configuration = configuration;
         _containerName = _configuration["AzureStorage:PlayerPicturesContainer"] ?? "player-pictures";
         _sasExpirationMinutes = int.TryParse(_configuration["AzureStorage:SasExpirationMinutes"], out var minutes) ? minutes : 60;
+        _blobServiceClient = new Lazy<BlobServiceClient>(CreateBlobServiceClient);
     }
 
     /// <inheritdoc/>
@@ -218,7 +220,7 @@ public sealed class BlobStorageService : IBlobStorageService
             throw new ArgumentException("Player ID must be greater than 0.", nameof(playerId));
         }
 
-        var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmssfff");
         var normalizedExtension = fileExtension.StartsWith('.') ? fileExtension : $".{fileExtension}";
 
         return $"player-{playerId}-{timestamp}{normalizedExtension}";
@@ -267,7 +269,7 @@ public sealed class BlobStorageService : IBlobStorageService
         }
     }
 
-    private BlobServiceClient GetBlobServiceClient()
+    private BlobServiceClient CreateBlobServiceClient()
     {
         var connectionString = _configuration["AzureStorage:ConnectionString"];
 
@@ -280,4 +282,6 @@ public sealed class BlobStorageService : IBlobStorageService
 
         return new BlobServiceClient(connectionString);
     }
+
+    private BlobServiceClient GetBlobServiceClient() => _blobServiceClient.Value;
 }

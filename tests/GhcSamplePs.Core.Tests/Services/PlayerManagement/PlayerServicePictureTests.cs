@@ -224,6 +224,58 @@ public sealed class PlayerServicePictureTests
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    [Fact(DisplayName = "UploadPlayerPictureAsync continues when old picture deletion fails")]
+    public async Task UploadPlayerPictureAsync_OldPictureDeletionFails_ContinuesWithUpload()
+    {
+        var player = TestPlayerFactory.CreateValidPlayer();
+        player.Id = 1;
+        player.PhotoUrl = "https://blob.url/old-picture.jpg";
+
+        var uploadDto = new UploadPlayerPictureDto
+        {
+            PlayerId = 1,
+            FileContent = new byte[1024],
+            FileName = "new-picture.jpg",
+            ContentType = "image/jpeg",
+            FileSizeBytes = 1024
+        };
+
+        _mockRepository.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(player);
+
+        _mockBlobStorage.Setup(b => b.DeletePlayerPictureAsync(
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Deletion failed"));
+
+        _mockBlobStorage.Setup(b => b.UploadPlayerPictureAsync(
+                It.IsAny<byte[]>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ServiceResult<(string, string)>.Ok(("https://blob.url/new-picture.jpg", "player-1-new.jpg")));
+
+        _mockRepository.Setup(r => r.UpdateAsync(It.IsAny<Player>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Player p, CancellationToken ct) => p);
+
+        var result = await _service.UploadPlayerPictureAsync(uploadDto, TestUserId);
+
+        Assert.True(result.Success);
+        Assert.Equal("https://blob.url/new-picture.jpg", result.Data!.PictureUrl);
+
+        _mockBlobStorage.Verify(b => b.DeletePlayerPictureAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        _mockBlobStorage.Verify(b => b.UploadPlayerPictureAsync(
+            It.IsAny<byte[]>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     [Fact(DisplayName = "UploadPlayerPictureAsync returns failure when blob upload fails")]
     public async Task UploadPlayerPictureAsync_BlobUploadFails_ReturnsFailure()
     {
