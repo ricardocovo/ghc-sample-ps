@@ -356,6 +356,7 @@ public sealed class PlayerStatisticService : IPlayerStatisticService
             var statistics = await _statisticRepository.GetAllByUserIdAsync(userId, cancellationToken);
 
             var recentActivities = statistics
+                .OrderByDescending(s => s.GameDate)
                 .Take(count)
                 .Select(s => new RecentActivityDto
                 {
