@@ -335,4 +335,111 @@ public sealed class PlayerStatisticService : IPlayerStatisticService
 
         return Task.FromResult(validationResult);
     }
+
+    /// <inheritdoc/>
+    public async Task<ServiceResult<IReadOnlyList<RecentActivityDto>>> GetRecentActivityAsync(
+        string userId,
+        int count = 10,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(userId);
+
+        if (count <= 0)
+        {
+            return ServiceResult<IReadOnlyList<RecentActivityDto>>.Fail("Count must be greater than zero.");
+        }
+
+        _logger.LogInformation("Retrieving recent activity for user {UserId}, count: {Count}", userId, count);
+
+        try
+        {
+            var statistics = await _statisticRepository.GetAllByUserIdAsync(userId, cancellationToken);
+
+            var recentActivities = statistics
+                .OrderByDescending(s => s.GameDate)
+                .Take(count)
+                .Select(s => new RecentActivityDto
+                {
+                    PlayerStatisticId = s.PlayerStatisticId,
+                    PlayerId = s.TeamPlayer?.PlayerId ?? 0,
+                    PlayerName = s.TeamPlayer?.Player?.Name?.Trim() ?? "Unknown",
+                    TeamName = s.TeamPlayer?.TeamName?.Trim() ?? "Unknown",
+                    ChampionshipName = s.TeamPlayer?.ChampionshipName?.Trim() ?? "Unknown",
+                    GameDate = s.GameDate,
+                    Goals = s.Goals,
+                    Assists = s.Assists,
+                    MinutesPlayed = s.MinutesPlayed,
+                    IsStarter = s.IsStarter
+                })
+                .ToList();
+
+            _logger.LogInformation("Retrieved {Count} recent activities for user {UserId}", recentActivities.Count, userId);
+
+            return ServiceResult<IReadOnlyList<RecentActivityDto>>.Ok(recentActivities);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving recent activity for user {UserId}", userId);
+            return ServiceResult<IReadOnlyList<RecentActivityDto>>.Fail("Unable to load recent activity. Please refresh the page.");
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<ServiceResult<IReadOnlyList<TopPerformerDto>>> GetTopPerformersAsync(
+        string userId,
+        int count = 5,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(userId);
+
+        if (count <= 0)
+        {
+            return ServiceResult<IReadOnlyList<TopPerformerDto>>.Fail("Count must be greater than zero.");
+        }
+
+        _logger.LogInformation("Retrieving top performers for user {UserId}, count: {Count}", userId, count);
+
+        try
+        {
+            var statistics = await _statisticRepository.GetAllByUserIdAsync(userId, cancellationToken);
+
+            var topPerformers = statistics
+                .Where(s => s.TeamPlayer?.Player is not null)
+                .GroupBy(s => new
+                {
+                    PlayerId = s.TeamPlayer!.PlayerId,
+                    PlayerName = s.TeamPlayer.Player!.Name
+                })
+                .Select(g => new
+                {
+                    g.Key.PlayerId,
+                    g.Key.PlayerName,
+                    TotalGoals = g.Sum(s => s.Goals),
+                    GamesPlayed = g.Count(),
+                    TotalAssists = g.Sum(s => s.Assists)
+                })
+                .OrderByDescending(p => p.TotalGoals)
+                .ThenBy(p => p.GamesPlayed)
+                .Take(count)
+                .Select(p => new TopPerformerDto
+                {
+                    PlayerId = p.PlayerId,
+                    PlayerName = p.PlayerName.Trim(),
+                    TotalGoals = p.TotalGoals,
+                    GamesPlayed = p.GamesPlayed,
+                    GoalsPerGame = p.GamesPlayed > 0 ? (decimal)p.TotalGoals / p.GamesPlayed : 0m,
+                    TotalAssists = p.TotalAssists
+                })
+                .ToList();
+
+            _logger.LogInformation("Retrieved {Count} top performers for user {UserId}", topPerformers.Count, userId);
+
+            return ServiceResult<IReadOnlyList<TopPerformerDto>>.Ok(topPerformers);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving top performers for user {UserId}", userId);
+            return ServiceResult<IReadOnlyList<TopPerformerDto>>.Fail("Unable to load top performers. Please refresh the page.");
+        }
+    }
 }
