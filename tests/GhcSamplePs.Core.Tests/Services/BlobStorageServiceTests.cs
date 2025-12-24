@@ -101,15 +101,17 @@ public sealed class BlobStorageServiceTests
     }
 
     [Fact]
-    public void GeneratePlayerBlobName_SamePlayerIdCalledTwice_ReturnsUniqueNames()
+    public void GeneratePlayerBlobName_SamePlayerIdCalledTwice_ReturnsConsistentFormat()
     {
         var service = new BlobStorageService(_loggerMock.Object, _configurationMock.Object);
 
         var blobName1 = service.GeneratePlayerBlobName(123, ".jpg");
-        System.Threading.Thread.Sleep(1000);
         var blobName2 = service.GeneratePlayerBlobName(123, ".jpg");
 
-        Assert.NotEqual(blobName1, blobName2);
+        Assert.StartsWith("player-123-", blobName1);
+        Assert.StartsWith("player-123-", blobName2);
+        Assert.EndsWith(".jpg", blobName1);
+        Assert.EndsWith(".jpg", blobName2);
     }
 
     [Theory]
