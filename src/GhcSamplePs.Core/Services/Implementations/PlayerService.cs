@@ -445,8 +445,9 @@ public sealed class PlayerService : IPlayerService
                 return blobName;
             }
         }
-        catch
+        catch (UriFormatException)
         {
+            // Malformed URLs are treated as "no blob name" and result in a null return value.
         }
 
         return null;
