@@ -7,6 +7,7 @@
 @inject ITeamPlayerService TeamPlayerService
 @inject IPlayerStatisticService PlayerStatisticService
 @inject ICurrentUserProvider CurrentUserProvider
+@inject ILogger<Home> Logger
 
 <PageTitle>Dashboard</PageTitle>
 
@@ -337,7 +338,7 @@
 
             await Task.WhenAll(playersTask, recentActivityTask, topPerformersTask);
 
-            var playersResult = await playersTask;
+            var playersResult = playersTask.Result;
             if (!playersResult.Success || playersResult.Data is null)
             {
                 _errorMessage = "Unable to load dashboard data. Please try again.";
@@ -366,10 +367,7 @@
             var teamTasks = players.Select(p => TeamPlayerService.GetActiveTeamsByPlayerIdAsync(p.Id)).ToList();
             var statsTasks = players.Select(p => PlayerStatisticService.GetStatisticsByPlayerIdAsync(p.Id)).ToList();
 
-            var allTasks = new List<Task>();
-            allTasks.AddRange(teamTasks.Cast<Task>());
-            allTasks.AddRange(statsTasks.Cast<Task>());
-            await Task.WhenAll(allTasks);
+            await Task.WhenAll(teamTasks.Cast<Task>().Concat(statsTasks.Cast<Task>()));
 
             var activeTeamsSet = new HashSet<(string TeamName, string ChampionshipName)>();
             var allGames = 0;
@@ -378,7 +376,7 @@
             // Process team data
             foreach (var teamTask in teamTasks)
             {
-                var teamsResult = await teamTask;
+                var teamsResult = teamTask.Result;
                 if (teamsResult.Success && teamsResult.Data is not null)
                 {
                     foreach (var team in teamsResult.Data)
@@ -391,7 +389,7 @@
             // Process statistics data
             foreach (var statsTask in statsTasks)
             {
-                var statsResult = await statsTask;
+                var statsResult = statsTask.Result;
                 if (statsResult.Success && statsResult.Data is not null)
                 {
                     allGames += statsResult.Data.Count;
@@ -404,22 +402,39 @@
             _totalGames = allGames;
             _totalGoals = allGoals;
 
-            // Retrieve recent activities and top performers
-            var recentActivityResult = await recentActivityTask;
-            if (recentActivityResult.Success && recentActivityResult.Data is not null)
+            // Retrieve recent activities and top performers - allow partial failure
+            try
             {
-                _recentActivities = recentActivityResult.Data;
+                var recentActivityResult = recentActivityTask.Result;
+                if (recentActivityResult.Success && recentActivityResult.Data is not null)
+                {
+                    _recentActivities = recentActivityResult.Data;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to load recent activity for user {UserId}", CurrentUserId);
+                _recentActivities = null;
             }
 
-            var topPerformersResult = await topPerformersTask;
-            if (topPerformersResult.Success && topPerformersResult.Data is not null)
+            try
             {
-                _topPerformers = topPerformersResult.Data;
+                var topPerformersResult = topPerformersTask.Result;
+                if (topPerformersResult.Success && topPerformersResult.Data is not null)
+                {
+                    _topPerformers = topPerformersResult.Data;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to load top performers for user {UserId}", CurrentUserId);
+                _topPerformers = null;
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Don't expose technical details in error messages
+            // Log exception for operational visibility while hiding technical details from users
+            Logger.LogError(ex, "Error loading dashboard data for user {UserId}", CurrentUserId);
             _errorMessage = "Unable to load dashboard data. Please try again.";
         }
         finally
