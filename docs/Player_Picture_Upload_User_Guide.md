@@ -274,7 +274,7 @@ A: Picture deletion is permanent. You'll need to re-upload the picture. Make sur
 
 ### Related Documentation
 
-- [Player Management Guide](playerstats-requirements.md) - General player management
+- [Player Statistics Requirements](playerstats-requirements.md) - Player statistics requirements
 - [Team Management User Guide](Team_Management_User_Guide.md) - Managing team assignments
 - [Player Statistics User Guide](Player_Statistics_User_Guide.md) - Recording game statistics
 - [Azure Entra ID Setup Guide](Azure_EntraID_Setup_Guide.md) - Authentication configuration

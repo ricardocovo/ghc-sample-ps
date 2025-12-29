@@ -135,7 +135,7 @@ Examples:
 ### ✅ User Documentation
 **Status:** ✅ **COMPLETE**
 
-Created: [`docs/Player_Picture_Upload_User_Guide.md`](../../docs/Player_Picture_Upload_User_Guide.md)
+Created: [`docs/Player_Picture_Upload_User_Guide.md`](Player_Picture_Upload_User_Guide.md)
 
 **Contents:**
 - [x] Feature overview and key features
@@ -154,7 +154,7 @@ Created: [`docs/Player_Picture_Upload_User_Guide.md`](../../docs/Player_Picture_
 ### ✅ Developer Documentation
 **Status:** ✅ **COMPLETE**
 
-Created: [`docs/Player_Picture_Services_Developer_Guide.md`](../../docs/Player_Picture_Services_Developer_Guide.md)
+Created: [`docs/Player_Picture_Services_Developer_Guide.md`](Player_Picture_Services_Developer_Guide.md)
 
 **Contents:**
 - [x] Architecture overview
@@ -415,4 +415,4 @@ Ready for production release
 - [Player Picture Upload Specification](../specs/PlayerPictureUpload_Feature_Specification.md)
 - [Player Picture Upload User Guide](Player_Picture_Upload_User_Guide.md)
 - [Player Picture Services Developer Guide](Player_Picture_Services_Developer_Guide.md)
-- [Test Coverage Report](../coverage.cobertura.xml)
+- Test Coverage Report (generated during test execution as `coverage.cobertura.xml` and published via CI/CD coverage artifacts)

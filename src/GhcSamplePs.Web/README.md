@@ -117,7 +117,7 @@ GhcSamplePs.Web/
 
 - **CRUD Operations** - Create, read, update, delete players
 - **Profile Pictures** - Upload, display, and manage player pictures
-  - File upload with drag-and-drop support (when available)
+  - File upload via file browser (drag-and-drop support planned for a future release)
   - Client-side validation (5 MB limit, JPEG/PNG/GIF/WebP)
   - Progress indicator during upload
   - Confirmation dialog for deletion
