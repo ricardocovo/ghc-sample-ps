@@ -48,7 +48,7 @@ public static class ServiceCollectionExtensions
     ///     connectionString: builder.Configuration.GetConnectionString("DefaultConnection")!,
     ///     enableSensitiveDataLogging: builder.Environment.IsDevelopment(),
     ///     enableDetailedErrors: builder.Environment.IsDevelopment());
-    /// 
+    ///
     /// // In Program.cs for production with custom retry settings
     /// builder.Services.AddApplicationDbContext(
     ///     connectionString: builder.Configuration.GetConnectionString("DefaultConnection")!,
@@ -87,8 +87,10 @@ public static class ServiceCollectionExtensions
                 // Set command timeout
                 sqlServerOptions.CommandTimeout(commandTimeoutSeconds);
 
-                // Configure query splitting for related data (improves performance for complex queries)
-                sqlServerOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                // Use single query behavior to avoid DbContext threading issues in Blazor Server
+                // Split queries can cause "A second operation was started on this context" errors
+                // when multiple components render concurrently
+                sqlServerOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
             });
 
             if (enableSensitiveDataLogging)

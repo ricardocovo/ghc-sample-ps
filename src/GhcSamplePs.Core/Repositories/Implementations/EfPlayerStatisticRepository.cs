@@ -26,12 +26,12 @@ namespace GhcSamplePs.Core.Repositories.Implementations;
 /// <code>
 /// // Register in DI container
 /// builder.Services.AddScoped&lt;IPlayerStatisticRepository, EfPlayerStatisticRepository&gt;();
-/// 
+///
 /// // Use in a service
 /// public class PlayerStatisticService
 /// {
 ///     private readonly IPlayerStatisticRepository _repository;
-///     
+///
 ///     public async Task&lt;PlayerStatistic?&gt; GetStatisticAsync(int id)
 ///     {
 ///         return await _repository.GetByIdAsync(id);
@@ -511,9 +511,10 @@ public sealed class EfPlayerStatisticRepository : IPlayerStatisticRepository
         {
             var statistics = await _context.PlayerStatistics
                 .AsNoTracking()
-                .Include(ps => ps.TeamPlayer)
-                    .ThenInclude(tp => tp!.Player)
-                .Where(ps => ps.TeamPlayer != null && ps.TeamPlayer.Player != null && ps.TeamPlayer.Player.UserId == userId)
+                .Include(ps => ps.TeamPlayer).ThenInclude(tp => tp!.Player)
+                .Where(ps => ps.TeamPlayer != null
+                    && ps.TeamPlayer.Player != null
+                    && ps.TeamPlayer.Player.UserId == userId)
                 .OrderByDescending(ps => ps.GameDate)
                 .ToListAsync(cancellationToken);
 
