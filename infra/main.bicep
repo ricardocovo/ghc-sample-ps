@@ -43,6 +43,7 @@ var resourcePrefix = '${appName}-${environment}'
 var logAnalyticsName = '${resourcePrefix}-log'
 var appInsightsName = '${resourcePrefix}-ai'
 var storageAccountName = replace('${appName}${environment}st', '-', '')
+var playerPicturesStorageAccountName = replace('${appName}${environment}pics', '-', '')
 // Key Vault name must be 3-24 characters, globally unique
 // Truncate appName to max 18 chars to ensure total length <24 with 'dev'/'prod' (3-4 chars) + 'kv' (2 chars)
 var keyVaultName = '${take(appName, 18)}${environment}kv'
@@ -102,6 +103,16 @@ module storage 'modules/storage.bicep' = {
   params: {
     location: location
     storageAccountName: storageAccountName
+    environment: environment
+  }
+}
+
+// Storage: Storage Account for Player Pictures (public access)
+module playerPicturesStorage 'modules/storage-player-pictures.bicep' = {
+  name: 'storage-player-pictures-deployment'
+  params: {
+    location: location
+    storageAccountName: playerPicturesStorageAccountName
     environment: environment
   }
 }
@@ -169,8 +180,23 @@ module containerApp 'modules/containerapp.bicep' = {
 // Storage Blob Data Contributor role for Container App Managed Identity
 var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 
+// RBAC for Data Protection storage account
 resource storageRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(resourceGroup().id, storageAccountName, containerAppName, storageBlobDataContributorRoleId)
+  scope: resourceGroup()
+  properties: {
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      storageBlobDataContributorRoleId
+    )
+    principalId: containerApp.outputs.containerAppIdentityPrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// RBAC for Player Pictures storage account
+resource playerPicturesStorageRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, playerPicturesStorageAccountName, containerAppName, storageBlobDataContributorRoleId)
   scope: resourceGroup()
   properties: {
     roleDefinitionId: subscriptionResourceId(
@@ -243,3 +269,12 @@ output appInsightsInstrumentationKey string = applicationInsights.properties.Ins
 
 @description('Key Vault URI')
 output keyVaultUri string = keyVault.outputs.keyVaultUri
+
+@description('Name of the player pictures blob container')
+output playerPicturesContainerName string = playerPicturesStorage.outputs.playerPicturesContainerName
+
+@description('Blob endpoint for player pictures storage account')
+output playerPicturesBlobEndpoint string = playerPicturesStorage.outputs.blobEndpoint
+
+@description('Name of the player pictures storage account')
+output playerPicturesStorageAccountName string = playerPicturesStorage.outputs.storageAccountName
