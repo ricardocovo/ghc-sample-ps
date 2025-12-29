@@ -1,4 +1,5 @@
 using GhcSamplePs.Core.Services.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -10,15 +11,16 @@ namespace GhcSamplePs.Core.Services.Implementations;
 /// </summary>
 public sealed class BlobStorageInitializationService : IHostedService
 {
-    private readonly IBlobStorageService? _blobStorageService;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<BlobStorageInitializationService> _logger;
 
     public BlobStorageInitializationService(
-        IBlobStorageService? blobStorageService,
+        IServiceProvider serviceProvider,
         ILogger<BlobStorageInitializationService> logger)
     {
-        _blobStorageService = blobStorageService;
+        ArgumentNullException.ThrowIfNull(serviceProvider);
         ArgumentNullException.ThrowIfNull(logger);
+        _serviceProvider = serviceProvider;
         _logger = logger;
     }
 
@@ -27,7 +29,10 @@ public sealed class BlobStorageInitializationService : IHostedService
     /// </summary>
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        if (_blobStorageService is null)
+        using var scope = _serviceProvider.CreateScope();
+        var blobStorageService = scope.ServiceProvider.GetService<IBlobStorageService>();
+
+        if (blobStorageService is null)
         {
             _logger.LogWarning("Blob storage service is not configured. Skipping container initialization");
             return;
@@ -37,7 +42,7 @@ public sealed class BlobStorageInitializationService : IHostedService
 
         try
         {
-            var result = await _blobStorageService.EnsureContainerExistsAsync(cancellationToken);
+            var result = await blobStorageService.EnsureContainerExistsAsync(cancellationToken);
 
             if (result.Success)
             {

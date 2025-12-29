@@ -247,6 +247,10 @@ builder.Services.AddScoped<ITeamPlayerService, TeamPlayerService>();
 builder.Services.AddScoped<IPlayerStatisticRepository, EfPlayerStatisticRepository>();
 builder.Services.AddScoped<IPlayerStatisticService, PlayerStatisticService>();
 
+// Register Blob Storage Service for player pictures
+builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
+builder.Services.AddHostedService<BlobStorageInitializationService>();
+
 // Register Entity Framework Core DbContext with SQL Server
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))

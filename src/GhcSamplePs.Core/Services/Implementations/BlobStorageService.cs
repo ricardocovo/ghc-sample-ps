@@ -80,7 +80,28 @@ public sealed class BlobStorageService : IBlobStorageService
                 },
                 cancellationToken);
 
-            var blobUrl = blobClient.Uri.ToString();
+            // Generate a SAS URL for the uploaded blob so it can be accessed by the client
+            string blobUrl;
+            if (blobClient.CanGenerateSasUri)
+            {
+                var sasBuilder = new BlobSasBuilder
+                {
+                    BlobContainerName = _containerName,
+                    BlobName = blobName,
+                    Resource = "b",
+                    StartsOn = DateTimeOffset.UtcNow.AddMinutes(-5),
+                    ExpiresOn = DateTimeOffset.UtcNow.AddMinutes(_sasExpirationMinutes)
+                };
+                sasBuilder.SetPermissions(BlobSasPermissions.Read);
+
+                var sasUri = blobClient.GenerateSasUri(sasBuilder);
+                blobUrl = sasUri.ToString();
+            }
+            else
+            {
+                // Fallback to plain URI if SAS generation is not supported
+                blobUrl = blobClient.Uri.ToString();
+            }
 
             _logger.LogInformation(
                 "Successfully uploaded player picture. PlayerId: {PlayerId}, BlobName: {BlobName}, Size: {Size} bytes",
