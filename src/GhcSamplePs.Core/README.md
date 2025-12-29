@@ -86,7 +86,9 @@ GhcSamplePs.Core/
 │           ├── PlayerStatisticDto.cs
 │           ├── PlayerStatisticAggregateResult.cs
 │           ├── RecentActivityDto.cs
-│           └── TopPerformerDto.cs
+│           ├── TopPerformerDto.cs
+│           ├── UploadPlayerPictureDto.cs
+│           └── UploadPlayerPictureResultDto.cs
 │
 ├── Repositories/                # Data access layer
 │   ├── Interfaces/              # Repository contracts
@@ -104,18 +106,22 @@ GhcSamplePs.Core/
 │   │   ├── IAuthenticationService.cs
 │   │   ├── IAuthorizationService.cs
 │   │   ├── ICurrentUserProvider.cs
+│   │   ├── IBlobStorageService.cs
 │   │   ├── IPlayerService.cs
 │   │   ├── ITeamPlayerService.cs
 │   │   └── IPlayerStatisticService.cs
 │   └── Implementations/         # Service implementations
 │       ├── AuthenticationService.cs
 │       ├── AuthorizationService.cs
+│       ├── BlobStorageService.cs
+│       ├── BlobStorageInitializationService.cs
 │       ├── PlayerService.cs
 │       ├── TeamPlayerService.cs
 │       └── PlayerStatisticService.cs
 │
 └── Validation/                  # Business validation rules
     ├── PlayerValidator.cs
+    ├── PlayerPictureValidator.cs
     ├── TeamPlayerValidator.cs
     └── PlayerStatisticValidator.cs
 ```
@@ -146,16 +152,27 @@ GhcSamplePs.Core/
 - Players with name, date of birth, gender, photo
 - Audit fields (CreatedAt, CreatedBy, UpdatedAt, UpdatedBy)
 - Automatic age calculation
+- Picture storage via Azure Blob Storage
 
 **Services:**
-- `IPlayerService` - CRUD operations for players
+- `IPlayerService` - CRUD operations for players, picture upload/delete
 - `IPlayerRepository` - Data access abstraction
+- `IBlobStorageService` - Azure Blob Storage integration for pictures
 
 **Validation Rules:**
 - Name: Required, 1-200 characters
 - DateOfBirth: Required, past date, not more than 100 years ago
 - Gender: Optional (Male, Female, Non-binary, Prefer not to say)
 - PhotoUrl: Optional, max 500 chars, valid HTTP/HTTPS URL
+
+**Picture Upload:**
+- Upload player pictures from device (JPEG, PNG, GIF, WebP)
+- Maximum file size: 5 MB
+- Secure storage in Azure Blob Storage (player-pictures container)
+- Time-limited SAS URLs for secure access
+- Client and server-side validation
+- Authorization: Only owner can upload/delete
+- See [Player Picture Services Developer Guide](../../docs/Player_Picture_Services_Developer_Guide.md)
 
 ### 2. Team Management
 
@@ -491,7 +508,7 @@ dotnet ef migrations script \
 
 ### Test Coverage
 
-**Total: 802 tests passing ✅**
+**Total: 891 tests passing ✅**
 
 | Test Suite | Tests | Coverage Area |
 |------------|-------|---------------|
@@ -502,6 +519,7 @@ dotnet ef migrations script \
 | UserClaimTests | 18 | Claims management |
 | AuthorizationResultTests | 8 | Authorization result model |
 | PlayerValidatorTests | 43 | Player validation rules |
+| PlayerPictureValidatorTests | 18 | Picture upload validation rules |
 | TeamPlayerValidatorTests | 25 | Team assignment validation |
 | PlayerStatisticValidatorTests | 30 | Statistics validation |
 | ApplicationDbContextTests | 16 | Audit field population |
@@ -511,6 +529,8 @@ dotnet ef migrations script \
 | EfPlayerRepositoryTests | 32 | CRUD operations, error handling |
 | EfTeamPlayerRepositoryTests | 50 | Team assignments, duplicate detection |
 | EfPlayerStatisticRepositoryTests | 45 | Statistics CRUD, aggregates |
+| BlobStorageServiceTests | 21 | Azure Blob Storage operations |
+| PlayerServicePictureTests | 18 | Picture upload/delete workflows |
 | MockPlayerRepositoryTests | 30 | In-memory implementation |
 | PlayerServiceTests | 26 | Player business logic |
 | TeamPlayerServiceTests | 28 | Team management logic |
@@ -691,7 +711,10 @@ if (result.Success)
 
 - [Database Connection Setup](../../docs/Database_Connection_Setup.md)
 - [Player Statistics Requirements](../../docs/playerstats-requirements.md)
+- [Player Picture Services Developer Guide](../../docs/Player_Picture_Services_Developer_Guide.md)
+- [Player Picture Upload User Guide](../../docs/Player_Picture_Upload_User_Guide.md)
 - [Entra ID Integration Spec](../../docs/specs/EntraID_ExternalIdentities_Integration_Specification.md)
+- [Player Picture Upload Specification](../../docs/specs/PlayerPictureUpload_Feature_Specification.md)
 
 ### Architecture Guidelines
 
@@ -722,7 +745,7 @@ This project is part of the GhcSamplePs solution. See the main repository LICENS
 
 ---
 
-**Last Updated:** December 3, 2025  
+**Last Updated:** December 29, 2024  
 **Version:** 1.0.0  
 **Target Framework:** .NET 10.0  
-**Test Status:** ✅ 802 tests passing
+**Test Status:** ✅ 891 tests passing

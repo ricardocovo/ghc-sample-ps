@@ -117,11 +117,13 @@ GhcSamplePs.Web/
 
 - **CRUD Operations** - Create, read, update, delete players
 - **Profile Pictures** - Upload, display, and manage player pictures
-  - File upload with drag-and-drop support
+  - File upload via file browser (drag-and-drop support planned for a future release)
   - Client-side validation (5 MB limit, JPEG/PNG/GIF/WebP)
   - Progress indicator during upload
   - Confirmation dialog for deletion
   - Pictures stored in Azure Blob Storage
+  - Secure access via time-limited SAS tokens
+  - See [Player Picture Upload User Guide](../../docs/Player_Picture_Upload_User_Guide.md)
 - **Advanced Search** - Filter by name, age, gender
 - **Sortable Columns** - Sort by name, age, date of birth
 - **Pagination** - Efficient browsing of large player lists
@@ -691,12 +693,13 @@ The application implements automatic token refresh with resilience features:
 
 ## Additional Resources
 
-### Documentation
+### Related Documentation
 
 - [Database Connection Setup](../../docs/Database_Connection_Setup.md) - Connection string configuration
 - [Azure Entra ID Setup Guide](../../docs/Azure_EntraID_Setup_Guide.md) - Authentication configuration
 - [Player Statistics User Guide](../../docs/Player_Statistics_User_Guide.md) - Statistics feature guide
 - [Team Management User Guide](../../docs/Team_Management_User_Guide.md) - Team feature guide
+- [Player Picture Upload User Guide](../../docs/Player_Picture_Upload_User_Guide.md) - Picture upload guide
 - [PWA Implementation Summary](../../docs/PWA_Implementation_Summary.md) - Progressive Web App details
 
 ### Architecture Guidelines
@@ -729,7 +732,7 @@ This project is part of the GhcSamplePs solution. See the main repository LICENS
 
 ---
 
-**Last Updated:** December 3, 2025  
+**Last Updated:** December 29, 2024  
 **Version:** 1.0.0  
 **Framework:** .NET 10.0  
-**Build Status:** ✅ All 802 tests passing
+**Build Status:** ✅ All 891 tests passing

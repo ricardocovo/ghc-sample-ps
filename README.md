@@ -34,6 +34,9 @@ GhcSamplePs is a Progressive Web Application (PWA) designed to help parents, coa
 ### What This Application Does
 
 - **Player Management** - Track player profiles, dates of birth, photos, and roster history
+  - Upload and manage player profile pictures (Azure Blob Storage)
+  - File validation (5 MB limit, JPEG/PNG/GIF/WebP)
+  - Secure picture storage with time-limited access
 - **Team Management** - Organize players into teams across different championships and seasons
 - **Statistics Tracking** - Record detailed game-level statistics (goals, assists, minutes played, starter status)
 - **Performance Analytics** - View aggregated statistics and player performance over time
@@ -70,7 +73,8 @@ GhcSamplePs is a Progressive Web Application (PWA) designed to help parents, coa
 | **Container Apps** | 0.25 vCPU, 0.5GB RAM | Serverless container hosting |
 | **SQL Database** | Serverless (0.5-2 vCores) | Auto-pausing SQL database |
 | **Key Vault** | Standard tier | Secrets and key encryption |
-| **Storage Account** | Standard LRS | Data Protection keys |
+| **Storage Account** | Standard LRS | Data Protection keys & player pictures |
+| **Blob Storage** | player-pictures container | Player profile picture storage |
 | **Container Registry** | Basic tier | Private Docker images |
 | **Application Insights** | Pay-as-you-go | APM and telemetry |
 
@@ -90,8 +94,9 @@ GhcSamplePs is a Progressive Web Application (PWA) designed to help parents, coa
 ### Testing & Quality
 
 - **xUnit** - Unit testing framework
-- **802 tests** - Comprehensive test coverage
+- **891 tests** - Comprehensive test coverage (57 picture-related tests)
 - **In-Memory Database** - EF Core testing provider
+- **85%+ Code Coverage** - Business logic thoroughly tested
 
 ---
 
