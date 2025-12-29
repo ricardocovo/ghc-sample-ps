@@ -1,4 +1,6 @@
-azurite.bat
+# Azurite (Azure Storage Emulator) data
+azurite-start.bat
+
 # .NET Build Outputs
 bin/
 obj/
