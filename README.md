@@ -45,11 +45,11 @@ GhcSamplePs is a Progressive Web Application (PWA) designed to help parents, coa
 
 ### Architecture Highlights
 
-✅ **Clean Architecture** - Strict separation between UI (Web) and business logic (Core)  
-✅ **Cloud-Native** - Designed for Azure Container Apps with serverless SQL  
-✅ **Passwordless Auth** - Managed Identity for all Azure service connections  
-✅ **Cost-Optimized** - Scale-to-zero containers, auto-pausing SQL ($7-35/month dev environment)  
-✅ **GDPR Compliant** - Canada Central region, audit logging, encryption at rest/transit  
+✅ **Clean Architecture** - Strict separation between UI (Web) and business logic (Core)
+✅ **Cloud-Native** - Designed for Azure Container Apps with serverless SQL
+✅ **Passwordless Auth** - Managed Identity for all Azure service connections
+✅ **Cost-Optimized** - Scale-to-zero containers, auto-pausing SQL ($7-35/month dev environment)
+✅ **GDPR Compliant** - Canada Central region, audit logging, encryption at rest/transit
 ✅ **Progressive Web App** - Install to home screen, offline support, responsive design
 
 ---
@@ -109,32 +109,32 @@ graph TB
     subgraph "Presentation Layer"
         Web[GhcSamplePs.Web<br/>Blazor Server UI<br/>Components & Pages]
     end
-    
+
     subgraph "Business Logic Layer"
         Core[GhcSamplePs.Core<br/>Services & Repositories<br/>Domain Models]
     end
-    
+
     subgraph "Data Layer"
         DB[(Azure SQL Database<br/>Entity Framework Core)]
     end
-    
+
     subgraph "External Services"
         EntraID[Microsoft Entra ID<br/>Authentication]
         Storage[Azure Storage<br/>Data Protection Keys]
         KV[Azure Key Vault<br/>Secrets & Encryption]
     end
-    
+
     subgraph "Testing"
         Tests[GhcSamplePs.Core.Tests<br/>802 Unit Tests]
     end
-    
+
     Web -->|References| Core
     Core -->|Entity Framework| DB
     Web -->|Authenticates| EntraID
     Web -->|Stores Keys| Storage
     Web -->|Retrieves Secrets| KV
     Tests -->|Tests| Core
-    
+
     style Web fill:#512BD4
     style Core fill:#0078D4
     style DB fill:#0078D4
@@ -148,8 +148,8 @@ graph TB
 GhcSamplePs.Web → GhcSamplePs.Core
 ```
 
-✅ **Web depends on Core** - UI layer calls business logic services  
-❌ **Core never depends on Web** - Business logic is UI-agnostic and testable  
+✅ **Web depends on Core** - UI layer calls business logic services
+❌ **Core never depends on Web** - Business logic is UI-agnostic and testable
 
 **Separation of Concerns:**
 
@@ -422,12 +422,12 @@ public interface IPlayerService
 public class PlayerService : IPlayerService
 {
     private readonly IPlayerRepository _repository;
-    
+
     public PlayerService(IPlayerRepository repository)
     {
         _repository = repository;
     }
-    
+
     public async Task<ServiceResult<Player>> CreatePlayerAsync(Player player)
     {
         // Business logic here
@@ -619,10 +619,10 @@ public async Task WhenCreatingPlayerWithValidData_ThenPlayerIsCreated()
 {
     // Arrange
     var player = new Player { Name = "John Doe", DateOfBirth = new DateTime(2010, 1, 1) };
-    
+
     // Act
     var result = await _playerService.CreatePlayerAsync(player);
-    
+
     // Assert
     Assert.True(result.IsSuccess);
     Assert.NotNull(result.Data);
@@ -846,9 +846,46 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) file for 
 
 ---
 
+## Recent Fixes & Updates
+
+### December 29, 2025 - DbContext Threading Fix
+
+**Issue Resolved:** Fixed "A second operation was started on this context instance before a previous operation completed" error in Blazor Server.
+
+**Root Cause:**
+- EF Core `QuerySplittingBehavior.SplitQuery` was enabled, causing `.Include()` statements to execute as multiple SQL queries
+- Blazor Server components rendering concurrently (pre-rendering + normal rendering) triggered simultaneous access to the same DbContext instance
+- This violated EF Core's threading safety requirements
+
+**Solution Applied:**
+1. Changed EF Core query splitting from `SplitQuery` to `SingleQuery` in `ServiceCollectionExtensions.cs`
+2. Converted parallel `Task.WhenAll` operations to sequential execution in Home.razor
+3. Added proper null checks for navigation properties in LINQ queries
+
+**Impact:**
+- ✅ Eliminated DbContext threading exceptions
+- ✅ Statistics now display correctly on dashboard
+- ✅ All queries execute as single SQL statements with JOINs
+- ✅ Improved stability for concurrent Blazor operations
+
+**Files Modified:**
+- [ServiceCollectionExtensions.cs](src/GhcSamplePs.Core/Extensions/ServiceCollectionExtensions.cs#L91)
+- [Home.razor](src/GhcSamplePs.Web/Components/Pages/Home.razor)
+- [EfPlayerStatisticRepository.cs](src/GhcSamplePs.Core/Repositories/Implementations/EfPlayerStatisticRepository.cs#L515)
+
+---
+
 ## Acknowledgments
 
 - Built with [.NET 10](https://dotnet.microsoft.com/)
 - UI powered by [MudBlazor](https://mudblazor.com/)
 - Hosted on [Azure Container Apps](https://azure.microsoft.com/products/container-apps)
 - Authentication by [Microsoft Entra ID](https://www.microsoft.com/security/business/identity-access/microsoft-entra-id)
+
+---
+
+**Last Updated:** December 29, 2025
+**Version:** 1.0.1
+**Target Framework:** .NET 10.0
+**Test Status:** ✅ 802+ tests passing
+
