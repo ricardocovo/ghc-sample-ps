@@ -13,6 +13,7 @@ using Microsoft.Net.Http.Headers;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Azure.Identity;
 using Microsoft.AspNetCore.DataProtection;
@@ -53,10 +54,28 @@ if (!builder.Environment.IsDevelopment())
     }
 }
 
-// Add authentication services with Microsoft Identity Web
-// Configure token refresh handling with automatic refresh on expiration
-builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApp(options =>
+// Add authentication services - conditional setup for testing vs production
+// Check if we're using test authentication for E2E testing
+var useTestAuthentication = builder.Environment.EnvironmentName == "Testing" ||
+                           builder.Configuration.GetValue<bool>("Authentication:UseTestProvider");
+
+if (useTestAuthentication)
+{
+    // Configure test authentication for E2E testing
+    builder.Services.AddSingleton<TestCurrentUserProvider>();
+    builder.Services.AddScoped<ICurrentUserProvider>(provider =>
+        provider.GetRequiredService<TestCurrentUserProvider>());
+
+    // Add test authentication scheme
+    builder.Services.AddAuthentication("Test")
+        .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>("Test", options => { });
+}
+else
+{
+    // Add authentication services with Microsoft Identity Web
+    // Configure token refresh handling with automatic refresh on expiration
+    builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+        .AddMicrosoftIdentityWebApp(options =>
     {
         builder.Configuration.GetSection("AzureAd").Bind(options);
 
@@ -174,14 +193,24 @@ builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
             }
         };
     });
+}
 
 builder.Services.AddControllersWithViews()
     .AddMicrosoftIdentityUI();
 
+// Add test controller only in Testing environment
+if (useTestAuthentication)
+{
+    builder.Services.AddControllers();
+}
+
 builder.Services.AddAuthorization(options =>
 {
-    // Require authenticated user by default
-    options.FallbackPolicy = options.DefaultPolicy;
+    // Require authenticated user by default (except in test mode with bypass enabled)
+    if (!useTestAuthentication || !builder.Configuration.GetValue<bool>("Authentication:BypassEntraId"))
+    {
+        options.FallbackPolicy = options.DefaultPolicy;
+    }
 
     // Define custom authorization policies
     options.AddPolicy("RequireAuthenticatedUser", policy =>
@@ -199,8 +228,13 @@ builder.Services.AddCascadingAuthenticationState();
 
 // Register Core services
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUserProvider, HttpContextCurrentUserProvider>();
-builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+
+// Register current user provider - conditional based on authentication mode
+if (!useTestAuthentication)
+{
+    builder.Services.AddScoped<ICurrentUserProvider, HttpContextCurrentUserProvider>();
+}
+builder.Services.AddScoped<GhcSamplePs.Core.Services.Interfaces.IAuthenticationService, GhcSamplePs.Core.Services.Implementations.AuthenticationService>();
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
 // Register Player Management services
