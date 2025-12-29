@@ -3,6 +3,7 @@
 @using GhcSamplePs.Core.Models.PlayerManagement.DTOs
 @using GhcSamplePs.Core.Validation
 @using GhcSamplePs.Web.Helpers
+@using Microsoft.AspNetCore.Components.Forms
 @inject IPlayerService PlayerService
 @inject ITeamPlayerService TeamPlayerService
 @inject IPlayerStatisticService PlayerStatisticService
@@ -72,6 +73,76 @@
                             @_errorMessage
                         </MudAlert>
                     }
+
+                    @* Picture upload section *@
+                    <MudPaper Elevation="1" Class="pa-4 mb-4">
+                        <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                            @* Picture display area *@
+                            <MudAvatar Size="Size.Large" Style="width: 150px; height: 150px;">
+                                @if (!string.IsNullOrEmpty(_player?.PhotoUrl))
+                                {
+                                    <MudImage Src="@_player.PhotoUrl" Alt="Player photo" ObjectFit="ObjectFit.Cover" />
+                                }
+                                else
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Large" />
+                                }
+                            </MudAvatar>
+
+                            @* Upload success message *@
+                            @if (_uploadSuccess)
+                            {
+                                <MudAlert Severity="Severity.Success" ShowCloseIcon="true" CloseIconClicked="() => _uploadSuccess = false" Class="mt-2">
+                                    Picture uploaded successfully!
+                                </MudAlert>
+                            }
+
+                            @* Upload error message *@
+                            @if (!string.IsNullOrEmpty(_uploadErrorMessage))
+                            {
+                                <MudAlert Severity="Severity.Error" ShowCloseIcon="true" CloseIconClicked="() => _uploadErrorMessage = null" Class="mt-2">
+                                    @_uploadErrorMessage
+                                </MudAlert>
+                            }
+
+                            @* Upload progress *@
+                            @if (_isUploading)
+                            {
+                                <MudStack AlignItems="AlignItems.Center" Class="mt-2">
+                                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Uploading picture...</MudText>
+                                </MudStack>
+                            }
+
+                            @* Upload and delete buttons *@
+                            @if (!_isUploading)
+                            {
+                                <MudStack Row="true" Spacing="2" Class="mt-2">
+                                    <MudFileUpload T="IBrowserFile" Accept="image/jpeg,image/png,image/gif,image/webp" OnFilesChanged="HandleFileSelected" MaximumFileCount="1">
+                                        <ActivatorContent>
+                                            <MudButton Variant="Variant.Filled"
+                                                       Color="Color.Primary"
+                                                       StartIcon="@Icons.Material.Filled.CloudUpload"
+                                                       Disabled="@(_isSaving || _isDeleting || _isUploading)">
+                                                @(string.IsNullOrEmpty(_player?.PhotoUrl) ? "Upload Picture" : "Change Picture")
+                                            </MudButton>
+                                        </ActivatorContent>
+                                    </MudFileUpload>
+
+                                    @if (!string.IsNullOrEmpty(_player?.PhotoUrl))
+                                    {
+                                        <MudButton Variant="Variant.Outlined"
+                                                   Color="Color.Error"
+                                                   StartIcon="@Icons.Material.Filled.Delete"
+                                                   OnClick="OpenDeletePictureDialog"
+                                                   Disabled="@(_isSaving || _isDeleting || _isUploading)">
+                                            Delete Picture
+                                        </MudButton>
+                                    }
+                                </MudStack>
+                            }
+                        </MudStack>
+                    </MudPaper>
 
                     @* Form *@
                     <MudForm @ref="_form" @bind-IsValid="_formIsValid">
@@ -800,6 +871,45 @@
             </MudButton>
         </DialogActions>
     </MudDialog>
+
+    @* Delete Picture Confirmation Dialog *@
+    <MudDialog @bind-Visible="_showDeletePictureDialog">
+        <TitleContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
+                <MudText Typo="Typo.h6">Delete Picture</MudText>
+            </MudStack>
+        </TitleContent>
+        <DialogContent>
+            <MudText Typo="Typo.body1" Class="mb-2">
+                Are you sure you want to delete <strong>@_player?.Name</strong>'s profile picture?
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                This action cannot be undone. The picture will be permanently deleted from storage.
+            </MudText>
+            @if (!string.IsNullOrEmpty(_deletePictureErrorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-4">@_deletePictureErrorMessage</MudAlert>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="CloseDeletePictureDialog" Disabled="@_isDeletingPicture">Cancel</MudButton>
+            <MudButton Color="Color.Error"
+                       Variant="Variant.Filled"
+                       OnClick="HandleDeletePicture"
+                       Disabled="@_isDeletingPicture">
+                @if (_isDeletingPicture)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Deleting...</span>
+                }
+                else
+                {
+                    <span>Delete</span>
+                }
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
 </MudContainer>
 
 @code {
@@ -887,6 +997,14 @@
     private bool _showDeleteStatisticDialog;
     private PlayerStatisticDto? _deletingStatistic;
     private string? _deleteStatisticErrorMessage;
+
+    // Picture upload state
+    private bool _isUploading;
+    private bool _uploadSuccess;
+    private string? _uploadErrorMessage;
+    private bool _showDeletePictureDialog;
+    private bool _isDeletingPicture;
+    private string? _deletePictureErrorMessage;
 
     private string CurrentUserId => CurrentUserProvider.GetCurrentUser()?.Identity?.Name ?? "system";
 
@@ -1558,6 +1676,150 @@
         finally
         {
             _isSavingStatistic = false;
+        }
+    }
+
+    // Picture upload methods
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file is null || _player is null)
+        {
+            return;
+        }
+
+        // Reset messages
+        _uploadSuccess = false;
+        _uploadErrorMessage = null;
+
+        // Validate file size
+        if (file.Size > PlayerPictureValidator.MaxFileSizeBytes)
+        {
+            _uploadErrorMessage = "The selected file exceeds the 5 MB size limit. Please choose a smaller image.";
+            return;
+        }
+
+        // Validate file type
+        if (!PlayerPictureValidator.IsValidImageContentType(file.ContentType))
+        {
+            _uploadErrorMessage = "Invalid file format. Please upload a JPEG, PNG, GIF, or WebP image.";
+            return;
+        }
+
+        // Verify ownership before upload
+        if (!IsCurrentUserOwner(_player))
+        {
+            _uploadErrorMessage = "You do not have permission to modify this player's picture.";
+            return;
+        }
+
+        _isUploading = true;
+
+        try
+        {
+            // Read file content
+            using var memoryStream = new MemoryStream();
+            await using var readStream = file.OpenReadStream(PlayerPictureValidator.MaxFileSizeBytes);
+            await readStream.CopyToAsync(memoryStream);
+            var fileContent = memoryStream.ToArray();
+
+            var uploadDto = new UploadPlayerPictureDto
+            {
+                PlayerId = Id,
+                FileContent = fileContent,
+                FileName = file.Name,
+                ContentType = file.ContentType,
+                FileSizeBytes = file.Size
+            };
+
+            var result = await PlayerService.UploadPlayerPictureAsync(uploadDto, CurrentUserId);
+
+            if (result.Success && result.Data is not null && result.Data.Success)
+            {
+                // Update local player with new picture URL
+                _player = _player with { PhotoUrl = result.Data.PictureUrl };
+
+                _uploadSuccess = true;
+
+                // Auto-hide success message after 3 seconds
+                _ = InvokeAsync(async () =>
+                {
+                    await Task.Delay(3000);
+                    _uploadSuccess = false;
+                    StateHasChanged();
+                });
+            }
+            else
+            {
+                _uploadErrorMessage = result.Data?.ErrorMessage
+                    ?? result.ErrorMessages.FirstOrDefault()
+                    ?? "Failed to upload picture. Please try again.";
+            }
+        }
+        catch (Exception)
+        {
+            _uploadErrorMessage = "An unexpected error occurred while uploading the picture. Please try again.";
+        }
+        finally
+        {
+            _isUploading = false;
+        }
+    }
+
+    // Delete Picture Dialog methods
+    private void OpenDeletePictureDialog()
+    {
+        _deletePictureErrorMessage = null;
+        _showDeletePictureDialog = true;
+    }
+
+    private void CloseDeletePictureDialog()
+    {
+        _showDeletePictureDialog = false;
+        _deletePictureErrorMessage = null;
+    }
+
+    private async Task HandleDeletePicture()
+    {
+        if (_player is null)
+        {
+            return;
+        }
+
+        // Verify ownership before delete
+        if (!IsCurrentUserOwner(_player))
+        {
+            _deletePictureErrorMessage = "You do not have permission to delete this player's picture.";
+            return;
+        }
+
+        _isDeletingPicture = true;
+        _deletePictureErrorMessage = null;
+
+        try
+        {
+            var result = await PlayerService.DeletePlayerPictureAsync(Id, CurrentUserId);
+
+            if (result.Success)
+            {
+                // Update local player to remove picture URL
+                _player = _player with { PhotoUrl = null };
+
+                CloseDeletePictureDialog();
+                Snackbar.Add("Picture deleted successfully.", Severity.Success);
+            }
+            else
+            {
+                _deletePictureErrorMessage = result.ErrorMessages.FirstOrDefault() ?? "Unable to delete picture.";
+            }
+        }
+        catch (Exception)
+        {
+            _deletePictureErrorMessage = "An unexpected error occurred while deleting the picture.";
+        }
+        finally
+        {
+            _isDeletingPicture = false;
         }
     }
 }

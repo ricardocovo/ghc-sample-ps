@@ -116,7 +116,12 @@ GhcSamplePs.Web/
 ### 👤 Player Management
 
 - **CRUD Operations** - Create, read, update, delete players
-- **Profile Photos** - Upload and display player photos
+- **Profile Pictures** - Upload, display, and manage player pictures
+  - File upload with drag-and-drop support
+  - Client-side validation (5 MB limit, JPEG/PNG/GIF/WebP)
+  - Progress indicator during upload
+  - Confirmation dialog for deletion
+  - Pictures stored in Azure Blob Storage
 - **Advanced Search** - Filter by name, age, gender
 - **Sortable Columns** - Sort by name, age, date of birth
 - **Pagination** - Efficient browsing of large player lists
