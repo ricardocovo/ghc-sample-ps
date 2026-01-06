@@ -35,6 +35,14 @@ jobs:
 
           copilot --agent documentation-reporter --prompt "$PROMPT" --allow-all-tools --allow-all-paths < /dev/null
 
+      - name: Upload  report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-report-${{ github.run_id }}
+          path: documentation-report.md
+          retention-days: 30
+
       - name: Check for report
         if: always()
         run: |
@@ -52,10 +60,3 @@ jobs:
           else
             echo "✅ Documentation is up to date"
           fi
-      - name: Upload  report artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: documentation-report-${{ github.run_id }}
-          path: documentation-report.md
-          retention-days: 30
