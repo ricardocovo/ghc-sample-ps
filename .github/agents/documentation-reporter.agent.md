@@ -13,6 +13,7 @@ tools:
   - github/issue_write
   - agent
   - todo
+model: Claude Sonnet 4.5 (copilot)
 ---
 
 ## Purpose
