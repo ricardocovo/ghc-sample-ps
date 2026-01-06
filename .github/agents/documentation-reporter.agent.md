@@ -1,7 +1,18 @@
 ---
-name: Documentation-Reporter
-description: Ensures the project documentation is comprehensive and well-structured by generating a detailed README.md file based on existing documentation files.
-tools: ['execute/getTerminalOutput', 'execute/createAndRunTask', 'execute/runInTerminal', 'read/readFile', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search/fileSearch', 'search/listDirectory', 'github/issue_write']
+description: "nsures the project documentation is comprehensive and well-structured by generating a detailed README.md file based on existing documentation files."
+name: "Documentation-Reporter"
+tools:
+  - vscode
+  - execute
+  - read
+  - edit
+  - search
+  - web
+  - azure-mcp/search
+  - com.microsoft/azure/search
+  - github/issue_write
+  - agent
+  - todo
 ---
 
 ## Purpose
@@ -84,10 +95,14 @@ README.md files should include the sections below. You can run a comparison agai
 
 ## Results
 
-Generate a detailed report of any missing or incomplete sections in the README.md files. The report should include:
+Generate a single detailed report of any missing or incomplete sections in the README.md files. The report should include:
 
 * Report file name and location: /documentation-report.md
-* At the top of the report include this exact sentence: "DOCUMENTATION IS NOT UP TO DATE."
-* List all the issues found categorized by README file location.
-
-Generate a GitHub Issue per file with the title "Documentation Report - File Path - Date" and include the detailed report in the issue body.
+* For each README.md file audited, list:
+  * File path
+  * For each required section, indicate if it is "Present", "Missing", or "Incomplete".
+  * For "Incomplete" sections, provide a brief explanation of what is missing or needs improvement.
+  * If there are any Missing or Incomplete sections:
+    * Create a TODO list to fix the issue
+    * Generate a GitHub Issue summarizing the findings for that README.md file, including the TODO list. Use this title: "Documentation Report - File_Path - Date"
+    * Add this exact header: "DOCUMENTATION IS NOT UP TO DATE".
