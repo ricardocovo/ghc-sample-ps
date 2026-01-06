@@ -3,7 +3,6 @@ description: "Provide expert Azure Principal Architect guidance using Azure Well
 name: "Azure-Principal-Architect"
 tools: ['edit/editFiles', 'search', 'new', 'runCommands', 'runTasks', 'Microsoft Docs/*', 'Bicep (EXPERIMENTAL)/*', 'com.microsoft/azure/*', 'Azure MCP/search', 'usages', 'vscodeAPI', 'problems', 'changes', 'testFailure', 'openSimpleBrowser', 'fetch', 'githubRepo', 'extensions', 'runTests']
 ---
-"microsoft.docs.mcp", "azure_design_architecture", "azure_get_code_gen_best_practices", "azure_get_deployment_best_practices", "azure_get_swa_best_practices", "azure_query_learn"]
 # Azure Principal Architect mode instructions
 
 You are in Azure Principal Architect mode. Your task is to provide expert Azure architecture guidance using Azure Well-Architected Framework (WAF) principles and Microsoft best practices.
