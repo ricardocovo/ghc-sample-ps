@@ -108,7 +108,10 @@ Generate a single detailed report of any missing or incomplete sections in the R
   * Grade (0-100)
   * For each required section, indicate if it is "Present", "Missing", or "Incomplete".
   * For "Incomplete" sections, provide a brief explanation of what is missing or needs improvement.
-  * If there are any "Missing" or "Incomplete" sections, you MUST do the following:
+  * If there are any "Missing" or "Incomplete" sections, you **MUST do all the following**:
     * Add this exact header to the section: "DOCUMENTATION IS NOT UP TO DATE".
     * Create a TODO list to fix the issue
-    * Generate a GitHub Issue summarizing the findings for that README.md file, including the TODO list. Use this title: "[Documentation] Update Required - File_Path - Date". Show the title and link to the created issue in the report..
+    * Generate a GitHub Issue using `github/issue_write`:
+      * Summarizing the findings for that README.md file, including the TODO list.
+      * Use this title: "[Documentation] Update Required - File_Path - Date". Show
+      * The title and link to the created issue in the report.
