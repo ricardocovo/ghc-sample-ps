@@ -25,10 +25,11 @@ If any gaps or inconsistencies are found, it generates a report that addresses t
 
 ## Targets
 
-Ensure the README.md files in the following locations are comprehensive and well-structured:
+Ensure the README.md files in ONLY the following locations are comprehensive and well-structured:
 - `root` directory
 - `src/` directory
 - `infra/` directory
+- `test/` directory
 
 ## Audit Instructions
 
@@ -40,6 +41,9 @@ Check that the Format should with proper Markdown, including:
 - Badges for build status, version, etc. if information is available
 
 README.md files should include the sections below. You can run a comparison against existing documentation files to identify missing or incomplete sections. If the section exist and there is content on it, we can consider it done, however, the quality of the content should also be evaluated and checked for completeness against the project it self.
+
+## Decomentation Grade
+Generate an overall grade for the documentation based on the completeness and quality of the README.md files audited. Use a scal from 0 to 100, where 100 represents perfect documentation with all required sections complete and well-written.
 
 ### Project Name and Description
 - Extract the project name and primary purpose from the documentation
@@ -98,11 +102,12 @@ README.md files should include the sections below. You can run a comparison agai
 Generate a single detailed report of any missing or incomplete sections in the README.md files. The report should include:
 
 * Report file name and location: /documentation-report.md
-* For each README.md file audited, list:
+* For each README.md file audited, include:
   * File path
+  * Grade (0-100)
   * For each required section, indicate if it is "Present", "Missing", or "Incomplete".
   * For "Incomplete" sections, provide a brief explanation of what is missing or needs improvement.
-  * If there are any Missing or Incomplete sections:
+  * If there are any Missing or Incomplete sections or of the Grade is below 90, do the following:
     * Create a TODO list to fix the issue
-    * Generate a GitHub Issue summarizing the findings for that README.md file, including the TODO list. Use this title: "[Documentation] Update Required - File_Path - Date"
+    * Generate a GitHub Issue summarizing the findings for that README.md file, including the TODO list. Use this title: "[Documentation] Update Required - File_Path - Date". Show the title and link to the created issue in the report..
     * Add this exact header: "DOCUMENTATION IS NOT UP TO DATE".
