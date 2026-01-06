@@ -43,7 +43,7 @@ Check that the Format should with proper Markdown, including:
 
 README.md files should include the sections below. You can run a comparison against existing documentation files to identify missing or incomplete sections. If the section exist and there is content on it, we can consider it done, however, the quality of the content should also be evaluated and checked for completeness against the project it self.
 
-## Decomentation Grade
+## Documentation Grade
 Generate an overall grade for the documentation based on the completeness and quality of the README.md files audited. Use a scal from 0 to 100, where 100 represents perfect documentation with all required sections complete and well-written.
 
 ### Project Name and Description
