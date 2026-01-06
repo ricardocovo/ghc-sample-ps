@@ -104,5 +104,5 @@ Generate a single detailed report of any missing or incomplete sections in the R
   * For "Incomplete" sections, provide a brief explanation of what is missing or needs improvement.
   * If there are any Missing or Incomplete sections:
     * Create a TODO list to fix the issue
-    * Generate a GitHub Issue summarizing the findings for that README.md file, including the TODO list. Use this title: "Documentation Report - File_Path - Date"
+    * Generate a GitHub Issue summarizing the findings for that README.md file, including the TODO list. Use this title: "[Documentation] Update Required - File_Path - Date"
     * Add this exact header: "DOCUMENTATION IS NOT UP TO DATE".
