@@ -22,7 +22,7 @@ jobs:
       - name: Install GitHub Copilot CLI
         run: npm i -g @github/copilot
 
-      - name: Run Security Agent via Copilot CLI
+      - name: Run Documentation Reporter Agent via Copilot CLI
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN}}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -42,8 +42,8 @@ jobs:
           REPORT_PATH="documentation-report.md"
 
           if [ ! -f "$REPORT_PATH" ]; then
-            echo "No report generated; skipping check."
-            exit 0
+            echo "❌ NO REPORT GENERATED - Check workflow logs for errors"
+            exit 1
           fi
 
           if grep -q "DOCUMENTATION IS NOT UP TO DATE." "$REPORT_PATH"; then
