@@ -11,6 +11,7 @@
 @inject ICurrentUserProvider CurrentUserProvider
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject IConfiguration Configuration
 
 <PageTitle>Edit Player</PageTitle>
 
@@ -366,6 +367,24 @@
                             Add Statistics
                         </MudButton>
                     </MudStack>
+
+                    @* YouTube Tutorial Link *@
+                    @if (!string.IsNullOrEmpty(_youTubeVideoUrl))
+                    {
+                        <MudAlert Severity="Severity.Info" Class="mb-4" Icon="@Icons.Material.Filled.VideoLibrary">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.body2">
+                                    <strong>Need help?</strong> Watch our tutorial on tracking player statistics:
+                                </MudText>
+                                <MudLink Href="@_youTubeVideoUrl" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                        <MudIcon Icon="@Icons.Material.Filled.PlayCircle" Size="Size.Small" />
+                                        <span>Watch Tutorial</span>
+                                    </MudStack>
+                                </MudLink>
+                            </MudStack>
+                        </MudAlert>
+                    }
 
                     @* Error display *@
                     @if (!string.IsNullOrEmpty(_statisticsErrorMessage))
@@ -929,6 +948,9 @@
     private DateTime? _dateOfBirth;
     private string? _gender;
 
+    // YouTube help video URL (validated)
+    private string? _youTubeVideoUrl;
+
     // Teams tab state
     private List<TeamPlayerDto> _teams = [];
     private bool _isLoadingTeams;
@@ -1010,6 +1032,10 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Load and validate YouTube video URL from configuration
+        var configuredUrl = Configuration["StatisticsHelp:YouTubeVideoUrl"];
+        _youTubeVideoUrl = YouTubeUrlValidator.GetValidatedYouTubeUrl(configuredUrl);
+
         await LoadPlayerAsync();
     }
 
