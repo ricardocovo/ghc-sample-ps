@@ -39,24 +39,24 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: documentation-report-${{ github.run_id }}
-          path: documentation-report.md
+          name: documentation-reports-${{ github.run_id }}
+          path: Documentation_Reporter_Output*.md
           retention-days: 30
 
       - name: Check for report
         if: always()
         run: |
           set -euo pipefail
-          REPORT_PATH="documentation-report.md"
+          REPORT_PATTERN="Documentation_Reporter_Output*.md"
 
-          if [ ! -f "$REPORT_PATH" ]; then
+          if [ ! -f "$REPORT_PATTERN" ]; then
             echo "❌ NO REPORT GENERATED - Check workflow logs for errors"
             exit 1
           fi
 
-          if grep -q "DOCUMENTATION IS NOT UP TO DATE." "$REPORT_PATH"; then
+          if grep -q "DOCUMENTATION-NEEDS-WORK." "$REPORT_PATTERN"; then
             echo "❌ MISSING OR INCOMPLETE DOCUMENTATION - Workflow failed"
             exit 1
           else
-            echo "✅ Documentation is up to date"
+            echo "✅ Documentation is ok"
           fi
