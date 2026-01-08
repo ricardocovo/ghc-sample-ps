@@ -54,7 +54,7 @@ jobs:
               exit 1
           fi
 
-          if grep -q "DOCUMENTATION-NEEDS-WORK" $REPORT_PATTERN; then
+          if grep -q "CONTAINS-CRITICAL-VULNERABILITY" $REPORT_PATTERN; then
             echo "❌ MISSING OR INCOMPLETE DOCUMENTATION - Workflow failed"
             exit 1
           else
