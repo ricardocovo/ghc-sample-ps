@@ -49,9 +49,9 @@ jobs:
           set -euo pipefail
           REPORT_PATTERN="Documentation_Reporter_Output*.md"
 
-          if [ ! -f "$REPORT_PATTERN" ]; then
-            echo "❌ NO REPORT GENERATED - Check workflow logs for errors"
-            exit 1
+          if ! compgen -G "$REPORT_PATTERN" > /dev/null; then
+              echo "❌ NO REPORT GENERATED - Check workflow logs for errors"
+              exit 1
           fi
 
           if grep -q "DOCUMENTATION-NEEDS-WORK." "$REPORT_PATTERN"; then
