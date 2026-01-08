@@ -33,7 +33,7 @@ jobs:
           PROMPT+=$'\n\nTask:\n'
           PROMPT+=$"\n- Generate Security report"
 
-          copilot --agent Security-reporter --prompt "$PROMPT" --allow-all-tools --allow-all-paths < /dev/null
+          copilot --agent security-reporter --prompt "$PROMPT" --allow-all-tools --allow-all-paths < /dev/null
 
       - name: Upload  report artifact
         if: always()
