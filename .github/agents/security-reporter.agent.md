@@ -130,15 +130,15 @@ This agent can perform comprehensive security analysis across the full stack:
 - Prioritized list of fixes needed
 - Quick wins vs. complex remediation
 
-6. Critical Vulnerability Warning
+6. Vulnerability Warning
 
-- Review all CRITICAL severity findings.
-- If there are any Critical vulnerabilities after filtering:
-  1. List them briefly under a header "### Blocking Critical Vulnerabilities".
+- Review all HIGH and CRITICAL severity findings.
+- If there are any High OR Critical vulnerabilities after filtering:
+  1. List them briefly under a header "### Blocking Vulnerabilities".
   2. Include exactly this message at the end of the report:
 
 ```
-CONTAINS-CRITICAL-VULNERABILITY
+CONTAINS-VULNERABILITY
 ```
 
 - Do not adapt or change this message in any way.

@@ -54,8 +54,8 @@ jobs:
               exit 1
           fi
 
-          if grep -q "CONTAINS-CRITICAL-VULNERABILITY" $REPORT_PATTERN; then
-            echo "❌ CRITICAL VULNERABILITY FOUND - Workflow failed"
+          if grep -q "CONTAINS-VULNERABILITY" $REPORT_PATTERN; then
+            echo "❌ CRITICAL OR HIGH VULNERABILITY FOUND - Workflow failed"
             exit 1
           else
             echo "✅ Documentation is ok"
