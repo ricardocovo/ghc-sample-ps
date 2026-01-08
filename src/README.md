@@ -4,7 +4,205 @@ Source code directory containing all application projects following clean archit
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![Clean Architecture](https://img.shields.io/badge/Architecture-Clean-success)](../.github/copilot-instructions.md)
-[![Tests](https://img.shields.io/badge/tests-802%2B%20passing-success)](../tests/)
+[![Tests](https://img.shields.io/badge/tests-891%20passing-success)](../tests/)
+
+---
+
+## 📋 Table of Contents
+
+- [Overview](#overview)
+- [Technology Stack](#technology-stack)
+- [Project Architecture](#project-architecture)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [Development Workflows](#development-workflows)
+- [Coding Standards](#coding-standards)
+- [Testing](#testing)
+- [Contributing](#contributing)
+
+---
+
+## Overview
+
+This directory contains the core source code for GhcSamplePs, a Blazor Server application following clean architecture principles. The solution is organized into two main projects:
+
+- **GhcSamplePs.Core** - Business logic layer (UI-agnostic)
+- **GhcSamplePs.Web** - Presentation layer (Blazor UI)
+
+### Key Architectural Principle
+
+```
+✅ CORRECT:  GhcSamplePs.Web → GhcSamplePs.Core
+❌ FORBIDDEN: GhcSamplePs.Core → GhcSamplePs.Web
+```
+
+The Core project is completely **UI-agnostic** and must never reference the Web project. This ensures business logic remains testable, reusable, and independent of any UI framework.
+
+---
+
+## Technology Stack
+
+### Core Technologies
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **.NET** | 10.0 | Runtime framework and SDK |
+| **C#** | 14 | Programming language with latest features |
+| **Entity Framework Core** | 10.0 | ORM and database migrations |
+| **SQL Server** | Latest | Database provider |
+
+### UI Technologies
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **Blazor Server** | 10.0 | Interactive web UI with SignalR |
+| **MudBlazor** | 8.x | Material Design component library |
+| **Microsoft Identity Web** | 4.1.0 | Entra ID authentication |
+| **Azure Identity** | 1.14.2 | Managed Identity support |
+
+### Testing & Quality
+
+- **xUnit** - Unit testing framework
+- **891 tests** - Comprehensive test coverage
+- **In-Memory Database** - EF Core testing provider
+- **85%+ Coverage** - Business logic thoroughly tested
+
+---
+
+## Project Architecture
+
+### Clean Architecture Diagram
+
+```
+┌─────────────────────────────────────────────┐
+│         Presentation Layer (Web)            │
+│  • Blazor Components & Pages                │
+│  • User Interface & Interaction             │
+│  • Display Logic & Formatting               │
+│  • Client-side Validation (UX)              │
+└─────────────────┬───────────────────────────┘
+                  │ References
+                  ↓
+┌─────────────────────────────────────────────┐
+│       Business Logic Layer (Core)           │
+│  • Services & Business Rules                │
+│  • Repositories & Data Access               │
+│  • Domain Models & Entities                 │
+│  • Validation & Exception Handling          │
+└─────────────────┬───────────────────────────┘
+                  │ Uses
+                  ↓
+┌─────────────────────────────────────────────┐
+│          Data Layer (EF Core)               │
+│  • ApplicationDbContext                     │
+│  • Entity Configurations                    │
+│  • Database Migrations                      │
+└─────────────────────────────────────────────┘
+```
+
+### Benefits of Clean Architecture
+
+- ✅ **Testability** - Business logic tested independently of UI
+- ✅ **Reusability** - Core can be used across different UI technologies
+- ✅ **Maintainability** - Clear separation of concerns
+- ✅ **Scalability** - Easy to extend and modify
+- ✅ **Framework Independence** - Core doesn't depend on Blazor
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+Before working with the source code, ensure you have:
+
+- **.NET 10 SDK** (version 10.0 or later)
+- **IDE** - Visual Studio 2022 (17.12+), VS Code with C# extension, or Rider
+- **SQL Server** - LocalDB, SQL Express, or Azure SQL Database
+- **Git** - For version control
+
+> 💡 **For complete setup instructions**, see the [main README prerequisites](../README.md#prerequisites) and [Development Environment Setup](../docs/Development_Environment_Setup.md).
+
+### Quick Start
+
+#### 1. Opening the Solution
+
+```powershell
+# Navigate to the src directory
+cd src
+
+# Open in Visual Studio
+start GhcSamplePs.sln
+
+# Or open in VS Code
+code .
+```
+
+#### 2. Building the Solution
+
+```powershell
+# Build entire solution
+dotnet build
+
+# Build specific projects
+dotnet build GhcSamplePs.Core/GhcSamplePs.Core.csproj
+dotnet build GhcSamplePs.Web/GhcSamplePs.Web.csproj
+
+# Clean before building
+dotnet clean
+dotnet build
+```
+
+#### 3. Database Setup
+
+```powershell
+# Apply migrations (creates/updates database)
+dotnet ef database update \
+  --project GhcSamplePs.Core \
+  --startup-project GhcSamplePs.Web
+
+# Or use the configured task from workspace root
+dotnet ef database update --project src/GhcSamplePs.Core --startup-project src/GhcSamplePs.Web
+```
+
+> 📖 **For detailed database setup**, see [Database Connection Setup](../docs/Database_Connection_Setup.md).
+
+#### 4. Running the Application
+
+```powershell
+# Run from Web project directory
+cd GhcSamplePs.Web
+dotnet run
+
+# Or watch for changes (hot reload)
+dotnet watch run
+
+# Application runs at: https://localhost:7001
+```
+
+#### 5. Running Tests
+
+```powershell
+# From src directory or repository root
+dotnet test
+
+# With detailed output
+dotnet test --verbosity normal
+
+# With code coverage
+dotnet test --collect:"XPlat Code Coverage"
+```
+
+### Next Steps
+
+After setting up your development environment:
+
+1. 📚 Review [Development Workflows](#development-workflows) for adding features
+2. 📖 Read [Coding Standards](#coding-standards) for conventions
+3. 🧪 Explore [Testing](#testing) for test execution strategies
+4. 📘 Check project-specific READMEs:
+   - [GhcSamplePs.Core/README.md](GhcSamplePs.Core/README.md) - Business logic documentation
+   - [GhcSamplePs.Web/README.md](GhcSamplePs.Web/README.md) - UI documentation
 
 ---
 
@@ -13,178 +211,78 @@ Source code directory containing all application projects following clean archit
 ```
 src/
 ├── GhcSamplePs.Core/         # Business Logic Layer (UI-Agnostic)
-│   ├── Models/               # Domain entities and DTOs
-│   ├── Services/             # Business logic services
-│   ├── Repositories/         # Data access layer
-│   ├── Data/                 # EF Core DbContext
-│   ├── Validation/           # Business validation rules
+│   ├── Common/               # ServiceResult, ValidationResult
+│   ├── Data/                 # EF Core DbContext & configurations
 │   ├── Exceptions/           # Custom domain exceptions
 │   ├── Extensions/           # Extension methods
-│   ├── Migrations/           # EF Core migrations
+│   ├── Migrations/           # EF Core database migrations
+│   ├── Models/               # Domain entities (Player, Team, etc.)
+│   ├── Repositories/         # Data access interfaces & implementations
+│   ├── Services/             # Business logic services
+│   │   ├── Interfaces/       # Service abstractions
+│   │   └── Implementations/  # Service implementations
+│   ├── Validation/           # Business validation rules
 │   └── README.md             # Core project documentation (750+ lines)
 │
 └── GhcSamplePs.Web/          # Presentation Layer (Blazor Server)
     ├── Components/           # Blazor components
-    │   ├── Layout/           # Layout components
-    │   ├── Pages/            # Page components
-    │   └── Shared/           # Shared UI components
-    ├── Services/             # UI-specific services
-    ├── wwwroot/              # Static assets (CSS, JS, images)
+    │   ├── Layout/           # MainLayout, NavMenu
+    │   ├── Pages/            # Routable pages (@page)
+    │   └── Shared/           # Reusable UI components
+    ├── Services/             # UI-specific services (state management)
+    ├── wwwroot/              # Static assets
+    │   ├── css/              # Stylesheets
+    │   ├── js/               # JavaScript files
     │   ├── manifest.json     # PWA manifest
     │   └── service-worker.js # PWA service worker
-    ├── Dockerfile            # Container build definition
-    ├── Program.cs            # Application startup and DI
+    ├── Dockerfile            # Multi-stage container build
+    ├── Program.cs            # Application startup & DI configuration
     ├── appsettings.json      # Application configuration
     └── README.md             # Web project documentation (700+ lines)
 ```
 
 ---
 
-## Architecture Overview
-
-### Clean Architecture Principles
-
-This solution strictly follows **clean architecture** with clear separation of concerns:
-
-```
-┌─────────────────────────────────────────────┐
-│         Presentation Layer (Web)            │
-│  • Blazor Components                        │
-│  • User Interface                           │
-│  • Display Logic                            │
-└─────────────────┬───────────────────────────┘
-                  │ References
-                  ↓
-┌─────────────────────────────────────────────┐
-│       Business Logic Layer (Core)           │
-│  • Services                                 │
-│  • Repositories                             │
-│  • Domain Models                            │
-│  • Validation                               │
-└─────────────────┬───────────────────────────┘
-                  │ Uses
-                  ↓
-┌─────────────────────────────────────────────┐
-│          Data Layer (EF Core)               │
-│  • ApplicationDbContext                     │
-│  • Entity Configurations                    │
-│  • Migrations                               │
-└─────────────────────────────────────────────┘
-```
-
-### Dependency Direction
-
-**Critical Rule:** Core project is UI-agnostic and must never reference Web project.
-
-```
-✅ CORRECT:  GhcSamplePs.Web → GhcSamplePs.Core
-❌ FORBIDDEN: GhcSamplePs.Core → GhcSamplePs.Web
-```
-
-This ensures:
-- ✅ Business logic is testable independently
-- ✅ Core can be reused across different UI technologies
-- ✅ Clear separation of concerns
-- ✅ Maintainable and scalable codebase
-
----
-
-## Project Descriptions
-
-### 1. GhcSamplePs.Core - Business Logic Layer
-
-**Purpose:** Contains all business logic, domain models, services, and data access.
-
-**Key Components:**
-- **Domain Models** - Player, TeamPlayer, PlayerStatistic entities
-- **Services** - Business logic orchestration (interfaces + implementations)
-- **Repositories** - Data access abstraction (interfaces + implementations)
-- **Validation** - Business rules and validation logic
-- **DbContext** - Entity Framework Core database context
-- **Migrations** - Database schema versioning
-
-**Technology:**
-- .NET 10.0 Class Library
-- Entity Framework Core 10.0
-- Microsoft.Extensions.Logging
-
-**Responsibilities:**
-- ✅ Business rules and validation
-- ✅ Domain logic and calculations
-- ✅ Data access through repositories
-- ✅ Service orchestration
-- ✅ Exception handling
-- ❌ NO UI components
-- ❌ NO Blazor-specific code
-- ❌ NO HTTP context
-
-**Documentation:** See [GhcSamplePs.Core/README.md](GhcSamplePs.Core/README.md)
-
----
-
-### 2. GhcSamplePs.Web - Presentation Layer
-
-**Purpose:** Blazor Server UI layer providing user interface and interaction.
-
-**Key Components:**
-- **Pages** - Blazor page components (routing)
-- **Layout** - Application layout components
-- **Components** - Reusable UI components
-- **Services** - UI-specific services (state management)
-- **wwwroot** - Static assets and PWA files
-
-**Technology:**
-- .NET 10.0 Blazor Server
-- MudBlazor 8.x UI Components
-- Microsoft Identity Web
-- SignalR (Blazor Server transport)
-
-**Responsibilities:**
-- ✅ User interface rendering
-- ✅ User interaction handling
-- ✅ Display logic and formatting
-- ✅ Client-side validation (UX)
-- ✅ State management (UI state)
-- ✅ Calling Core services
-- ❌ NO business logic
-- ❌ NO direct database access
-- ❌ NO complex calculations
-
-**Documentation:** See [GhcSamplePs.Web/README.md](GhcSamplePs.Web/README.md)
-
----
-
 ## Development Workflows
 
-### Adding New Features
+### Service Layer Pattern
+
+All business logic is implemented using the **Service Layer Pattern**:
+
+1. **Define Interface** in `Core/Services/Interfaces/`
+2. **Implement Service** in `Core/Services/Implementations/`
+3. **Register Service** in `Web/Program.cs` with dependency injection
+4. **Inject Service** into Blazor components using `@inject`
+
+### Adding New Features - Step-by-Step Guide
 
 Follow this structured workflow when implementing new features:
 
-#### 1. Define Requirements
-- Document business requirements
-- Identify affected entities and services
-- Plan database changes if needed
+#### Step 1: Define Requirements
 
-#### 2. Core Layer (Business Logic)
+- Document business requirements and user stories
+- Identify affected entities, services, and components
+- Plan database schema changes if needed
+- Create feature specification document (see `docs/specs/`)
 
-```powershell
-cd src/GhcSamplePs.Core
-```
+#### Step 2: Create Domain Model (if needed)
 
-**a) Create Domain Model** (if needed)
 ```csharp
-// Models/PlayerManagement/NewEntity.cs
+// GhcSamplePs.Core/Models/NewEntity.cs
 public class NewEntity : BaseEntity
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    // ... properties
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    // Add properties as needed
 }
 ```
 
-**b) Create Repository Interface**
+#### Step 3: Create Repository Layer
+
+**Interface:**
 ```csharp
-// Repositories/Interfaces/INewEntityRepository.cs
+// GhcSamplePs.Core/Repositories/Interfaces/INewEntityRepository.cs
 public interface INewEntityRepository
 {
     Task<NewEntity?> GetByIdAsync(int id, CancellationToken ct = default);
@@ -195,52 +293,310 @@ public interface INewEntityRepository
 }
 ```
 
-**c) Implement Repository**
+**Implementation:**
 ```csharp
-// Repositories/Implementations/EfNewEntityRepository.cs
+// GhcSamplePs.Core/Repositories/Implementations/EfNewEntityRepository.cs
 public class EfNewEntityRepository : INewEntityRepository
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<EfNewEntityRepository> _logger;
 
-    // ... implementation
+    public EfNewEntityRepository(
+        ApplicationDbContext context,
+        ILogger<EfNewEntityRepository> logger)
+    {
+        _context = context;
+        _logger = logger;
+    }
+
+    public async Task<NewEntity?> GetByIdAsync(int id, CancellationToken ct = default)
+    {
+        return await _context.NewEntities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == id, ct);
+    }
+    // ... implement other methods
 }
 ```
 
-**d) Create Service Interface**
+#### Step 4: Create Service Layer
+
+**Interface:**
 ```csharp
-// Services/Interfaces/INewEntityService.cs
+// GhcSamplePs.Core/Services/Interfaces/INewEntityService.cs
 public interface INewEntityService
 {
     Task<ServiceResult<NewEntityDto>> CreateAsync(CreateNewEntityDto dto, string userId);
     Task<ServiceResult<IReadOnlyList<NewEntityDto>>> GetAllAsync();
-    // ... methods
+    Task<ServiceResult<NewEntityDto>> GetByIdAsync(int id);
+    Task<ServiceResult<NewEntityDto>> UpdateAsync(int id, UpdateNewEntityDto dto, string userId);
+    Task<ServiceResult> DeleteAsync(int id, string userId);
 }
 ```
 
-**e) Implement Service**
+**Implementation:**
 ```csharp
-// Services/Implementations/NewEntityService.cs
+// GhcSamplePs.Core/Services/Implementations/NewEntityService.cs
 public class NewEntityService : INewEntityService
 {
     private readonly INewEntityRepository _repository;
     private readonly ILogger<NewEntityService> _logger;
 
-    // ... implementation with business logic
+    public NewEntityService(
+        INewEntityRepository repository,
+        ILogger<NewEntityService> logger)
+    {
+        _repository = repository;
+        _logger = logger;
+    }
+
+    public async Task<ServiceResult<NewEntityDto>> CreateAsync(
+        CreateNewEntityDto dto,
+        string userId)
+    {
+        try
+        {
+            // 1. Validate input
+            var validation = NewEntityValidator.Validate(dto);
+            if (!validation.IsValid)
+                return ServiceResult<NewEntityDto>.Failure(validation.Errors);
+
+            // 2. Business logic
+            var entity = new NewEntity
+            {
+                Name = dto.Name,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            // 3. Persist
+            var created = await _repository.AddAsync(entity);
+
+            // 4. Return result
+            return ServiceResult<NewEntityDto>.Success(
+                MapToDto(created));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating entity");
+            return ServiceResult<NewEntityDto>.Failure(
+                "An error occurred while creating the entity.");
+        }
+    }
+    // ... implement other methods
 }
 ```
 
-**f) Add Validation** (if needed)
+#### Step 5: Add Validation
+
 ```csharp
-// Validation/NewEntityValidator.cs
+// GhcSamplePs.Core/Validation/NewEntityValidator.cs
 public static class NewEntityValidator
 {
-    public static ValidationResult Validate(NewEntity entity)
+    public static ValidationResult Validate(CreateNewEntityDto dto)
     {
         var errors = new Dictionary<string, List<string>>();
 
-        if (string.IsNullOrWhiteSpace(entity.Name))
-            errors.Add(nameof(entity.Name), new() { "Name is required" });
+        if (string.IsNullOrWhiteSpace(dto.Name))
+            errors.Add(nameof(dto.Name), new() { "Name is required" });
+
+        if (dto.Name?.Length > 100)
+            errors.Add(nameof(dto.Name), new() { "Name must not exceed 100 characters" });
+
+        return errors.Any()
+            ? ValidationResult.Failure(errors)
+            : ValidationResult.Success();
+    }
+}
+```
+
+#### Step 6: Register Services in DI Container
+
+```csharp
+// GhcSamplePs.Web/Program.cs
+builder.Services.AddScoped<INewEntityRepository, EfNewEntityRepository>();
+builder.Services.AddScoped<INewEntityService, NewEntityService>();
+```
+
+#### Step 7: Create Database Migration
+
+```powershell
+# From repository root
+dotnet ef migrations add AddNewEntityTable \
+    --project src/GhcSamplePs.Core \
+    --startup-project src/GhcSamplePs.Web
+
+# Apply migration
+dotnet ef database update \
+    --project src/GhcSamplePs.Core \
+    --startup-project src/GhcSamplePs.Web
+```
+
+#### Step 8: Write Unit Tests
+
+```csharp
+// tests/GhcSamplePs.Core.Tests/Services/NewEntityServiceTests.cs
+public class NewEntityServiceTests
+{
+    [Fact]
+    public async Task CreateAsync_WhenValidDto_ThenReturnsSuccess()
+    {
+        // Arrange
+        var mockRepo = new Mock<INewEntityRepository>();
+        var mockLogger = new Mock<ILogger<NewEntityService>>();
+        var service = new NewEntityService(mockRepo.Object, mockLogger.Object);
+
+        var dto = new CreateNewEntityDto { Name = "Test Entity" };
+
+        // Act
+        var result = await service.CreateAsync(dto, "user123");
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Data);
+        mockRepo.Verify(r => r.AddAsync(It.IsAny<NewEntity>(), default), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenInvalidDto_ThenReturnsFailure()
+    {
+        // Arrange
+        var service = CreateService();
+        var dto = new CreateNewEntityDto { Name = "" }; // Invalid
+
+        // Act
+        var result = await service.CreateAsync(dto, "user123");
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        Assert.Contains("Name is required", result.ErrorMessage);
+    }
+}
+```
+
+#### Step 9: Create Blazor UI Components
+
+**Page Component:**
+```razor
+@* GhcSamplePs.Web/Components/Pages/NewEntityManagement.razor *@
+@page "/new-entities"
+@inject INewEntityService NewEntityService
+@inject ISnackbar Snackbar
+
+<PageTitle>Entity Management</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-4">Entity Management</MudText>
+
+    <MudButton Color="Color.Primary"
+               Variant="Variant.Filled"
+               OnClick="OpenCreateDialog">
+        <MudIcon Icon="@Icons.Material.Filled.Add" /> Add Entity
+    </MudButton>
+
+    @if (_entities is null)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else
+    {
+        <MudDataGrid Items="_entities" Class="mt-4">
+            <Columns>
+                <PropertyColumn Property="x => x.Name" Title="Name" />
+                <PropertyColumn Property="x => x.CreatedAt" Title="Created" />
+                <TemplateColumn Title="Actions">
+                    <CellTemplate>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       OnClick="() => EditEntity(context.Item)" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       OnClick="() => DeleteEntity(context.Item.Id)" />
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+        </MudDataGrid>
+    }
+</MudContainer>
+
+@code {
+    private IReadOnlyList<NewEntityDto>? _entities;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEntitiesAsync();
+    }
+
+    private async Task LoadEntitiesAsync()
+    {
+        var result = await NewEntityService.GetAllAsync();
+        if (result.IsSuccess)
+            _entities = result.Data;
+        else
+            Snackbar.Add(result.ErrorMessage, Severity.Error);
+    }
+
+    private void OpenCreateDialog()
+    {
+        // Open MudDialog for create
+    }
+
+    private void EditEntity(NewEntityDto entity)
+    {
+        // Open MudDialog for edit
+    }
+
+    private async Task DeleteEntity(int id)
+    {
+        var result = await NewEntityService.DeleteAsync(id, "current-user");
+        if (result.IsSuccess)
+        {
+            Snackbar.Add("Entity deleted successfully", Severity.Success);
+            await LoadEntitiesAsync();
+        }
+        else
+        {
+            Snackbar.Add(result.ErrorMessage, Severity.Error);
+        }
+    }
+}
+```
+
+#### Step 10: Update Documentation
+
+- Update this README if architecture changes
+- Update project-specific READMEs (Core/Web)
+- Document new features in `docs/` directory
+- Add user guides if needed
+
+### Repository Pattern
+
+All data access uses the **Repository Pattern** for abstraction:
+
+```
+Service Layer → Repository Interface → Repository Implementation → DbContext
+```
+
+**Benefits:**
+- ✅ Testable services (mock repositories)
+- ✅ Consistent data access patterns
+- ✅ Easy to swap implementations
+- ✅ Clear separation of concerns
+
+### Testing Workflow
+
+```powershell
+# Run all tests
+dotnet test
+
+# Run tests with coverage
+dotnet test --collect:"XPlat Code Coverage"
+
+# Run specific test class
+dotnet test --filter "FullyQualifiedName~NewEntityServiceTests"
+
+# Run in watch mode (auto-run on changes)
+dotnet watch test --project tests/GhcSamplePs.Core.Tests
+```
+
+---
 
         return errors.Any()
             ? ValidationResult.Failure(errors)
@@ -738,12 +1094,31 @@ When making changes to source code:
 
 ## License
 
-This project is part of the GhcSamplePs solution. See the main repository [LICENSE](../LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](../LICENSE) file for details.
 
 ---
 
-**Last Updated:** December 29, 2025
-**Version:** 1.0.1
+## Quick Links
+
+- 🏠 [Main README](../README.md) - Project overview
+- 🏗️ [Infrastructure](../infra/README.md) - Azure deployment
+- 🧪 [Tests](../tests/README.md) - Test documentation
+- 📚 [Documentation](../docs/) - User & developer guides
+- 🎯 [Specifications](../docs/specs/) - Feature specs
+
+---
+
+**Need Help?**
+
+- Review project documentation in `docs/` directory
+- Check `.github/instructions/` for coding guidelines
+- See project-specific READMEs in `Core/` and `Web/`
+- Refer to [copilot-instructions.md](../.github/copilot-instructions.md) for architecture overview
+
+---
+
+**Last Updated:** January 7, 2026
+**Version:** 1.1.0
 **Target Framework:** .NET 10.0
 **Projects:** 2 (Core, Web)
-**Test Status:** ✅ 802+ tests passing
+**Test Status:** ✅ 891 tests passing
