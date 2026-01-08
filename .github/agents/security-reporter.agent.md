@@ -130,18 +130,10 @@ This agent can perform comprehensive security analysis across the full stack:
 - Prioritized list of fixes needed
 - Quick wins vs. complex remediation
 
-6. Intentional Vulnerabilities
-
-- List any critical or high severity findings found in:
-  - Any file within the `infra/` directory.
-  - Any file path containing the string `legacy-vibe`.
-- Mark them as "Intentional - No Action Required".
-
-7. Critical Vulnerability Warning
+6. Critical Vulnerability Warning
 
 - Review all CRITICAL severity findings.
-- Filter out any findings that are located in the "Intentional Vulnerabilities" paths defined above (files in `infra/` or containing `legacy-vibe/`).
-- If there are any REMAINING Critical vulnerabilities after filtering:
+- If there are any Critical vulnerabilities after filtering:
   1. List them briefly under a header "### Blocking Critical Vulnerabilities".
   2. Include exactly this message at the end of the report:
 
