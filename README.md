@@ -884,10 +884,6 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) file for 
 
 ---
 
-### Trail - Nothing here
-
----
-
 **Last Updated:** December 29, 2025
 **Version:** 1.0.1
 **Target Framework:** .NET 10.0
