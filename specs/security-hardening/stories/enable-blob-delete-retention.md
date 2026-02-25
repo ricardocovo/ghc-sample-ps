@@ -1,15 +1,8 @@
-# User Story: Enable Blob Delete Retention & Fix ForwardedHeaders
+# Enable blob delete retention & fix ForwardedHeaders
 
-## As a
-Security engineer
+## Story
+As an operations engineer, I want to enable blob delete retention and ensure ForwardedHeaders are configured correctly, so that accidental deletions can be recovered and reverse proxy scenarios are secure.
 
-## I want
-blob delete retention enabled and ForwardedHeaders configured securely
-
-## So that
-accidental or malicious blob deletions can be recovered and header spoofing is prevented
-
-### Acceptance Criteria
-- [ ] `storage.bicep` and `storage-player-pictures.bicep` enable delete retention
-- [ ] `Program.cs` configures ForwardedHeaders securely
-- [ ] Automated test verifies retention and header config
+## Acceptance Criteria
+- Blob delete retention is enabled in `storage.bicep` and `storage-player-pictures.bicep`.
+- `Program.cs` configures ForwardedHeaders securely.

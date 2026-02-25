@@ -1,15 +1,9 @@
-# User Story: Harden Auth Bypass Guards
+# Harden auth bypass guards (prevent test auth in Prod)
 
-## As a
-Security engineer
+## Story
+As a security engineer, I want to ensure that any test authentication or bypass logic cannot be enabled in production, so that only real authentication is possible in live environments.
 
-## I want
-test authentication and bypass logic to be disabled in production environments
-
-## So that
-no unauthorized access is possible in production
-
-### Acceptance Criteria
-- [ ] Test/bypass auth code is only enabled in Development
-- [ ] Production builds cannot enable test auth via config or code
-- [ ] Automated test verifies bypass is not possible in production
+## Acceptance Criteria
+- All test/bypass auth code is disabled or fails safe in production.
+- Environment checks are robust and cannot be spoofed by config.
+- Add tests to verify bypass cannot be enabled in production.

@@ -1,15 +1,9 @@
-# User Story: Add Security Scanning to CI
+# Add security scanning to CI
 
-## As a
-Security engineer
+## Story
+As a DevOps engineer, I want to add security scanning to the CI pipeline, so that vulnerabilities are detected early in the development process.
 
-## I want
-security scanning to be part of the CI pipeline
-
-## So that
-vulnerabilities are detected early
-
-### Acceptance Criteria
-- [ ] `deploy-application.yml` runs security scanning tools
-- [ ] Build fails on critical vulnerabilities
-- [ ] Automated test verifies scanning is enforced
+## Acceptance Criteria
+- Security scanning step is added to `deploy-application.yml`.
+- Scans run on every PR and main branch build.
+- Fails the build on critical vulnerabilities.

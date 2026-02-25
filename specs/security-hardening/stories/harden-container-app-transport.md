@@ -1,15 +1,9 @@
-# User Story: Harden Container App Transport & Env Defaults
+# Harden Container App transport & environment defaults
 
-## As a
-Security engineer
+## Story
+As a platform engineer, I want to enforce secure transport (HTTPS) and set secure environment defaults for the Container App, so that all traffic is encrypted and misconfiguration is minimized.
 
-## I want
-all container app traffic to use secure transport and secure environment defaults
-
-## So that
-traffic is encrypted and containers are not exposed to unnecessary risk
-
-### Acceptance Criteria
-- [ ] `containerapp.bicep` enforces HTTPS-only ingress
-- [ ] `main.bicep` sets secure environment defaults
-- [ ] Automated test verifies only HTTPS is allowed
+## Acceptance Criteria
+- Container App only accepts HTTPS traffic.
+- Default environment variables are secure and do not leak secrets.
+- Bicep files (`containerapp.bicep`, `main.bicep`) enforce these settings.

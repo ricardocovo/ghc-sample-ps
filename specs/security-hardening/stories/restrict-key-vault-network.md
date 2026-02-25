@@ -1,15 +1,9 @@
-# User Story: Restrict Key Vault Network Access
+# Restrict Key Vault network access
 
-## As a
-Security engineer
+## Story
+As a security engineer, I want to restrict Azure Key Vault network access to only trusted networks and services, so that secrets are not exposed to the public internet.
 
-## I want
-Key Vault to only allow access from approved networks and services
-
-## So that
-secrets are not exposed to the public internet
-
-### Acceptance Criteria
-- [ ] `keyvault.bicep` restricts network access to required subnets/services
-- [ ] Public network access is disabled
-- [ ] Automated test verifies Key Vault is not publicly accessible
+## Acceptance Criteria
+- Key Vault allows access only from required subnets/services.
+- Public network access is disabled in `keyvault.bicep`.
+- Access policies are reviewed and least-privilege.

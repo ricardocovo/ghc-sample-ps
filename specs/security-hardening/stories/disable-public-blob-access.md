@@ -1,15 +1,9 @@
-# User Story: Disable Public Blob Access for Player Pictures
+# Disable public blob access for player pictures
 
-## As a
-Security engineer
+## Story
+As an infrastructure engineer, I want to ensure that the player pictures blob storage does not allow public access, so that only authenticated requests can retrieve images.
 
-## I want
-public access to player picture blobs to be disabled
-
-## So that
-only authenticated/authorized users can access player images
-
-### Acceptance Criteria
-- [ ] `storage-player-pictures.bicep` disables public blob access
-- [ ] Access to blobs requires authentication
-- [ ] Automated test verifies public access is denied
+## Acceptance Criteria
+- Public access is disabled in `storage-player-pictures.bicep`.
+- Access is only possible via authorized application/API calls.
+- Existing blobs are not exposed publicly.

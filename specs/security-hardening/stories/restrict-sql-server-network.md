@@ -1,15 +1,9 @@
-# User Story: Restrict SQL Server Network Access
+# Restrict SQL Server network access
 
-## As a
-Security engineer
+## Story
+As a database administrator, I want to restrict SQL Server network access to only trusted networks and services, so that the database is not exposed to the public internet.
 
-## I want
-SQL Server to only allow access from approved networks and services
-
-## So that
-database is not exposed to the public internet
-
-### Acceptance Criteria
-- [ ] `sql.bicep` restricts network access to required subnets/services
-- [ ] Public network access is disabled
-- [ ] Automated test verifies SQL Server is not publicly accessible
+## Acceptance Criteria
+- SQL Server allows access only from required subnets/services.
+- Public network access is disabled in `sql.bicep`.
+- Firewall rules are least-privilege.

@@ -1,15 +1,9 @@
-# User Story: Enable Deterministic NuGet Restores
+# Enable deterministic NuGet restores
 
-## As a
-Developer
+## Story
+As a developer, I want to ensure NuGet package restores are deterministic and lock files are committed, so that builds are reproducible and secure.
 
-## I want
-NuGet lock files committed and deterministic restores enabled
-
-## So that
-builds are reproducible and secure
-
-### Acceptance Criteria
-- [ ] `.gitignore` allows lock files
-- [ ] Lock files are committed for all projects
-- [ ] Automated test verifies deterministic restore
+## Acceptance Criteria
+- `.gitignore` allows lock files to be committed.
+- Lock files are present and up to date.
+- Build is reproducible across environments.
