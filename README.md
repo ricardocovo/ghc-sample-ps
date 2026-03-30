@@ -3,10 +3,15 @@
 A modern, cloud-native Blazor Server application for tracking soccer player statistics across teams, seasons, and championships. Built with clean architecture principles and deployed to Azure Container Apps.
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![C#](https://img.shields.io/badge/C%23-14-239120?logo=c-sharp)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 [![Blazor](https://img.shields.io/badge/Blazor-Server-512BD4?logo=blazor)](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
 [![Azure](https://img.shields.io/badge/Azure-Container%20Apps-0078D4?logo=microsoft-azure)](https://azure.microsoft.com/products/container-apps)
 [![MudBlazor](https://img.shields.io/badge/MudBlazor-8.x-594AE2)](https://mudblazor.com/)
+[![Tests](https://img.shields.io/badge/Tests-891%2B%20Passing-success)](tests/)
+[![Coverage](https://img.shields.io/badge/Coverage-85%25%2B-brightgreen)](tests/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+> 🚀 **Quick Links:** [Getting Started](#getting-started) | [Architecture](#project-architecture) | [Deployment](#deployment) | [Documentation](#documentation) | [Contributing](#contributing)
 
 ---
 
@@ -24,24 +29,57 @@ A modern, cloud-native Blazor Server application for tracking soccer player stat
 - [Deployment](#deployment)
 - [Contributing](#contributing)
 - [Documentation](#documentation)
+- [CI/CD](#cicd)
+- [License](#license)
 
 ---
 
 ## Overview
 
-GhcSamplePs is a Progressive Web Application (PWA) designed to help parents, coaches, and players track soccer player performance across multiple teams and seasons. Built with modern .NET technologies and Azure cloud services, it provides a responsive, mobile-first experience with offline capabilities.
+**GhcSamplePs** is a Progressive Web Application (PWA) designed to help parents, coaches, and players track soccer player performance across multiple teams and seasons. Built with modern .NET technologies and Azure cloud services, it demonstrates enterprise-grade architecture patterns and cloud-native development practices.
 
 ### What This Application Does
 
-- **Player Management** - Track player profiles, dates of birth, photos, and roster history
+**Core Functionality:**
+
+- **Player Management** - Comprehensive player profile management
+  - Track player demographics (name, date of birth, gender)
   - Upload and manage player profile pictures (Azure Blob Storage)
-  - File validation (5 MB limit, JPEG/PNG/GIF/WebP)
-  - Secure picture storage with time-limited access
-- **Team Management** - Organize players into teams across different championships and seasons
-- **Statistics Tracking** - Record detailed game-level statistics (goals, assists, minutes played, starter status)
-- **Performance Analytics** - View aggregated statistics and player performance over time
-- **Authentication** - Secure access with Microsoft Entra ID External Identities
-- **Mobile-First Design** - Responsive UI with PWA capabilities for mobile devices
+  - File validation (5 MB limit, JPEG/PNG/GIF/WebP formats)
+  - Secure picture storage with time-limited SAS token access
+  - Delete and re-upload capabilities with immediate preview
+  - Complete roster history across all teams and seasons
+  
+- **Team Management** - Multi-team organization system
+  - Organize players into multiple teams simultaneously
+  - Track team rosters with precise join/leave dates
+  - Manage active/inactive player status per team
+  - Associate teams with championships and seasons
+  - Historical tracking of player team assignments
+  
+- **Statistics Tracking** - Detailed game-level analytics
+  - Record comprehensive game statistics:
+    - Minutes played per game
+    - Goals scored and assists
+    - Starter vs. substitute status
+    - Jersey number assignment
+  - Link statistics to specific team-season combinations
+  - Aggregate views: team stats, season stats, career totals
+  - Performance trending and analytics
+  
+- **Authentication & Security** - Enterprise-grade security
+  - Microsoft Entra ID External Identities integration
+  - Secure user authentication with OIDC/OAuth 2.0
+  - Role-based access control (extensible)
+  - Complete audit logging (CreatedBy, UpdatedBy on all entities)
+  - Passwordless authentication with Managed Identity
+  
+- **Mobile-First Design** - Progressive Web App experience
+  - Install to mobile/desktop home screen
+  - Offline support with intelligent caching
+  - Responsive design for all screen sizes
+  - Material Design UI with MudBlazor components
+  - Fast, app-like user experience
 
 ### Architecture Highlights
 
@@ -94,9 +132,10 @@ GhcSamplePs is a Progressive Web Application (PWA) designed to help parents, coa
 ### Testing & Quality
 
 - **xUnit** - Unit testing framework
-- **891 tests** - Comprehensive test coverage (57 picture-related tests)
+- **891+ tests** - Comprehensive test coverage (57+ picture-related tests)
 - **In-Memory Database** - EF Core testing provider
 - **85%+ Code Coverage** - Business logic thoroughly tested
+- **Moq** - Mocking framework for dependencies
 
 ---
 
@@ -121,17 +160,19 @@ graph TB
     subgraph "External Services"
         EntraID[Microsoft Entra ID<br/>Authentication]
         Storage[Azure Storage<br/>Data Protection Keys]
+        BlobStorage[Azure Blob Storage<br/>Player Pictures]
         KV[Azure Key Vault<br/>Secrets & Encryption]
     end
 
     subgraph "Testing"
-        Tests[GhcSamplePs.Core.Tests<br/>802 Unit Tests]
+        Tests[GhcSamplePs.Core.Tests<br/>891+ Unit Tests]
     end
 
     Web -->|References| Core
     Core -->|Entity Framework| DB
     Web -->|Authenticates| EntraID
     Web -->|Stores Keys| Storage
+    Web -->|Stores Pictures| BlobStorage
     Web -->|Retrieves Secrets| KV
     Tests -->|Tests| Core
 
@@ -202,10 +243,27 @@ GhcSamplePs.Web → GhcSamplePs.Core
 
 ### 5. Progressive Web App (PWA)
 
-- Install to mobile home screen
-- Offline support with service workers
-- Responsive design for all screen sizes
-- Material Design UI with MudBlazor components
+**Installation & Offline Support:**
+- **Installable:** Add to mobile/desktop home screen like a native app
+- **Offline Support:** Service worker caches critical resources
+- **Background Sync:** Queue data operations when offline
+- **Push Notifications:** (Future enhancement)
+
+**Responsive Design:**
+- **Mobile-First:** Optimized for touch and small screens
+- **Tablet Support:** Adaptive layout for medium screens
+- **Desktop Experience:** Full-featured desktop interface
+- **Material Design:** MudBlazor component library
+
+**PWA Features:**
+- `manifest.json` - App metadata and icons
+- `service-worker.js` - Offline caching and sync
+- Installable on iOS, Android, Windows, macOS, Linux
+- Fast loading with cached assets
+- Works in low or no connectivity scenarios
+
+**Testing PWA:**
+See [docs/PWA_Testing_Guide.md](docs/PWA_Testing_Guide.md) for comprehensive PWA testing instructions.
 
 ### 6. Data Management
 
@@ -282,7 +340,7 @@ Before you begin, ensure you have:
 # Build entire solution
 dotnet build
 
-# Run all tests (802 tests)
+# Run all tests (891+ tests)
 dotnet test
 
 # Run with verbose test output
@@ -562,7 +620,7 @@ Follow `.github/instructions/dotnet-architecture-good-practices.instructions.md`
 
 ### Test Strategy
 
-This project follows comprehensive testing practices with **802 unit tests** covering:
+This project follows comprehensive testing practices with **891+ unit tests** covering:
 
 - ✅ Service layer business logic
 - ✅ Repository data access patterns
@@ -652,11 +710,50 @@ public async Task WhenCreatingPlayerWithValidData_ThenPlayerIsCreated()
 
 ## Deployment
 
-### Local Development
+### Deployment Options
 
-See [Getting Started](#getting-started) section for local setup.
+This project supports multiple deployment methods:
 
-### Docker Containerization
+1. **GitHub Actions** (Recommended) - Automated deployment workflows
+2. **PowerShell Scripts** - Manual deployment with scripts
+3. **Azure CLI** - Direct command-line deployment
+4. **Local Docker** - Containerized local development
+
+### Option 1: GitHub Actions Deployment (Recommended)
+
+The easiest way to deploy is using the built-in GitHub Actions workflows.
+
+**Prerequisites:**
+- GitHub repository with proper secrets configured (see [CI/CD](#cicd) section)
+- Azure subscription with appropriate permissions
+- Entra ID application registered
+
+**Steps:**
+
+1. **Deploy Infrastructure First**
+   - Navigate to: Actions → Deploy Infrastructure
+   - Click "Run workflow"
+   - Select environment (`dev` or `prod`)
+   - Wait for completion (~5-10 minutes)
+
+2. **Deploy Application**
+   - Navigate to: Actions → Deploy Application
+   - Click "Run workflow"
+   - Select environment and image tag
+   - Wait for completion (~3-5 minutes)
+
+3. **Verify Deployment**
+   - Check workflow logs for Container App URL
+   - Navigate to URL and test application
+   - Update Entra ID redirect URIs if needed
+
+See [CI/CD](#cicd) section for detailed workflow documentation.
+
+### Option 2: Local Development
+
+See [Getting Started](#getting-started) section for local setup instructions.
+
+### Option 3: Docker Containerization
 
 The application includes a multi-stage Dockerfile optimized for Azure Container Apps:
 
@@ -667,9 +764,17 @@ docker build -t ghcsampleps-web:latest -f Dockerfile ../..
 
 # Run container locally
 docker run -p 8080:8080 ghcsampleps-web:latest
+
+# Test locally at http://localhost:8080
 ```
 
-### Azure Deployment
+**Dockerfile Highlights:**
+- Multi-stage build for optimized image size
+- Non-root user for security
+- Exposed on port 8080 (Container Apps standard)
+- Based on .NET 10 runtime
+
+### Option 4: Manual Azure Deployment with PowerShell
 
 #### Prerequisites
 
@@ -767,7 +872,7 @@ See [infra/README.md](infra/README.md) for detailed cost breakdown and optimizat
 ### Code Review Guidelines
 
 - All code changes require approval
-- Tests must pass (802+ tests)
+- Tests must pass (891+ tests)
 - Code must follow established patterns
 - Documentation must be updated
 - No business logic in UI layer
@@ -832,6 +937,146 @@ This project includes extensive documentation:
 
 ---
 
+## CI/CD
+
+This project uses **GitHub Actions** for automated deployment and quality checks.
+
+### Available Workflows
+
+#### 1. Infrastructure Deployment (`.github/workflows/deploy-infrastructure.yml`)
+
+Deploys Azure infrastructure using Bicep templates.
+
+**Trigger:** Manual (workflow_dispatch)
+
+**Parameters:**
+- `environment`: Choose between `dev` or `prod`
+
+**What it does:**
+- Validates Bicep templates
+- Creates/updates resource group
+- Deploys all Azure resources (Container Apps, SQL, Storage, Key Vault, etc.)
+- Uses OIDC authentication (passwordless)
+
+**Usage:**
+```bash
+# Via GitHub UI: Actions → Deploy Infrastructure → Run workflow → Select environment
+```
+
+#### 2. Application Deployment (`.github/workflows/deploy-application.yml`)
+
+Builds Docker image and deploys to Azure Container Apps.
+
+**Trigger:** Manual (workflow_dispatch)
+
+**Parameters:**
+- `environment`: Choose between `dev` or `prod`
+- `image_tag`: Docker image tag (default: latest)
+
+**What it does:**
+- Builds multi-stage Docker image
+- Pushes to Azure Container Registry
+- Updates Container App with new image
+- Automatic rolling deployment
+
+**Usage:**
+```bash
+# Via GitHub UI: Actions → Deploy Application → Run workflow
+```
+
+#### 3. Security Reporter (`.github/workflows/security-reporter.yml`)
+
+Analyzes code for security vulnerabilities.
+
+**Trigger:** Manual (workflow_dispatch)
+
+**What it does:**
+- Scans TypeScript and C# code for security issues
+- Generates security report
+- Uploads report as artifact (30-day retention)
+
+#### 4. Documentation Reporter (`.github/workflows/documentation-reporter.yml`)
+
+Validates project documentation completeness.
+
+**Trigger:** Manual (workflow_dispatch)
+
+**What it does:**
+- Audits README files across the project
+- Checks documentation quality and completeness
+- Generates documentation report
+- Uploads report as artifact (30-day retention)
+
+### Deployment Pipeline
+
+```mermaid
+graph LR
+    A[Code Push] -->|Manual Trigger| B[Infrastructure Deployment]
+    B --> C{Bicep Validation}
+    C -->|Pass| D[Deploy Azure Resources]
+    D --> E[Application Deployment]
+    E --> F[Docker Build]
+    F --> G[Push to ACR]
+    G --> H[Update Container App]
+    H --> I[Rolling Deployment]
+    
+    style B fill:#0078D4
+    style E fill:#0078D4
+    style I fill:#00A4EF
+```
+
+### Required GitHub Secrets
+
+Configure these secrets in your GitHub repository (Settings → Secrets and variables → Actions):
+
+**For Infrastructure Deployment:**
+- `AZURE_CLIENT_ID` - Service Principal client ID
+- `AZURE_TENANT_ID` - Azure tenant ID
+- `AZURE_SUBSCRIPTION_ID` - Azure subscription ID
+- `SQL_ADMIN_ENTRA_ID` - Entra ID admin username for SQL
+- `SQL_ADMIN_OBJECT_ID` - Entra ID admin object ID
+- `ENTRA_ID_CLIENT_ID` - Application (client) ID
+- `ENTRA_ID_TENANT_ID` - Directory (tenant) ID
+
+**For Application Deployment:**
+- All infrastructure secrets (above)
+- `REGISTRY_LOGIN_SERVER` - ACR login server URL
+- `REGISTRY_USERNAME` - ACR username
+- `REGISTRY_PASSWORD` - ACR password
+
+### Continuous Integration Best Practices
+
+While this project uses manual deployment workflows, consider these practices for CI:
+
+1. **Automated Testing:** Run `dotnet test` on every pull request
+2. **Code Coverage:** Generate coverage reports and track trends
+3. **Static Analysis:** Use tools like SonarQube or CodeQL
+4. **Docker Image Scanning:** Scan images for vulnerabilities before deployment
+5. **Database Migrations:** Automate EF Core migrations in deployment pipeline
+
+**Example CI workflow (not included):**
+```yaml
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --no-restore
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
+```
+
+---
+
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) file for details.
@@ -881,10 +1126,88 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) file for 
 - UI powered by [MudBlazor](https://mudblazor.com/)
 - Hosted on [Azure Container Apps](https://azure.microsoft.com/products/container-apps)
 - Authentication by [Microsoft Entra ID](https://www.microsoft.com/security/business/identity-access/microsoft-entra-id)
+- Infrastructure as Code with [Azure Bicep](https://learn.microsoft.com/azure/azure-resource-manager/bicep/)
 
 ---
 
-**Last Updated:** December 29, 2025
-**Version:** 1.0.1
+## Quick Reference
+
+### Common Commands
+
+```powershell
+# Development
+dotnet restore                          # Restore NuGet packages
+dotnet build                            # Build solution
+dotnet run --project src/GhcSamplePs.Web  # Run application
+dotnet watch --project src/GhcSamplePs.Web  # Run with hot reload
+
+# Testing
+dotnet test                             # Run all tests
+dotnet test --filter "Category=Unit"    # Run unit tests only
+dotnet test --collect:"XPlat Code Coverage"  # Generate coverage
+dotnet test --verbosity normal          # Detailed test output
+
+# Database
+cd src/GhcSamplePs.Web
+dotnet ef migrations add [Name] --project ../GhcSamplePs.Core  # Create migration
+dotnet ef database update --project ../GhcSamplePs.Core        # Apply migrations
+dotnet ef migrations list --project ../GhcSamplePs.Core        # List migrations
+dotnet ef database drop --project ../GhcSamplePs.Core          # Drop database
+
+# Docker
+docker build -t ghcsampleps-web:latest -f src/GhcSamplePs.Web/Dockerfile .
+docker run -p 8080:8080 ghcsampleps-web:latest
+docker ps                               # List running containers
+docker logs [container-id]              # View container logs
+
+# Azure CLI
+az login                                # Login to Azure
+az account set --subscription [id]      # Set active subscription
+az group list                           # List resource groups
+az containerapp list -g [resource-group]  # List container apps
+az containerapp logs show --name [app-name] -g [rg]  # View app logs
+```
+
+### Project File Locations
+
+| Component | Path |
+|-----------|------|
+| **Main README** | `/README.md` (this file) |
+| **Solution File** | `/GhcSamplePs.sln` |
+| **Core Project** | `/src/GhcSamplePs.Core/` |
+| **Web Project** | `/src/GhcSamplePs.Web/` |
+| **Tests** | `/tests/GhcSamplePs.Core.Tests/` |
+| **Infrastructure** | `/infra/` |
+| **Documentation** | `/docs/` |
+| **GitHub Actions** | `/.github/workflows/` |
+| **Coding Standards** | `/.github/instructions/` |
+
+### Key Configuration Files
+
+| File | Purpose |
+|------|---------|
+| `global.json` | .NET SDK version (10.0.100) |
+| `src/GhcSamplePs.Web/appsettings.json` | Application configuration |
+| `src/GhcSamplePs.Web/appsettings.Development.json` | Development settings |
+| `src/GhcSamplePs.Web/Dockerfile` | Container build definition |
+| `infra/main.bicep` | Infrastructure orchestration |
+| `infra/main.bicepparam` | Infrastructure parameters |
+| `.github/copilot-instructions.md` | AI assistant configuration |
+
+### Useful Links
+
+- **Project Documentation:** [docs/](docs/)
+- **Core Layer Docs:** [src/GhcSamplePs.Core/README.md](src/GhcSamplePs.Core/README.md)
+- **Web Layer Docs:** [src/GhcSamplePs.Web/README.md](src/GhcSamplePs.Web/README.md)
+- **Infrastructure Docs:** [infra/README.md](infra/README.md)
+- **Test Docs:** [tests/GhcSamplePs.Core.Tests/README.md](tests/GhcSamplePs.Core.Tests/README.md)
+- **Entra ID Setup:** [docs/Azure_EntraID_Setup_Guide.md](docs/Azure_EntraID_Setup_Guide.md)
+- **Development Setup:** [docs/Development_Environment_Setup.md](docs/Development_Environment_Setup.md)
+
+---
+
+**Last Updated:** March 30, 2026
+**Version:** 1.0.2
 **Target Framework:** .NET 10.0
-**Test Status:** ✅ 802+ tests passing
+**Test Status:** ✅ 891+ tests passing
+**Deployment:** Azure Container Apps with GitHub Actions CI/CD
