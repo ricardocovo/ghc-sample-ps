@@ -45,12 +45,12 @@ GhcSamplePs is a Progressive Web Application (PWA) designed to help parents, coa
 
 ### Architecture Highlights
 
-✅ **Clean Architecture** - Strict separation between UI (Web) and business logic (Core)
-✅ **Cloud-Native** - Designed for Azure Container Apps with serverless SQL
-✅ **Passwordless Auth** - Managed Identity for all Azure service connections
-✅ **Cost-Optimized** - Scale-to-zero containers, auto-pausing SQL ($7-35/month dev environment)
-✅ **GDPR Compliant** - Canada Central region, audit logging, encryption at rest/transit
-✅ **Progressive Web App** - Install to home screen, offline support, responsive design
+✅ **Clean Architecture** - Strict separation between UI (Web) and business logic (Core)  
+✅ **Cloud-Native** - Designed for Azure Container Apps with serverless SQL  
+✅ **Passwordless Auth** - Managed Identity for all Azure service connections  
+✅ **Cost-Optimized** - Scale-to-zero containers, auto-pausing SQL ($7-35/month dev environment)  
+✅ **GDPR Compliant** - Canada Central region, audit logging, encryption at rest/transit  
+✅ **Progressive Web App** - Install to home screen, offline support, responsive design  
 
 ---
 
@@ -94,7 +94,8 @@ GhcSamplePs is a Progressive Web Application (PWA) designed to help parents, coa
 ### Testing & Quality
 
 - **xUnit** - Unit testing framework
-- **891 tests** - Comprehensive test coverage (57 picture-related tests)
+- **811+ tests** - Comprehensive test coverage (57+ picture-related tests)
+- **Moq** - Mocking library for unit tests
 - **In-Memory Database** - EF Core testing provider
 - **85%+ Code Coverage** - Business logic thoroughly tested
 
@@ -120,18 +121,18 @@ graph TB
 
     subgraph "External Services"
         EntraID[Microsoft Entra ID<br/>Authentication]
-        Storage[Azure Storage<br/>Data Protection Keys]
+        Storage[Azure Blob Storage<br/>Player Pictures]
         KV[Azure Key Vault<br/>Secrets & Encryption]
     end
 
     subgraph "Testing"
-        Tests[GhcSamplePs.Core.Tests<br/>802 Unit Tests]
+        Tests[GhcSamplePs.Core.Tests<br/>811+ Unit Tests]
     end
 
     Web -->|References| Core
     Core -->|Entity Framework| DB
     Web -->|Authenticates| EntraID
-    Web -->|Stores Keys| Storage
+    Web -->|Stores Pictures| Storage
     Web -->|Retrieves Secrets| KV
     Tests -->|Tests| Core
 
@@ -148,7 +149,7 @@ graph TB
 GhcSamplePs.Web → GhcSamplePs.Core
 ```
 
-✅ **Web depends on Core** - UI layer calls business logic services
+✅ **Web depends on Core** - UI layer calls business logic services  
 ❌ **Core never depends on Web** - Business logic is UI-agnostic and testable
 
 **Separation of Concerns:**
@@ -282,7 +283,7 @@ Before you begin, ensure you have:
 # Build entire solution
 dotnet build
 
-# Run all tests (802 tests)
+# Run all tests (811+ tests)
 dotnet test
 
 # Run with verbose test output
@@ -305,8 +306,11 @@ ghc-sample-ps/
 │   │   ├── blazor-architecture.instructions.md
 │   │   ├── csharp.instructions.md
 │   │   └── dotnet-architecture-good-practices.instructions.md
-│   └── prompts/                      # Code generation prompts
-│       └── readme-blueprint-generator.prompt.md
+│   └── workflows/                    # CI/CD pipelines
+│       ├── deploy-infrastructure.yml
+│       ├── deploy-application.yml
+│       ├── security-reporter.yml
+│       └── documentation-reporter.yml
 │
 ├── docs/                             # Documentation
 │   ├── Azure_EntraID_Setup_Guide.md  # Entra ID configuration
@@ -317,18 +321,20 @@ ghc-sample-ps/
 │   ├── playerstats-requirements.md   # Business requirements
 │   ├── PWA_Implementation_Summary.md
 │   ├── migrations/                   # SQL migration scripts
-│   └── specs/                        # Feature specifications
+│   └── specs/                        # Feature specifications (11 files)
 │
 ├── infra/                            # Infrastructure as Code
 │   ├── main.bicep                    # Main orchestration template
 │   ├── main.bicepparam               # Parameters file
-│   ├── modules/                      # Bicep modules
+│   ├── modules/                      # Bicep modules (8 files)
 │   │   ├── containerapp.bicep        # Container Apps configuration
 │   │   ├── containerregistry.bicep   # Azure Container Registry
 │   │   ├── keyvault.bicep            # Key Vault setup
 │   │   ├── monitoring.bicep          # Log Analytics & App Insights
 │   │   ├── sql.bicep                 # Azure SQL Database
-│   │   └── storage.bicep             # Storage Account
+│   │   ├── storage.bicep             # Storage Account
+│   │   ├── storage-player-pictures.bicep
+│   │   └── acr-rbac.bicep
 │   ├── scripts/                      # Deployment automation
 │   │   ├── deploy-infra.ps1          # Infrastructure deployment
 │   │   ├── build-push-image.ps1      # Docker build & push
@@ -348,17 +354,19 @@ ghc-sample-ps/
 │   │   │   └── Implementations/      # EF Core repositories
 │   │   ├── Data/                     # DbContext and configurations
 │   │   ├── Validation/               # Business validation rules
-│   │   ├── Exceptions/               # Custom exceptions
+│   │   ├── Exceptions/               # Custom exceptions (6 types)
 │   │   ├── Extensions/               # Extension methods
-│   │   ├── Migrations/               # EF Core migrations
+│   │   ├── Migrations/               # EF Core migrations (3 files)
 │   │   └── README.md                 # Core project documentation
 │   │
 │   └── GhcSamplePs.Web/              # UI layer (Blazor Server)
 │       ├── Components/               # Blazor components
 │       │   ├── Layout/               # Layout components
-│       │   ├── Pages/                # Page components
+│       │   ├── Pages/                # Page components (14 .razor files)
 │       │   └── Shared/               # Shared UI components
 │       ├── Services/                 # UI-specific services
+│       ├── Controllers/              # API controllers
+│       ├── Helpers/                  # UI helpers
 │       ├── wwwroot/                  # Static assets
 │       │   ├── css/                  # Stylesheets
 │       │   ├── js/                   # JavaScript files
@@ -372,15 +380,15 @@ ghc-sample-ps/
 ├── tests/                            # Test projects
 │   └── GhcSamplePs.Core.Tests/       # Unit tests for Core
 │       ├── Services/                 # Service tests
-│       ├── Repositories/             # Repository tests
+│       ├── Repositories/             # Repository tests (42 test files)
 │       ├── Models/                   # Model validation tests
 │       ├── Integration/              # Integration tests
 │       ├── TestHelpers/              # Test utilities
 │       └── README.md                 # Test documentation
 │
 ├── .gitignore                        # Git ignore rules
-├── global.json                       # .NET SDK version
-├── GhcSamplePs.sln                   # Solution file
+├── global.json                       # .NET SDK version (10.0.100)
+├── GhcSamplePs.sln                   # Solution file (3 projects)
 └── README.md                         # This file
 ```
 
@@ -388,9 +396,9 @@ ghc-sample-ps/
 
 | Project | Purpose | Dependencies |
 |---------|---------|--------------|
-| **GhcSamplePs.Core** | Business logic, services, repositories, domain models | EF Core, Logging abstractions |
+| **GhcSamplePs.Core** | Business logic, services, repositories, domain models | EF Core, Logging abstractions, Azure.Storage.Blobs |
 | **GhcSamplePs.Web** | Blazor UI, components, pages, authentication | Core, MudBlazor, Microsoft Identity Web |
-| **GhcSamplePs.Core.Tests** | Unit tests for Core project | Core, xUnit, EF Core InMemory |
+| **GhcSamplePs.Core.Tests** | Unit tests for Core project | Core, xUnit, Moq, EF Core InMemory |
 
 ---
 
@@ -422,15 +430,24 @@ public interface IPlayerService
 public class PlayerService : IPlayerService
 {
     private readonly IPlayerRepository _repository;
+    private readonly ILogger<PlayerService> _logger;
 
-    public PlayerService(IPlayerRepository repository)
+    public PlayerService(IPlayerRepository repository, ILogger<PlayerService> logger)
     {
         _repository = repository;
+        _logger = logger;
     }
 
     public async Task<ServiceResult<Player>> CreatePlayerAsync(Player player)
     {
+        // Validation
+        if (string.IsNullOrWhiteSpace(player.Name))
+            return ServiceResult<Player>.Failure("Player name is required");
+            
         // Business logic here
+        await _repository.AddAsync(player);
+        
+        _logger.LogInformation("Created player {PlayerId}", player.Id);
         return ServiceResult<Player>.Success(player);
     }
 }
@@ -448,6 +465,7 @@ builder.Services.AddScoped<IPlayerService, PlayerService>();
         if (result.IsSuccess)
         {
             // Update UI
+            StateHasChanged();
         }
     }
 }
@@ -523,6 +541,43 @@ Follow `.github/instructions/csharp.instructions.md` for comprehensive C# standa
 - Use `is null` / `is not null` instead of `== null`
 - Add XML documentation for all public APIs
 
+**Example:**
+
+```csharp
+namespace GhcSamplePs.Core.Services.Implementations;
+
+/// <summary>
+/// Provides player management operations.
+/// </summary>
+public class PlayerService : IPlayerService
+{
+    private readonly IPlayerRepository _repository;
+    private readonly ILogger<PlayerService> _logger;
+
+    public PlayerService(IPlayerRepository repository, ILogger<PlayerService> logger)
+    {
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    /// <summary>
+    /// Creates a new player.
+    /// </summary>
+    /// <param name="player">The player to create.</param>
+    /// <returns>Service result containing the created player.</returns>
+    public async Task<ServiceResult<Player>> CreatePlayerAsync(Player player)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        
+        if (string.IsNullOrWhiteSpace(player.Name))
+            return ServiceResult<Player>.Failure("Player name is required");
+        
+        await _repository.AddAsync(player);
+        return ServiceResult<Player>.Success(player);
+    }
+}
+```
+
 ### Blazor Architecture
 
 Follow `.github/instructions/blazor-architecture.instructions.md`:
@@ -562,13 +617,14 @@ Follow `.github/instructions/dotnet-architecture-good-practices.instructions.md`
 
 ### Test Strategy
 
-This project follows comprehensive testing practices with **802 unit tests** covering:
+This project follows comprehensive testing practices with **811+ unit tests** covering:
 
 - ✅ Service layer business logic
 - ✅ Repository data access patterns
 - ✅ Domain model validation
 - ✅ Exception handling and error cases
 - ✅ Edge cases and boundary conditions
+- ✅ Player picture upload/download (57+ tests)
 
 ### Running Tests
 
@@ -596,10 +652,12 @@ tests/GhcSamplePs.Core.Tests/
 ├── Services/
 │   ├── PlayerServiceTests.cs
 │   ├── PlayerStatisticServiceTests.cs
-│   └── TeamPlayerServiceTests.cs
+│   ├── TeamPlayerServiceTests.cs
+│   └── PlayerPictureServiceTests.cs (57+ tests)
 ├── Repositories/
 │   ├── PlayerRepositoryTests.cs
-│   └── PlayerStatisticRepositoryTests.cs
+│   ├── PlayerStatisticRepositoryTests.cs
+│   └── TeamPlayerRepositoryTests.cs
 ├── Models/
 │   ├── PlayerValidationTests.cs
 │   └── TeamPlayerValidationTests.cs
@@ -618,7 +676,11 @@ tests/GhcSamplePs.Core.Tests/
 public async Task WhenCreatingPlayerWithValidData_ThenPlayerIsCreated()
 {
     // Arrange
-    var player = new Player { Name = "John Doe", DateOfBirth = new DateTime(2010, 1, 1) };
+    var player = new Player 
+    { 
+        Name = "John Doe", 
+        DateOfBirth = new DateTime(2010, 1, 1) 
+    };
 
     // Act
     var result = await _playerService.CreatePlayerAsync(player);
@@ -626,6 +688,21 @@ public async Task WhenCreatingPlayerWithValidData_ThenPlayerIsCreated()
     // Assert
     Assert.True(result.IsSuccess);
     Assert.NotNull(result.Data);
+    Assert.Equal("John Doe", result.Data.Name);
+}
+
+[Fact]
+public async Task WhenCreatingPlayerWithEmptyName_ThenReturnsFailure()
+{
+    // Arrange
+    var player = new Player { Name = "", DateOfBirth = DateTime.Now };
+
+    // Act
+    var result = await _playerService.CreatePlayerAsync(player);
+
+    // Assert
+    Assert.False(result.IsSuccess);
+    Assert.Contains("name", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
 }
 ```
 
@@ -666,7 +743,12 @@ cd src/GhcSamplePs.Web
 docker build -t ghcsampleps-web:latest -f Dockerfile ../..
 
 # Run container locally
-docker run -p 8080:8080 ghcsampleps-web:latest
+docker run -p 8080:8080 \
+  -e ConnectionStrings__DefaultConnection="your-connection-string" \
+  ghcsampleps-web:latest
+
+# Access the application
+# Navigate to http://localhost:8080
 ```
 
 ### Azure Deployment
@@ -690,12 +772,18 @@ az login
 # Set subscription (if multiple subscriptions)
 az account set --subscription "Your Subscription Name"
 
-# Deploy infrastructure
+# Deploy infrastructure using PowerShell script
 ./scripts/deploy-infra.ps1 `
     -AppName "ghcsampleps" `
     -Environment "dev" `
     -Location "canadacentral" `
     -SubscriptionId "your-subscription-id"
+
+# OR deploy using Bicep CLI directly
+az deployment sub create `
+    --location canadacentral `
+    --template-file main.bicep `
+    --parameters main.bicepparam
 ```
 
 #### Application Deployment
@@ -710,6 +798,34 @@ az account set --subscription "Your Subscription Name"
 
 # Container App will automatically pull and deploy the new image
 ```
+
+#### CI/CD with GitHub Actions
+
+The repository includes two GitHub Actions workflows:
+
+1. **Infrastructure Deployment** (`.github/workflows/deploy-infrastructure.yml`)
+   - Validates Bicep templates
+   - Deploys Azure resources
+   - Verifies deployment health
+
+2. **Application Deployment** (`.github/workflows/deploy-application.yml`)
+   - Builds Docker image
+   - Pushes to Azure Container Registry
+   - Updates Container App
+   - Performs health checks
+
+**Required GitHub Secrets:**
+```
+AZURE_CLIENT_ID
+AZURE_TENANT_ID
+AZURE_SUBSCRIPTION_ID
+SQL_ADMIN_EMAIL
+SQL_ADMIN_OBJECT_ID
+ENTRA_CLIENT_ID
+ENTRA_TENANT_ID
+```
+
+See [docs/GitHub_Actions_Variables_and_Secrets.md](docs/GitHub_Actions_Variables_and_Secrets.md) for setup instructions.
 
 #### Post-Deployment Configuration
 
@@ -731,14 +847,19 @@ az account set --subscription "Your Subscription Name"
        --name "ca-ghcsampleps-dev" `
        --resource-group "rg-ghcsampleps-dev" `
        --query "properties.configuration.ingress.fqdn" -o tsv
+   
+   # Test health endpoint
+   curl https://your-app.azurecontainerapps.io/health
    ```
+
+See [docs/Infrastructure_Verification_Checklist.md](docs/Infrastructure_Verification_Checklist.md) for complete verification steps.
 
 ### Cost Management
 
 **Development Environment:** $7-35/month
 - Container Apps: Scale-to-zero (0-1 replicas)
 - SQL Database: Serverless (0.5-2 vCores, auto-pause after 1hr)
-- Storage: Minimal usage for Data Protection keys
+- Storage: Minimal usage for Data Protection keys and player pictures
 - Key Vault: Standard tier with minimal operations
 
 **Production Environment:** $125-235/month
@@ -767,7 +888,7 @@ See [infra/README.md](infra/README.md) for detailed cost breakdown and optimizat
 ### Code Review Guidelines
 
 - All code changes require approval
-- Tests must pass (802+ tests)
+- Tests must pass (811+ tests)
 - Code must follow established patterns
 - Documentation must be updated
 - No business logic in UI layer
@@ -781,6 +902,7 @@ Reference existing implementations for patterns:
 - **Repository Pattern:** `src/GhcSamplePs.Core/Repositories/Implementations/PlayerRepository.cs`
 - **Blazor Component:** `src/GhcSamplePs.Web/Components/Pages/ManagePlayers.razor`
 - **Unit Tests:** `tests/GhcSamplePs.Core.Tests/Services/PlayerServiceTests.cs`
+- **Picture Service:** `src/GhcSamplePs.Core/Services/Implementations/PlayerPictureService.cs`
 
 ---
 
@@ -788,7 +910,7 @@ Reference existing implementations for patterns:
 
 ### Comprehensive Documentation
 
-This project includes extensive documentation:
+This project includes extensive documentation organized by purpose:
 
 #### Architecture & Guidelines
 
@@ -800,35 +922,44 @@ This project includes extensive documentation:
 
 #### Project Documentation
 
-- [src/GhcSamplePs.Core/README.md](src/GhcSamplePs.Core/README.md) - Business logic layer documentation (900+ lines)
-- [src/GhcSamplePs.Web/README.md](src/GhcSamplePs.Web/README.md) - UI layer documentation (700+ lines)
+- [src/GhcSamplePs.Core/README.md](src/GhcSamplePs.Core/README.md) - Business logic layer documentation
+- [src/GhcSamplePs.Web/README.md](src/GhcSamplePs.Web/README.md) - UI layer documentation
 - [tests/GhcSamplePs.Core.Tests/README.md](tests/GhcSamplePs.Core.Tests/README.md) - Testing documentation
-- [infra/README.md](infra/README.md) - Infrastructure deployment guide (900+ lines)
+- [infra/README.md](infra/README.md) - Infrastructure deployment guide
 
 #### Setup & Configuration
 
 - [docs/Development_Environment_Setup.md](docs/Development_Environment_Setup.md) - Local development setup
-- [docs/Azure_EntraID_Setup_Guide.md](docs/Azure_EntraID_Setup_Guide.md) - Entra ID configuration
+- [docs/Azure_EntraID_Setup_Guide.md](docs/Azure_EntraID_Setup_Guide.md) - Entra ID configuration guide
+- [docs/Azure_EntraID_Configuration_Reference.md](docs/Azure_EntraID_Configuration_Reference.md) - Entra ID configuration reference
 - [docs/Database_Connection_Setup.md](docs/Database_Connection_Setup.md) - Database configuration
 - [docs/Infrastructure_Verification_Checklist.md](docs/Infrastructure_Verification_Checklist.md) - Pre-deployment validation
+- [docs/GitHub_Actions_Infrastructure_Deployment.md](docs/GitHub_Actions_Infrastructure_Deployment.md) - CI/CD setup
+- [docs/GitHub_Actions_Variables_and_Secrets.md](docs/GitHub_Actions_Variables_and_Secrets.md) - GitHub Actions configuration
 
 #### Requirements & Specifications
 
 - [docs/playerstats-requirements.md](docs/playerstats-requirements.md) - Business requirements and entity model
 - [docs/specs/PlayerStatistics_Feature_Specification.md](docs/specs/PlayerStatistics_Feature_Specification.md) - Statistics feature spec
 - [docs/specs/TeamManagement_Feature_Specification_Concise.md](docs/specs/TeamManagement_Feature_Specification_Concise.md) - Team management spec
-- [docs/specs/EFCore_AzureSQL_Repository_Implementation_Specification.md](docs/specs/EFCore_AzureSQL_Repository_Implementation_Specification.md) - Data access spec
+- [docs/specs/PlayerPictureUpload_Feature_Specification.md](docs/specs/PlayerPictureUpload_Feature_Specification.md) - Picture upload feature spec
+- [docs/specs/EntraID_ExternalIdentities_Integration_Specification.md](docs/specs/EntraID_ExternalIdentities_Integration_Specification.md) - Authentication spec
+- [docs/specs/Blob_Storage_Integration_Specification.md](docs/specs/Blob_Storage_Integration_Specification.md) - Blob storage integration
 
 #### User Guides
 
 - [docs/Player_Statistics_User_Guide.md](docs/Player_Statistics_User_Guide.md) - Player statistics feature guide
 - [docs/Team_Management_User_Guide.md](docs/Team_Management_User_Guide.md) - Team management feature guide
+- [docs/Player_Picture_Upload_User_Guide.md](docs/Player_Picture_Upload_User_Guide.md) - Picture upload user guide
+- [docs/Player_Picture_Services_Developer_Guide.md](docs/Player_Picture_Services_Developer_Guide.md) - Picture services developer guide
 - [docs/PWA_Testing_Guide.md](docs/PWA_Testing_Guide.md) - PWA functionality guide
 
 #### Performance & Operations
 
 - [docs/PERFORMANCE.md](docs/PERFORMANCE.md) - Performance optimization guidelines
 - [docs/PWA_Implementation_Summary.md](docs/PWA_Implementation_Summary.md) - PWA implementation details
+- [docs/PWA_Test_Results.md](docs/PWA_Test_Results.md) - PWA test results
+- [docs/Authorization_Testing_Guide.md](docs/Authorization_Testing_Guide.md) - Authorization testing
 
 ---
 
@@ -846,35 +977,6 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) file for 
 
 ---
 
-## Recent Fixes & Updates
-
-### December 29, 2025 - DbContext Threading Fix
-
-**Issue Resolved:** Fixed "A second operation was started on this context instance before a previous operation completed" error in Blazor Server.
-
-**Root Cause:**
-- EF Core `QuerySplittingBehavior.SplitQuery` was enabled, causing `.Include()` statements to execute as multiple SQL queries
-- Blazor Server components rendering concurrently (pre-rendering + normal rendering) triggered simultaneous access to the same DbContext instance
-- This violated EF Core's threading safety requirements
-
-**Solution Applied:**
-1. Changed EF Core query splitting from `SplitQuery` to `SingleQuery` in `ServiceCollectionExtensions.cs`
-2. Converted parallel `Task.WhenAll` operations to sequential execution in Home.razor
-3. Added proper null checks for navigation properties in LINQ queries
-
-**Impact:**
-- ✅ Eliminated DbContext threading exceptions
-- ✅ Statistics now display correctly on dashboard
-- ✅ All queries execute as single SQL statements with JOINs
-- ✅ Improved stability for concurrent Blazor operations
-
-**Files Modified:**
-- [ServiceCollectionExtensions.cs](src/GhcSamplePs.Core/Extensions/ServiceCollectionExtensions.cs#L91)
-- [Home.razor](src/GhcSamplePs.Web/Components/Pages/Home.razor)
-- [EfPlayerStatisticRepository.cs](src/GhcSamplePs.Core/Repositories/Implementations/EfPlayerStatisticRepository.cs#L515)
-
----
-
 ## Acknowledgments
 
 - Built with [.NET 10](https://dotnet.microsoft.com/)
@@ -884,7 +986,7 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) file for 
 
 ---
 
-**Last Updated:** December 29, 2025
-**Version:** 1.0.1
-**Target Framework:** .NET 10.0
-**Test Status:** ✅ 802+ tests passing
+**Last Updated:** January 2025  
+**Version:** 1.0.1  
+**Target Framework:** .NET 10.0  
+**Test Status:** ✅ 811+ tests passing
